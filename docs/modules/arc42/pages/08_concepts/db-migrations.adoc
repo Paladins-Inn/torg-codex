@@ -1,0 +1,180 @@
+= Zero-Downtime Database Migrations
+include::partial$config.adoc[]
+
+[NOTE]
+====
+This concept applies to all deployments of {system} that involve database schema changes.
+Schema migrations are executed by the dedicated `db-updater` service using *Liquibase* {liquibase}, which is the only component with write access to the schema.
+====
+
+Rolling updates and canary deployments require that **old and new application versions run in parallel** against the same database.
+A breaking schema change — such as renaming or removing a column — would cause one of the two versions to fail.
+
+The solution is the *Parallel Change* pattern {parallel-change}, also known as *Expand and Contract* or *Zero-Downtime Database Migration* {fowler-evodb}.
+It decomposes every potentially breaking schema change into a **sequence of fully backward-compatible steps**.
+
+== 🔁 The Three-Phase Pattern
+
+=== Phase 1 — Expand
+
+The schema is extended in a backward-compatible way.
+New columns, tables, or indexes are *added alongside* the existing structures.
+No existing column is removed or renamed.
+The old application version continues to work unchanged.
+
+.Example Liquibase changeset — Expand
+[source,xml]
+----
+<changeSet id="2024-06-01-001-expand" author="migration">
+    <!-- add new column; nullable so the old app can still INSERT without it -->
+    <addColumn tableName="events">
+        <column name="location_url" type="VARCHAR(2048)"/>
+    </addColumn>
+</changeSet>
+----
+
+=== Phase 2 — Migrate / Transition
+
+A new version of the application is deployed.
+It **writes to both** the old and the new column simultaneously and reads from the new column.
+During the rollout window, old instances still write only to the old column, so both columns must be kept consistent.
+
+If existing rows must be backfilled, a data-migration changeset can be executed once all old instances are drained:
+
+.Example Liquibase changeset — Backfill
+[source,xml]
+----
+<changeSet id="2024-06-01-002-backfill" author="migration">
+    <sql>
+        UPDATE events
+           SET location_url = website
+         WHERE location_url IS NULL
+           AND website IS NOT NULL;
+    </sql>
+</changeSet>
+----
+
+=== Phase 3 — Contract
+
+Once **all** application instances run the new version and the old column is no longer written to or read from, a follow-up deployment removes it.
+
+.Example Liquibase changeset — Contract
+[source,xml]
+----
+<changeSet id="2024-07-01-001-contract" author="migration">
+    <dropColumn tableName="events" columnName="website"/>
+</changeSet>
+----
+
+NOTE: The Contract changeset is intentionally released in a **separate deployment** from the Expand changeset — never in the same release.
+
+== 🔄 Deployment Flow
+
+[plantuml, db-migration-phases, svg]
+----
+@startuml
+skinparam style strict
+skinparam defaultFontSize 13
+
+!define PHASE(x,c) rectangle x #c
+
+skinparam rectangle {
+    BorderColor #333333
+    FontColor #111111
+}
+
+package "Phase 1 — Expand" #e8f5e9 {
+    rectangle "db-updater\nADD new column\n(nullable)" as expand #c8e6c9
+    rectangle "App v1\nwrites old column\nonly" as appv1a #f1f8e9
+}
+
+package "Phase 2 — Migrate" #fff9c4 {
+    rectangle "db-updater\nBackfill existing\nrows (optional)" as backfill #fff176
+    rectangle "App v1\n(draining)" as appv1b #f9fbe7
+    rectangle "App v2\nwrites BOTH columns\nreads new column" as appv2 #f0f4c3
+}
+
+package "Phase 3 — Contract" #fce4ec {
+    rectangle "db-updater\nBackfill existing rows\nDROP old column" as contract #f8bbd0
+    rectangle "App v3\nwrites new column\nonly" as appv3 #fce4ec
+}
+
+expand -down-> backfill
+appv1a -down-> appv1b
+backfill -down-> contract
+appv1b -down-> appv2
+appv2 -down-> appv3
+
+@enduml
+----
+
+== ✅ Rules to Follow
+
+[cols="^.^1,<.<9",frame="topbot",grid="rows"]
+|===
+| ✅ | Always add new columns as *nullable* or with a default value in the Expand phase.
+| ✅ | Keep the Expand and Contract changesets in **separate releases** (separate Git tags / deployments).
+| ✅ | Execute `db-updater` *before* deploying the new application version.
+| ✅ | Ensure all old instances are terminated *before* running the Contract changeset.
+| ✅ | Each Liquibase changeset must be *idempotent* — never modify an already-applied changeset.
+| ❌ | Never rename a column directly — use Expand (add new) → Migrate → Contract (drop old).
+| ❌ | Never change the data type of an existing column in a single step.
+| ❌ | Never add a `NOT NULL` constraint without a default value while old instances are still running.
+|===
+
+== 🏷️ Naming Convention for Changesets
+
+Changeset IDs follow the convention:
+
+----
+<ISO-date>-<sequence>-<phase>
+----
+
+Examples:
+
+* `2024-06-01-001-expand`
+* `2024-06-01-002-backfill`
+* `2024-07-01-001-contract`
+
+This makes the migration history self-documenting and allows teams to identify which phase a changeset belongs to at a glance.
+
+== ⚠️ Relationship to Canary and Rolling Deployments
+
+During a *canary deployment*, both the old (v1) and the new (v2) application version process live traffic simultaneously.
+The database schema must be valid for **both versions at the same time**.
+
+[plantuml, canary-db, svg]
+----
+@startuml
+skinparam style strict
+
+actor User
+
+component "Load Balancer\n(10% → v2, 90% → v1)" as LB
+component "App v1\n(old)" as V1
+component "App v2\n(new)" as V2
+database "PostgreSQL\n(schema expanded)" as DB
+
+User --> LB
+LB --> V1 : 90%
+LB --> V2 : 10%
+V1 --> DB : writes old column
+V2 --> DB : writes old + new column
+V2 --> DB : reads new column
+
+@enduml
+----
+
+The *Expand* phase is the enabler: it guarantees that both v1 and v2 are compatible with the current schema throughout the entire canary window.
+
+== 📚 Further Reading and References
+
+* {parallel-change} — Martin Fowler: *ParallelChange* — the canonical description of the pattern.
+* {fowler-evodb} — Martin Fowler & Pramod Sadalage: *Evolutionary Database Design* — the broader methodology behind schema evolution.
+* {refactoring-db} — Scott Ambler & Pramod Sadalage: *Refactoring Databases* — the reference book with a complete catalogue of database refactoring patterns.
+* {liquibase} — Liquibase: official documentation for the migration tool used by `db-updater`.
+* {liquibase-zddt} — Liquibase: *Zero-Downtime Deployments with Liquibase*.
+* {expand-contract-fowler} — Martin Fowler: *Expand Contract* — a concise summary of the two outer phases.
+
+<<<
+

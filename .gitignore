@@ -15,3 +15,6 @@ target/
 
 ### jte ###
 /jte-classes/
+
+### Proprietary information ###
+/src/main/resources/db/
