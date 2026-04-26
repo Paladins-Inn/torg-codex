@@ -1,4 +1,3 @@
-HELP.md
 ### Maven ###
 .mvn/wrapper/maven-wrapper.jar
 target/
@@ -8,3 +7,4 @@ target/
 /jte-classes/
 ### Proprietary information ###
 /torg-codex-data/src/main/resources/db/
+/node_modules/

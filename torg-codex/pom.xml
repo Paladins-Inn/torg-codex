@@ -12,7 +12,7 @@
 
   <groupId>de.paladins-inn.torg.codex</groupId>
   <artifactId>torg-codex</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <name>torg-codex</name>
   <description>torg-codex</description>
 
@@ -67,7 +67,7 @@
     <dependency>
       <groupId>de.paladins-inn.torg.codex</groupId>
       <artifactId>torg-codex-data</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>1.0.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>

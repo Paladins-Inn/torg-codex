@@ -1,6 +1,16 @@
 spring:
   application:
     name: torg-codex
+    version: "@project.version@"
+    # noinspection SpringBootApplicationYaml
+    description: "@project.description@"
+
 gg:
   jte:
     development-mode: true
+
+logging:
+  level:
+    root: info
+    de.paladinsinn: debug
+    de.paladinsinn.torg.codex: trace
