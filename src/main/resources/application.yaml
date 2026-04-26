@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: torg-codex
+gg:
+  jte:
+    development-mode: true
