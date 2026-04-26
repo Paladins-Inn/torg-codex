@@ -1,20 +1,10 @@
 HELP.md
-target/
+### Maven ###
 .mvn/wrapper/maven-wrapper.jar
+target/
 !**/src/main/**/target/
 !**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
 ### jte ###
 /jte-classes/
-
 ### Proprietary information ###
-/src/main/resources/db/
+/torg-codex-data/src/main/resources/db/
