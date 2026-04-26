@@ -1,0 +1,3 @@
+*** System scope and context
+**** xref:03_system_scope_and_context/business-context.adoc[]
+**** xref:03_system_scope_and_context/technical-context.adoc[]

@@ -1,0 +1,79 @@
+:adr-title: Hexagonal Architecture
+:adr-state: Accepted
+:adr-date: 2025-09-21
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 005
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+
+
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+
+== Context
+
+Software architecture defines the fundamental structure of a software system, establishing the way components interact and the constraints on their design and evolution. It provides a blueprint for both the system and the project developing it, addressing concerns like scalability, maintainability, and technical debt.
+
+Traditional layered architectures often lead to tight coupling between business logic and infrastructure components (databases, UI, external systems). This creates challenges for testing, maintenance, and adapting to changing requirements. Our system needs an architecture that promotes separation of concerns, testability, and resilience to technical changes.
+
+== Decision
+
+We will implement Hexagonal Architecture (also known as Ports and Adapters) for our system design.
+
+Key principles of this approach:
+
+* The core business logic (domain) sits at the center of the application
+* The domain defines "ports" (interfaces) through which it communicates with the outside world
+* External components connect to these ports via "adapters" that translate between the domain and external systems
+* Dependencies point inward toward the domain, never outward
+* The domain has no knowledge of the external systems it interacts with
+
+We will structure our application into three main layers:
+
+1. **Domain Layer**: Contains business logic, entities, and use cases
+2. **Ports Layer**: Defines interfaces for both incoming and outgoing interactions
+3. **Adapters Layer**: Implements concrete adapters for connecting external systems to the ports
+
+== Consequences
+
+Adopting Hexagonal Architecture will result in:
+
+=== Benefits
+
+* **Testability**: The domain can be tested in isolation using mock adapters
+* **Flexibility**: External components can be replaced without affecting the domain
+* **Maintainability**: Clear separation of concerns makes the codebase easier to understand
+* **Future-proofing**: The core business logic is protected from changes in external technologies
+* **Domain focus**: Developers can focus on business problems rather than technical details
+
+=== Challenges
+
+* **Learning curve**: Team members will need time to adapt to this architectural style
+* **Initial overhead**: More interfaces and classes are required compared to simpler approaches
+* **Design decisions**: Determining proper boundaries between domain and adapters requires careful consideration
+* **Potential overengineering**: For simpler components, this approach may be unnecessarily complex
+
+
+== Further Reading
+
+* {hexagonal}
+* {ports-adapters}
+* {implementing-ddd}
+* {ddd-hexagonal}
+* {clean-architecture}
+
+<<<

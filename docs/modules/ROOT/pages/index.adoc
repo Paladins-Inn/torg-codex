@@ -1,0 +1,6 @@
+include::partial$config.adoc[]
+= Manual {system}
+Roland T. Lichti <klenkes74@paladins-inn.de>
+:page-aliases: ROOT:index.adoc
+
+include::arc42:partial$abstract.adoc[]

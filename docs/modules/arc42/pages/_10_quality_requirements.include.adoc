@@ -1,0 +1,22 @@
+:fs01: xref:10_quality_requirements.adoc#FS01[&uparrow;FS01 Provide Event Management]
+:fs02: xref:10_quality_requirements.adoc#FS02[&uparrow;FS02 Data Retention TTL]
+:fs03: xref:10_quality_requirements.adoc#FS03[&uparrow;FS03 Self-Service]
+:fs04: xref:10_quality_requirements.adoc#FS04[&uparrow;FS04 Notification System]
+:fs05: xref:10_quality_requirements.adoc#FS05[&uparrow;FS05 Data Display for Events]
+
+:co01: xref:10_quality_requirements.adoc#CO01[&uparrow;CO01 Compatible with discord]
+:co02: xref:10_quality_requirements.adoc#CO02[&uparrow;CO02 Compatible with 3words]
+:co03: xref:10_quality_requirements.adoc#CO03[&uparrow;CO03 Compatible with OpenStreetMap]
+:co04: xref:10_quality_requirements.adoc#CO05[&uparrow;CO04 Compatible with VTT systems]
+
+:us01: xref:10_quality_requirements.adoc#US01[&uparrow;US01 Web based]
+:us02: xref:10_quality_requirements.adoc#US02[&uparrow;US02 Multi-language]
+:us03: xref:10_quality_requirements.adoc#US03[&uparrow;US03 Fast Responses]
+:us04: xref:10_quality_requirements.adoc#US04[&uparrow;US04 Accessible]
+:us05: xref:10_quality_requirements.adoc#[&uparrow;US05 Ready for tablet usage]
+:us06: xref:10_quality_requirements.adoc#US06[&uparrow;US06 Attribute based access control (ABAC)]
+
+:re01: xref:10_quality_requirements.adoc#RE01[&uparrow;RE01 Working Hours 24/7]
+
+:mt01: xref:10_quality_requirements.adoc#MT01[&uparrow;MT01 Small Team]
+:mt02: xref:10_quality_requirements.adoc#MT02[&uparrow;MT02 12-Factor]

@@ -1,0 +1,5 @@
+The software is an event management system.
+
+Event organizers can manage their event and sessions.
+
+Event attendees can view the event and sessions, and register for sessions.

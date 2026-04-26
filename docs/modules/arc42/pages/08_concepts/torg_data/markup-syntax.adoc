@@ -1,0 +1,222 @@
+= TORG Markup Syntax Reference
+include::partial$config.adoc[]
+
+This page documents the complete custom markup language used in the `text` and `worldLaws` fields of the TORG data YAML files.
+The markup is designed to be mixed with standard Markdown.
+
+== Conditional Blocks
+
+Conditional blocks show or hide content based on which products the user owns.
+
+=== Syntax
+
+[source]
+----
+<IF:product-id>
+Content shown when the user owns "product-id".
+</IF>
+
+<IF:!product-id>
+Content shown when the user does NOT own "product-id".
+</IF>
+----
+
+`product-id`:: A kebab-case product identifier such as `sourcebook-aysle`, `digital-orrorsh`, or `sourcebook-cyberpapacy`.
+
+The `!` prefix negates the condition.
+
+=== Behaviour
+
+* Blocks are *non-nesting* -- an `<IF:>` block never contains another `<IF:>` block.
+* Adjacent blocks are common: one block for users without a sourcebook, immediately followed by an expanded block for users who own it.
+* Content inside a kept block is processed by all subsequent pipeline stages (entity refs, HTML, tokens, Markdown).
+
+=== Example
+
+[source,yaml]
+----
+worldLaws: |
+  <IF:!sourcebook-aysle>
+  ## The Law of Magic
+  Magic is an integral part of life in Aysle.
+  </IF><IF:sourcebook-aysle>
+  ## The Law of Magic
+  The core principle of the Aysle reality is that magic
+  is everywhere; it can be manipulated by nearly any being...
+  </IF>
+----
+
+With `sourcebook-aysle` owned, the user sees the expanded description.
+Without it, they see the shorter core-rulebook version.
+
+
+== Entity Cross-References
+
+Entity references create hyperlinks to other game entities.
+
+=== Syntax
+
+[source]
+----
+<type:entity-id>
+----
+
+`type`:: One of the recognised entity types (see table below).
+`entity-id`:: A kebab-case identifier matching the entity's `name` or `id` field.
+
+=== Entity Types
+
+.Recognised entity reference types
+[cols="<.<3,<.<3,<.<4",options="header",frame="topbot",grid="rows"]
+|===
+| Markup Tag | URL Path | Example
+
+| `cosm` | `/cosms/` | `<cosm:aysle>`
+| `group` | `/groups/` | `<group:spellcraft>`
+| `perk` | `/perks/` | `<perk:negation>`
+| `spell` | `/spells/` | `<spell:fireball>`
+| `spell-list` | `/spell-lists/` | `<spell-list:demon-magic>`
+| `miracle` | `/miracles/` | `<miracle:heal>`
+| `miracle-list` | `/miracle-lists/` | `<miracle-list:sacellum>`
+| `power` | `/powers/` | `<power:awakened-mind>`
+| `power-list` | `/power-lists/` | `<power-list:the-way>`
+| `threat` | `/threats/` | `<threat:homunculus>`
+| `item` | `/items/` | `<item:mask>`
+| `vehicle` | `/vehicles/` | `<vehicle:corsair>`
+| `race` | `/races/` | `<race:elf>`
+| `shard` | `/shards/` | `<shard:khem>`
+|===
+
+=== Rendered Output
+
+Entity references are rendered as HTML anchor tags:
+
+[source,html]
+----
+<a href="/perks/negation" class="entity-ref entity-ref-perk">Negation</a>
+----
+
+The display name is derived from the entity ID by replacing hyphens with spaces and title-casing each word.
+Unknown entity types are left as plain text.
+
+=== Example
+
+[source,yaml]
+----
+text: |
+  Negation: The calamitous engines can negate [possibilities]
+  spent by others. This works exactly like the <perk:negation> Perk.
+----
+
+
+== Raw HTML Injection
+
+Allows embedding trusted HTML directly in the output.
+
+=== Syntax
+
+[source]
+----
+[HTML:content]
+----
+
+Everything between `HTML:` and the closing `]` is passed through verbatim as raw HTML.
+
+=== Examples
+
+[source,yaml]
+----
+[HTML:<strong>2023-06-19:</strong>]           <1>
+[HTML:<br>]                                   <2>
+[HTML:<a href="/decks">downloadable</a>]      <3>
+[HTML:<img class="inline-image-small"
+  src="/static/icons/tokens/aysle.webp">]     <4>
+[HTML:2021-03-31]                             <5>
+----
+<1> Bold text via HTML `<strong>` tag
+<2> Line break
+<3> Hyperlink
+<4> Inline image with CSS class
+<5> Plain text (no HTML tags -- still valid)
+
+[NOTE]
+====
+The data is authored by the project owner, not user-generated.
+The raw HTML is trusted and not sanitised at this stage.
+====
+
+
+== Game Mechanic Tokens
+
+Square-bracketed tokens represent game concepts that are rendered as icons or badges in the UI.
+
+=== Syntax
+
+[source]
+----
+[token-name]
+----
+
+Matching is *case-insensitive*: `[shock]`, `[Shock]`, and `[SHOCK]` all produce the same output.
+
+=== Known Tokens
+
+.Game mechanic tokens by category
+[cols="<.<3,<.<9",options="header",frame="topbot",grid="rows"]
+|===
+| Category | Tokens
+
+| Status Effects
+| `[shock]`, `[wound]`, `[wounds]`, `[stymied]`, `[stymied2]`, `[vulnerable]`, `[vulnerable2]`, `[restrained]`, `[disconnect]`, `[waiting]`
+
+| Resources
+| `[possibilities]`, `[possibility]`, `[BD]` (Bonus Dice)
+
+| Weapon Properties
+| `[RELOAD]`, `[SHOTGUN]`, `[SMALL]`, `[aim]`, `[malfunction]`
+
+| Conditions
+| `[concentration]`, `[DAZING]`, `[FATIGUES]`, `[HEAD]`
+|===
+
+=== Rendered Output
+
+Tokens are rendered as `<span>` elements with CSS classes for icon display:
+
+[source,html]
+----
+<span class="game-token game-token-shock" title="Shock"></span>
+----
+
+Unknown tokens receive the fallback class `game-token-unknown` and are still rendered visibly so data errors can be spotted.
+
+=== Example
+
+[source,yaml]
+----
+text: |
+  Spell casters may incur [shock] to gain a bonus on any magic
+  skill test, up to his number of adds in the skill.
+  A Living Land Possibility may be spent to add 1 [BD] to damage.
+----
+
+
+== Standard Markdown
+
+All remaining text is treated as standard Markdown (CommonMark).
+
+=== Supported Constructs
+
+* `**bold**` and `*italic*`
+* `## Headings` (level 2 and below)
+* Bullet lists using `- ` or `* ` prefixes
+* Unicode bullet `\u2022 ` (automatically normalised to `- ` before processing)
+* Paragraphs separated by blank lines
+
+=== Interaction with Custom Markup
+
+The Markdown processor runs *last* in the pipeline.
+By that point, all custom markup has been converted to HTML.
+The Markdown processor passes through existing HTML tags without escaping them.
+
+<<<

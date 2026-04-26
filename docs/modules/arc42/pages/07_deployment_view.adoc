@@ -1,0 +1,86 @@
+= Deployment View
+include::partial$config.adoc[]
+
+[plantuml, deployment-view]
+----
+@startuml deployment-view
+
+actor "Player" <<User>> as player
+actor "Game Master" <<User>> as gm
+actor "Con Orga" <<User>> as orga
+actor "System Admin" <<Admin>> as admin
+
+component "k8s Cluster" <<Cluster>> as k8s {
+  component "pandurart" <<Namespace>> as ns {
+    component ""pandurart" <<ArgoCD Application>> as app {
+      component "con-planer-scs" <<Helm Deployment>> {
+        [con-planer-scs] <<Ingress>> as ingress
+
+        [con-planer-scs] <<Service>> as service
+
+        [con-planer-scs] <<Pod>> as scs
+
+        database "con-planer-scs\n\nCNPG Cluster" <<Pod>> as data
+        component "con-planer-scs" <<PVC>> as pvc
+
+        ingress -right-> service : HTML, REST\n(Port 8080)
+        service --> scs : HTML, REST\n(Port 8080)
+        scs -left-> data : Postgresql\n(Port 5432)
+
+        data .left. pvc : uses
+      }
+
+      [nextcloud\n\nNextcloud Installation] <<Helm Deployment>> as nextcloud
+      [nextcloud-db\n\nCNPG Cluster] <<Helm Deployment>> as nextclouddb
+      [nextcloud-s3-credentials] <<External Secret>> as s3credentials
+
+      scs -left-> nextcloud : WebDAV\n(Port 443)
+    }
+
+    nextcloud -left-> nextclouddb : Postgresql\n(Port 5432)
+
+    [nextcloud-s3-credentials] <<Secret>> as nextclouds3secret
+    s3credentials -down-> nextclouds3secret : creates\nvia ESO + Vault
+    nextcloud -right-> nextclouds3secret : uses
+  }
+}
+
+player --> ingress : HTTPS (HTML, REST)\n(Port 443)
+gm --> ingress : HTTPS (HTML, REST)\n(Port 443)
+orga --> ingress : HTTPS (HTML, REST)\n(Port 443)
+admin --> ingress : HTTPS (HTML, REST)\n(Port 443)
+
+circle "S3 Storage" as s3
+circle "Google Calendar" as gcal
+circle "Discord" as discord
+circle "OpenStreetMap" as osm
+circle "3words" as what3words
+
+nextcloud -down-> s3 : HTTPS (S3 API)\n(Port 443)
+nextclouddb -down-> s3 : Backup\nHTTPS (S3 API)\n(Port 443)
+
+scs --> gcal : HTTPS (REST)\n(Port 443)
+scs <--> discord : HTTPS (REST)\n(Port 443)
+scs --> osm : HTTPS (REST)\n(Port 443)
+scs --> what3words : HTTPS (REST)\n(Port 443)
+
+@enduml
+----
+
+
+== Quality and/or Performance Features
+
+* {us03}
+* {re01}
+* {co01}
+* {co02}
+* {co03}
+* {co04} -- for integration with Nextcloud
+* {co06}
+
+== Mapping Building Blocks to Infrastructure
+
+The pod {system} contains the SCS application.
+It consists of the building blocks level 1.
+
+include::partial$building-blocks-level-2.adoc[]

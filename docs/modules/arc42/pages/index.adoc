@@ -1,0 +1,11 @@
+= Arc42 System Architecture
+include::partial$config.adoc[]
+
+:note-caption: Abstract
+[NOTE]
+====
+include::partial$abstract.adoc[]
+====
+:note-caption: Note
+
+include::_nav.adoc[]

@@ -1,0 +1,4 @@
+= Technical Context
+include::partial$config.adoc[]
+
+include::partial$whitebox-overall-system.adoc[]

@@ -1,0 +1,5 @@
+:tr001: xref:11_technical_risks.adoc#TR001[&uparrow;TR-001 - Small Team]
+:tr002: xref:11_technical_risks.adoc#TR002[&uparrow;TR-002]
+:tr003: xref:11_technical_risks.adoc#TR003[&uparrow;TR-003]
+:tr004: xref:11_technical_risks.adoc#TR004[&uparrow;TR-004]
+:tr005: xref:11_technical_risks.adoc#TR005[&uparrow;TR-005]

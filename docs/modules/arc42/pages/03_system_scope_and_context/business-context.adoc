@@ -1,0 +1,325 @@
+= Business Context
+
+include::partial$config.adoc[]
+
+.The business context of pandurart.
+[plantuml,business-context,svg]
+----
+@startuml
+skinparam actorStyle awesome
+
+together {
+  :Organizer: as orga << Human >>
+  :Speaker: as speaker << Human >>
+  :Participant: as participant << Human >>
+}
+
+rectangle <<External>> {
+  [Discord] as discord << External Service >>
+  [3words] as what3words << External Service >>
+  [OpenStreetMap] as osm << External Service >>
+  [Mail Server] as mail << External Service >>
+}
+
+
+speaker    .u.|> participant : is a
+orga  .u.|> participant : is a
+
+[pandurart] <<SCS>> as service
+[sso] <<SSO>> as sso
+
+participant <--> discord : sends/receives
+participant --> service : uses
+participant --> sso : logs into
+
+service <--> discord : sends/receives
+service --> what3words
+service --> osm
+
+mail <-- service : sends email
+mail --> participant : sends email
+
+sso <-.- service
+@enduml
+----
+
+== Usecases
+
+=== Usecases for organizers
+[plantuml,organizer-usecases]
+----
+@startuml organizer-usecases
+
+left to right direction
+
+actor "Organizer" as orga
+actor "Participant" as part
+actor "Speaker" as speak
+
+usecase "Create Event" as createEvent
+usecase "Manage Event" as manageEvent
+usecase "Delete Event" as deleteEvent
+
+usecase "Create Track" as createTrack
+usecase "Manage Track" as manageTrack
+usecase "Delete Track" as deleteTrack
+
+usecase "Create Session" as createSession
+usecase "Manage Session" as manageSession
+usecase "Delete Session" as deleteSession
+usecase "List Session Proposals" as listSessionProposals
+usecase "Acceppt Session Proposal" as acceptSession
+usecase "Decline Session Proposal" as declineSession
+
+usecase "Create Speaker" as createSpeaker
+usecase "Manage Speaker" as manageSpeaker
+usecase "Delete Speaker" as deleteSpeaker
+usecase "Assign Speaker" as assignSpeaker
+usecase "Unassign "Speaker" as unassignSpeaker
+
+
+usecase "Register Participant to Event" as registerEventParticipant
+usecase "Unregister Participant from Event" as unregisterEventParticipant
+
+usecase "Register Participant to Track" as registerTrackParticipant
+usecase "Unregister Participant from Track" as unregisterTrackParticipant
+
+usecase "Register Participant to Session" as registerSessionParticipant
+usecase "Unregister Participant from Session" as unregisterSessionParticipant
+
+usecase "Create Location" as createLocation
+usecase "Manage Location" as manageLocation
+usecase "Delete Location" as deleteLocation
+usecase "Assign Location to Event" as assignLocation
+usecase "Unassign Location from Event" as unassignLocation
+
+usecase "Create Room" as createRoom
+usecase "Manage Room" as manageRoom
+usecase "Delete Room" as deleteRoom
+usecase "Assign Room" as assignRoom
+usecase "Unassign Room" as unassignRoom
+
+usecase "Create Table" as createTable
+usecase "Manage Table" as manageTable
+usecase "Delete Table" as deleteTable
+usecase "Assign Table" as assignTable
+usecase "Unassign Table" as unassignTable
+
+usecase "List Venue Requests" as listVenueRequests
+usecase "Decline Venue Requests" as declineVenueRequests
+
+usecase "Create Accommodation" as createAccommodation
+usecase "Manage Accommodation" as manageAccommodation
+usecase "Delete Accommodation" as deleteAccommodation
+usecase "Assign Accommodation" as assignAccommodation
+usecase "Unassign Accommodation" as unassignAccommodation
+usecase "List Accommodation Requests" as listAccommodationRequest
+usecase "Decline Accommodation Request" as declineAccommodationRequest
+
+usecase "Create Equipment" as createEquipment
+usecase "Manage Equipment" as manageEquipment
+usecase "Delete Equipment" as deleteEquipment
+usecase "Assign Equipment" as assignEquipment
+usecase "Unassign Equipment" as unassignEquipment
+
+orga --> createEvent
+createEvent ..> manageEvent
+
+orga --> manageEvent
+manageEvent --> deleteEvent
+manageEvent --> assignLocation
+manageEvent --> unassignLocation
+manageEvent --> registerEventParticipant
+manageEvent --> unregisterEventParticipant
+
+unregisterEventParticipant ..> unregisterTrackParticipant
+unregisterEventParticipant ..> unregisterSessionParticipant
+
+
+listAccommodationRequest --> assignAccommodation
+listAccommodationRequest --> declineAccommodationRequest
+
+listVenueRequests --> assignRoom
+listVenueRequests --> assignTable
+listVenueRequests --> declineVenueRequests
+
+orga --> createTrack
+createTrack ..> manageTrack
+orga --> manageTrack
+manageTrack --> deleteTrack
+manageTrack --> registerTrackParticipant
+manageTrack --> unregisterTrackParticipant
+
+deleteTrack ..> unregisterTrackParticipant
+deleteTrack ..> unregisterSessionParticipant
+deleteTrack ..> deleteSession
+
+orga --> listSessionProposals
+listSessionProposals --> acceptSession
+listSessionProposals --> declineSession
+
+acceptSession --> manageSession
+
+orga --> createSession
+createSession ..> manageSession
+orga --> manageSession
+manageSession --> unassignSpeaker
+manageSession --> unassignEquipment
+manageSession --> unassignRoom
+manageSession --> unassignTable
+manageSession --> unregisterSessionParticipant
+manageSession --> assignSpeaker
+manageSession --> assignEquipment
+manageSession --> assignRoom
+manageSession --> assignTable
+manageSession --> registerSessionParticipant
+manageSession --> deleteSession
+deleteSession ..> unassignSpeaker
+deleteSession ..> unregisterSessionParticipant
+deleteSession ..> unassignEquipment
+deleteSession ..> unassignRoom
+deleteSession ..> unassignTable
+
+orga --> createSpeaker
+createSpeaker ..> manageSpeaker
+manageSpeaker --> assignSpeaker
+manageSpeaker --> unassignSpeaker
+manageSpeaker --> deleteSpeaker
+deleteSpeaker ..> unassignSpeaker
+
+orga --> createLocation
+createLocation ..> manageLocation
+orga --> manageLocation
+manageLocation --> deleteLocation
+manageLocation --> manageRoom
+manageLocation --> manageAccommodation
+manageLocation --> assignLocation
+manageLocation --> unassignLocation
+deleteLocation ..> deleteRoom
+deleteLocation ..> deleteAccommodation
+
+orga --> createRoom
+createRoom ..> manageRoom
+orga --> manageRoom
+manageRoom --> createTable
+manageRoom --> manageTable
+manageRoom --> createEquipment
+manageRoom --> manageEquipment
+
+manageRoom --> deleteRoom
+deleteRoom ..> deleteTable
+deleteRoom ..> deleteEquipment
+
+deleteTable ..> unassignTable
+
+orga --> createAccommodation
+createAccommodation ..> manageAccommodation
+orga --> manageAccommodation
+manageAccommodation --> deleteAccommodation
+manageAccommodation --> assignAccommodation
+manageAccommodation --> unassignAccommodation
+
+orga --> createEquipment
+createEquipment ..> manageEquipment
+orga --> manageEquipment
+manageEquipment --> deleteEquipment
+manageEquipment --> assignEquipment
+manageEquipment --> unassignEquipment
+
+deleteEquipment ..> unassignEquipment
+
+
+assignSpeaker ..> assignAccommodation
+unassignSpeaker ..> unassignAccommodation
+
+@enduml
+----
+
+=== Usecases for speakers
+[plantuml,speaker-usecases]
+----
+@startuml speaker-usecases
+
+left to right direction
+
+actor "Speaker" as speak
+
+usecase "Register Session" as createSession
+usecase "Manage Session" as manageSession
+usecase "Unregister Session" as deleteSession
+
+usecase "Create Speaker" as createSpeaker
+usecase "Manage Speaker" as manageSpeaker
+usecase "Delete Speaker" as deleteSpeaker
+
+usecase "Register Participant to Session" as registerSessionParticipant
+usecase "Unregister Participant from Session" as unregisterSessionParticipant
+
+usecase "Request Accommodation" as requestAccommodation
+usecase "Unrequest Accommodation" as unrequestAccommodation
+usecase "Request Equipment" as requestEquipment
+usecase "Unrequest Equioment" as unrequestEquipment
+
+usecase "Request Venue" as requestVenue
+usecase "Unrequest Venue" as unrequestVenue
+
+speak --> createSession
+createSession ..> manageSession
+speak --> manageSession
+manageSession --> deleteSession
+manageSession --> registerSessionParticipant
+manageSession --> unregisterSessionParticipant
+manageSesion --> requestVenue
+manageSession --> requestAccommodation
+manageSession --> requestEquipment
+
+deleteSession --> unregisterSessionParticipant
+deleteSession ..> unrequestVenue
+deleteSession ..> unrequestAccommodation
+deleteSession ..> unrequestEquipment
+
+@enduml
+----
+
+=== Usecases for participant
+[plantuml,participants-usecases]
+----
+@startuml participants-usecases
+
+left to right direction
+
+actor "Participant" as part
+
+usecase "Register participant" as registerParticipant
+usecase "Manage participant" as manageParticipant
+usecase "Unregister participant" as unregisterParticipant
+
+usecase "Register Participant to Event" as registerEventParticipant
+usecase "Unregister Participant from Event" as unregisterEventParticipant
+
+usecase "Register Participant to Track" as registerTrackParticipant
+usecase "Unregister Participant from Track" as unregisterTrackParticipant
+
+usecase "Register Participant to Session" as registerSessionParticipant
+usecase "Unregister Participant from Session" as unregisterSessionParticipant
+
+usecase "Request Accommodation" as requestAccommodation
+usecase "Unrequest Accommodation" as unrequestAccommodation
+
+part --> registerParticipant
+registerParticipant --> manageParticipant
+manageParticipant --> registerEventParticipant
+manageParticipant --> registerTrackParticipant
+manageParticipant --> registerSessionParticipant
+manageParticipant --> unregisterParticipant
+unregisterParticipant ..> unregisterEventParticipant
+manageParticipant --> unregisterEventParticipant
+unregisterEventParticipant ..> unregisterTrackParticipant
+manageParticipant --> unregisterTrackParticipant
+unregisterTrackParticipant ..> unregisterSessionParticipant
+manageParticipant --> unregisterSessionParticipant
+manageParticipant --> requestAccommodation
+manageParticipant --> unrequestAccommodation
+@enduml
+----
+

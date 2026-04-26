@@ -1,0 +1,83 @@
+= Level 3: UMA - User Managed Access to Resources
+
+[plantuml, uma-client]
+----
+@startuml
+package "de.paladinsinn.pandurart.services.security" as security {
+  class KeycloakProtectionClient {
+    - WebClient.Builder webClientBuilder
+    - KeycloakTokenClient tokens
+    - String protectionApiUrl
+    - WebClient protectionClient
+    ----
+    + getWebClientBuilder(): WebClient.Builder
+    + getTokens(): KeycloakTokenClient
+    + getProtectionApiUrl(): String
+    + getProtectionClient(): WebClient
+    + createResource(res: ResourceRepresentation): ResourceResponse
+    + getResource(resourceId: String): ResourceResponse
+    + deleteResource(resourceId: String): void
+    + listResources(): List<ResourceResponse>
+    + createPermissionTicket(requests: List<PermissionRequest>): PermissionTicketResponse
+  }
+
+  class KeycloakTokenClient {
+    - String clientId
+    - String clientSecret
+    - String tokenEndpoint
+    ----
+    + getClientId(): String
+    + getClientSecret(): String
+    + getTokenEndpoint(): String
+    + requestToken(): String
+    + refreshToken(refreshToken: String): String
+  }
+
+  class ResourceRepresentation {
+    - String name
+    - String type
+    - List<String> uris
+    - List<String> scopes
+    ----
+    + getName(): String
+    + getType(): String
+    + getUris(): List<String>
+    + getScopes(): List<String>
+  }
+
+  class ResourceResponse {
+    - String id
+    - String name
+    - String type
+    - List<String> uris
+    - List<String> scopes
+    ----
+    + getId(): String
+    + getName(): String
+    + getType(): String
+    + getUris(): List<String>
+    + getScopes(): List<String>
+  }
+
+  class PermissionRequest {
+    - String resourceId
+    - List<String> scopes
+    ----
+    + getResourceId(): String
+    + getScopes(): List<String>
+  }
+
+  class PermissionTicketResponse {
+    - String ticket
+    ----
+    + getTicket(): String
+  }
+
+  KeycloakProtectionClient o-- KeycloakTokenClient
+  KeycloakProtectionClient ..> ResourceRepresentation
+  KeycloakProtectionClient ..> ResourceResponse
+  KeycloakProtectionClient ..> PermissionRequest
+  KeycloakProtectionClient ..> PermissionTicketResponse
+}
+@enduml
+----

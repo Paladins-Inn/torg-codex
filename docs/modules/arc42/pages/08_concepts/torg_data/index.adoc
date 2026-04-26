@@ -1,0 +1,102 @@
+= TORG Data and Markup
+include::partial$config.adoc[]
+
+== Overview
+
+The Torg Codex application stores game data for the TORG RPG in *257 YAML files* located under `src/main/resources/db/`.
+These files contain spells, miracles, perks, items, threats, vehicles, races, cosm descriptions, and other game entities.
+
+Each entity typically has a `text` field (and sometimes a `worldLaws` field) containing rich content authored in a mix of *Markdown* and a *custom markup language* specific to the Torg Codex.
+
+== YAML File Organisation
+
+The YAML files are organised by product and entity type:
+
+[source]
+----
+src/main/resources/db/
++-- cosms.cosms.yml                    <1>
++-- groups.groups.yml
++-- darkness_devices.threats.yml
++-- articles/
+|   +-- possibility_tokens.articles.yml
+|   +-- changelog.articles.yml
+|   +-- credits.articles.yml
++-- books/
+|   +-- material/                      <2>
+|   +-- campaign/
+|   +-- delphi-missions/
++-- decks/                             <3>
++-- infiniverse/                       <4>
+----
+<1> Core data files shared across all products
+<2> Sourcebook and supplement content (222 files)
+<3> Card deck images and definitions
+<4> Community and creator content
+
+== Entity Types
+
+.YAML entity types by file suffix
+[cols="<.<3,<.<3,<.<6",options="header",frame="topbot",grid="rows"]
+|===
+| Suffix | Entity | Description
+
+| `.spells.yml` | Spells | Magical abilities with axioms, skills, casting times
+| `.miracles.yml` | Miracles | Faith-based powers
+| `.powers.yml` | Powers | Psionic and pulp powers
+| `.perks.yml` | Perks | Character advantages
+| `.items.yml` | Items | Weapons, armour, gear
+| `.vehicles.yml` | Vehicles | Cars, aircraft, watercraft
+| `.threats.yml` | Threats | NPCs, creatures, monsters
+| `.races.yml` | Races | Playable character races
+| `.shards.yml` | Shards | Eternity Shards (relics)
+| `.cosms.yml` | Cosms | Reality/world descriptions with world laws
+| `.groups.yml` | Groups | Skill and power groupings
+| `.articles.yml` | Articles | Reference and meta content
+| `.spelllists.yml` | Spell Lists | Grouped spell collections
+| `.miraclelists.yml` | Miracle Lists | Grouped miracle collections
+| `.powerlists.yml` | Power Lists | Grouped power collections
+| `.images.yml` | Images | Card deck image definitions
+|===
+
+== Custom Markup Language
+
+The `text` fields use standard Markdown enriched with four custom markup constructs:
+
+Conditional blocks:: `<IF:product-id>...</IF>` -- content shown or hidden based on which products the user owns.
+Entity cross-references:: `<type:id>` -- links to other game entities (e.g., `<perk:negation>`, `<cosm:aysle>`).
+Raw HTML injection:: `[HTML:content]` -- trusted HTML passed through verbatim.
+Game tokens:: `[shock]`, `[BD]`, `[possibilities]` -- icons representing game mechanics.
+
+See xref:08_concepts/torg_data/markup-syntax.adoc[] for the full syntax reference and xref:08_concepts/torg_data/markup-parser.adoc[] for the parser implementation.
+
+== Rendering Pipeline
+
+The markup is processed through a five-stage pipeline, each stage transforming the text string:
+
+[source]
+----
+raw text + ownedProducts
+    |
+    v
+1. ConditionalBlockProcessor   -- resolve <IF:...>...</IF>
+    |
+    v
+2. EntityReferenceProcessor    -- <type:id> -> HTML links
+    |
+    v
+3. RawHtmlProcessor            -- [HTML:...] -> raw HTML
+    |
+    v
+4. GameTokenProcessor          -- [token] -> <span> icons
+    |
+    v
+5. MarkdownProcessor           -- Markdown -> HTML (commonmark-java)
+    |
+    v
+rendered HTML
+----
+
+The pipeline is coordinated by `TorgMarkupService`, a Spring `@Service` in the `de.paladinsinn.torg.codex.torgcodex.markup` package.
+
+<<<

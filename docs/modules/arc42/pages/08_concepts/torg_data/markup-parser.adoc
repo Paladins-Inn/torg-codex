@@ -1,0 +1,261 @@
+= TORG Markup Parser Implementation
+include::partial$config.adoc[]
+
+== Purpose
+
+The markup parser converts the custom markup in YAML `text` and `worldLaws` fields into rendered HTML for the web UI.
+It is implemented as a five-stage string-transformation pipeline in the `de.paladinsinn.torg.codex.torgcodex.markup` package.
+
+
+== Architecture
+
+=== Why a Regex Pipeline
+
+The custom markup grammar is *flat*: `<IF:>` blocks never nest, and entity references, HTML blocks, and game tokens are all single-level patterns.
+A recursive descent parser would be overengineered.
+Instead, each stage uses a compiled `java.util.regex.Pattern` with `Matcher.appendReplacement` / `appendTail` for clean, sequential replacement.
+
+Each regex is compiled once as a `static final Pattern` for performance.
+
+=== Pipeline Stages
+
+[source]
+----
+raw text + Set<String> ownedProducts
+    |
+    v
+1. ConditionalBlockProcessor   -- <IF:...>...</IF>
+    |
+    v
+2. EntityReferenceProcessor    -- <type:id> -> <a href="...">
+    |
+    v
+3. RawHtmlProcessor            -- [HTML:...] -> raw HTML
+    |
+    v
+4. GameTokenProcessor          -- [token] -> <span class="...">
+    |
+    v
+5. MarkdownProcessor           -- Markdown -> HTML
+    |
+    v
+rendered HTML string
+----
+
+=== Stage Ordering Rationale
+
+The order is critical for correctness:
+
+1. *Conditional blocks first* -- `<IF:>` blocks wrap all other content types.
+They must be resolved before inner content is processed.
+2. *Entity references before raw HTML* -- Entity refs use angle brackets that the Markdown processor would mangle.
+They cannot conflict with `[HTML:...]` since they use different delimiters.
+3. *Raw HTML before game tokens* -- `[HTML:...]` uses square brackets.
+If tokens ran first, `[HTML:<strong>...]` would match `HTML` as a token name.
+4. *Game tokens before Markdown* -- Tokens use `[brackets]` which Markdown interprets as link references.
+Converting them to `<span>` HTML first prevents Markdown interference.
+5. *Markdown last* -- Converts remaining text to HTML, passing through all previously injected HTML unchanged.
+
+
+== Class Descriptions
+
+All classes are in package `de.paladinsinn.torg.codex.torgcodex.markup`.
+
+=== TorgMarkupService
+
+_File:_ `src/main/java/.../markup/TorgMarkupService.java`
+
+The coordinating `@Service` that composes the five stages.
+
+[source,java]
+----
+@Service
+public class TorgMarkupService {
+
+    public String render(String rawText, Set<String> ownedProducts) {
+        // Null/blank -> ""
+        // Stage 1: conditionalProcessor.process(text, ownedProducts)
+        // Stage 2: entityProcessor.process(text)
+        // Stage 3: rawHtmlProcessor.process(text)
+        // Stage 4: gameTokenProcessor.process(text)
+        // Stage 5: markdownProcessor.process(text)
+    }
+}
+----
+
+=== ConditionalBlockProcessor
+
+_File:_ `src/main/java/.../markup/ConditionalBlockProcessor.java`
+
+Resolves `<IF:condition>...</IF>` blocks based on the set of owned products.
+
+* Positive condition (`<IF:sourcebook-aysle>`) -- include content when product is owned.
+* Negated condition (`<IF:!sourcebook-aysle>`) -- include content when product is *not* owned.
+* Unclosed `<IF:>` blocks without a matching `</IF>` pass through unchanged.
+
+=== EntityReferenceProcessor
+
+_File:_ `src/main/java/.../markup/EntityReferenceProcessor.java`
+
+Converts `<type:id>` tags into HTML hyperlinks using the `EntityType` enum for URL path resolution.
+Unknown types are left as plain text.
+
+=== EntityType
+
+_File:_ `src/main/java/.../markup/EntityType.java`
+
+An `enum` mapping 14 entity type tags to URL path segments.
+Provides `fromTag(String)` returning `Optional<EntityType>` and a utility method `toDisplayName(String entityId)` that converts kebab-case IDs to title-cased display names.
+
+=== RawHtmlProcessor
+
+_File:_ `src/main/java/.../markup/RawHtmlProcessor.java`
+
+Extracts `[HTML:content]` blocks and replaces them with the raw HTML content.
+The data is trusted (authored by the project owner), so no sanitisation is applied.
+
+=== GameTokenProcessor
+
+_File:_ `src/main/java/.../markup/GameTokenProcessor.java`
+
+Converts `[tokenname]` patterns to `<span>` elements with CSS classes for icon rendering.
+Lookup is case-insensitive via `GameTokenRegistry`.
+
+=== GameTokenRegistry
+
+_File:_ `src/main/java/.../markup/GameTokenRegistry.java`
+
+A utility class with a static case-insensitive map from token names to CSS class names.
+Unknown tokens receive the `game-token-unknown` fallback class.
+
+=== MarkdownProcessor
+
+_File:_ `src/main/java/.../markup/MarkdownProcessor.java`
+
+Wraps the `commonmark-java` library.
+Pre-processes unicode bullet points (`\u2022 `) to standard Markdown list syntax (`- `) before parsing.
+HTML passthrough is enabled by default in commonmark-java.
+
+
+== Regex Patterns
+
+.Compiled regex patterns used by each stage
+[cols="<.<3,<.<7,<.<2",options="header",frame="topbot",grid="rows"]
+|===
+| Stage | Pattern | Flags
+
+| ConditionalBlockProcessor
+| `<IF:(!?)([a-z0-9-]+)>([\s\S]*?)</IF>`
+| `DOTALL`
+
+| EntityReferenceProcessor
+| `<([a-z][-a-z]*):([a-z0-9][-a-z0-9]*)>`
+| --
+
+| RawHtmlProcessor
+| `\[HTML:(.*?)\]`
+| --
+
+| GameTokenProcessor
+| `\[([a-zA-Z][a-zA-Z0-9]*)\]`
+| --
+
+| MarkdownProcessor (bullet fix)
+| `^&#x2022; ` (start of line)
+| `MULTILINE`
+|===
+
+
+== Robustness and Edge Cases
+
+Unclosed IF blocks:: The regex requires `</IF>`.
+An unclosed `<IF:...>` without a matching `</IF>` passes through unchanged.
+
+Unknown entity types:: `EntityType.fromTag()` returns `Optional.empty()` and the original text is preserved.
+
+Unknown game tokens:: Rendered with the generic `game-token-unknown` CSS class so they remain visible in the UI for data error detection.
+
+Null or blank input:: Short-circuited at the `TorgMarkupService` level -- returns an empty string.
+
+HTML inside raw HTML blocks:: The non-greedy regex stops at the first `]`.
+This works for all observed data (257 YAML files verified).
+
+Entity references in YAML list fields:: References like `<perk:brawler>` appearing in YAML array values (e.g., `perks:` fields) are *not* processed by this parser.
+They are handled separately at the data loading layer.
+
+
+== Maven Dependency
+
+The `commonmark-java` library is required for Markdown processing:
+
+[source,xml]
+----
+<dependency>
+    <groupId>org.commonmark</groupId>
+    <artifactId>commonmark</artifactId>
+    <version>0.24.0</version>
+</dependency>
+----
+
+
+== Usage Example
+
+[source,java]
+----
+@Controller
+public class CosmController {
+    private final TorgMarkupService markupService;
+
+    public CosmController(TorgMarkupService markupService) {
+        this.markupService = markupService;
+    }
+
+    @GetMapping("/cosms/{id}")
+    public String showCosm(@PathVariable String id, Model model) {
+        Cosm cosm = cosmRepository.findById(id);
+        Set<String> owned = currentUser.getOwnedProducts();
+
+        String renderedWorldLaws = markupService.render(
+            cosm.getWorldLaws(), owned);
+        String renderedText = markupService.render(
+            cosm.getText(), owned);
+
+        model.addAttribute("worldLaws", renderedWorldLaws);
+        model.addAttribute("text", renderedText);
+        return "cosm-detail";
+    }
+}
+----
+
+
+== Test Strategy
+
+Each processor has its own unit test class (no Spring context required):
+
+.Test classes
+[cols="<.<5,<.<7",options="header",frame="topbot",grid="rows"]
+|===
+| Test Class | Key Scenarios
+
+| `ConditionalBlockProcessorTest`
+| Positive/negated conditions, adjacent blocks, unclosed blocks, multiline content
+
+| `EntityReferenceProcessorTest`
+| All entity types, unknown types, long hyphenated IDs, multiple refs in one string
+
+| `RawHtmlProcessorTest`
+| `<br>`, `<strong>`, `<a>`, `<img>` tags, plain text, multiple blocks
+
+| `GameTokenProcessorTest`
+| Known tokens, case insensitivity, tokens with digits, unknown tokens
+
+| `MarkdownProcessorTest`
+| Bold, italic, headings, unicode bullets, HTML passthrough
+
+| `TorgMarkupServiceTest`
+| Full pipeline with real YAML excerpts, null/blank input, conditional + tokens combined
+|===
+
+All tests are located in `src/test/java/.../markup/`.
+
+<<<

@@ -1,0 +1,230 @@
+= Server-side Markdown with JTE and flexmark-java
+include::partial$config.adoc[]
+
+== Introduction
+
+This document explains a pragmatic, secure and maintainable approach to store Markdown content, render it server-side with `flexmark-java`, sanitize the output, and deliver it into JTE templates in a Spring Boot application.
+
+The writing style follows the existing Asciidoc examples in this documentation set (see `scs.adoc`) — short sections, concrete code examples, and instructions suitable for developers and tech writers.
+
+== Goals
+
+- Store content as human-readable Markdown in the application or database.
+- Render Markdown to HTML on the server with predictable output.
+- Sanitize generated HTML to prevent XSS before injecting into templates.
+- Integrate smoothly with JTE templates and Spring Boot dependency injection.
+- Offer caching guidance for performance-sensitive pages.
+
+== High-level approach
+
+1. Add `flexmark-java` (and optional HTML sanitizer) to the project dependencies.
+2. Implement a Spring `@Service` that converts Markdown -> HTML and sanitizes it.
+3. Optionally cache rendered HTML to reduce runtime overhead.
+4. Inject the service in controllers or other services and pass the sanitized HTML to JTE templates as a model attribute.
+5. Render the attribute unescaped in the JTE template (mark it as safe HTML).
+
+== Dependencies (Maven)
+
+[source,xml]
+----
+<!-- Add to your pom.xml -->
+<dependency>
+  <groupId>com.vladsch.flexmark</groupId>
+  <artifactId>flexmark-all</artifactId>
+  <version>0.62.2</version>
+</dependency>
+
+<!-- optional but recommended: OWASP Java HTML Sanitizer -->
+<dependency>
+  <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+  <artifactId>owasp-java-html-sanitizer</artifactId>
+  <version>20211018.1</version>
+</dependency>
+----
+
+Use the project-managed versions consistent with your BOM if you use one.
+The sanitizer is optional but strongly recommended for any content that may contain user input or external sources.
+
+== MarkdownService (design)
+
+Provide a single Spring `@Service` that:
+
+- accepts Markdown input (String),
+- parses and renders to HTML using `flexmark-java`,
+- sanitizes the HTML using a configured HTML policy,
+- optionally caches the sanitized HTML.
+
+Design contract (inputs/outputs):
+
+- Input: Markdown string (nullable/empty treated as empty output).
+- Output: sanitized HTML string safe for unescaped injection into JTE templates.
+- Error modes: invalid Markdown should not throw; service returns empty string or a safe fallback and logs details.
+
+== Example implementation
+
+[source,java]
+----
+package de.paladinsinn.pandurart.services.markdown;
+
+import org.springframework.stereotype.Service;
+import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.html.HtmlRenderer;
+import com.vladsch.flexmark.util.ast.Node;
+import org.owasp.html.PolicyFactory;
+import org.owasp.html.Sanitizers;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+@Service
+public class MarkdownService {
+    private final Parser parser;
+    private final HtmlRenderer renderer;
+    private final PolicyFactory sanitizer;
+    private final ConcurrentMap<String, String> cache = new ConcurrentHashMap<>();
+
+    public MarkdownService() {
+        this.parser = Parser.builder().build();
+        this.renderer = HtmlRenderer.builder().build();
+        this.sanitizer = Sanitizers.FORMATTING.and(Sanitizers.LINKS);
+    }
+
+    public String toHtml(String markdown) {
+        if (markdown == null || markdown.isEmpty()) return "";
+        // simple cache by content hash (safe but not perfect for large-scale usage)
+        String key = Integer.toHexString(markdown.hashCode());
+        return Optional.ofNullable(cache.get(key)).orElseGet(() -> {
+            Node doc = parser.parse(markdown);
+            String html = renderer.render(doc);
+            String safe = sanitizer.sanitize(html);
+            cache.putIfAbsent(key, safe);
+            return safe;
+        });
+    }
+}
+----
+
+[NOTE]
+====
+- The example uses a simple content-hash cache.
+For production use consider an LRU cache (Caffeine) with size and expiry policies.
+- The sanitizer combines formatting and link sanitizers; extend or restrict according to your allowed HTML features (images, iframes, tables, etc.).
+====
+
+
+== Controller usage
+
+Inject `MarkdownService` and add the sanitized HTML to the model that is forwarded to the JTE template.
+
+[source,java]
+----
+package de.paladinsinn.pandurart.web;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import de.paladinsinn.pandurart.services.markdown.MarkdownService;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+@Controller
+public class PageController {
+    private final MarkdownService markdownService;
+
+    public PageController(MarkdownService markdownService) {
+        this.markdownService = markdownService;
+    }
+
+    @GetMapping("/about")
+    public String about(Model model) throws Exception {
+        String md = Files.readString(Path.of("src/main/resources/content/about.md"));
+        String html = markdownService.toHtml(md);
+        model.addAttribute("contentHtml", html);
+        return "about"; // JTE template name: about.jte
+    }
+}
+----
+
+== JTE template: rendering the safe HTML
+
+In the JTE template you must render the already-sanitized HTML unescaped.
+The exact syntax depends on your JTE configuration and version.
+Typical approaches:
+
+- Mark the model attribute as already safe HTML in your JTE configuration or use the raw/unsafe output directive.
+- Example (JTE pseudo-syntax — check your JTE version docs for the exact expression):
+
+[source]
+----
+// in about.jte
+<html>
+  <body>
+    {{unsafe contentHtml}}
+  </body>
+</html>
+----
+
+[IMPORTANT]
+====
+Do not render user-supplied HTML unescaped without sanitization.
+====
+
+
+== Caching and performance
+
+- Rendering Markdown on every request may be acceptable for low-traffic pages.
+For higher load, cache rendered+sanitized HTML with an LRU cache (Caffeine) or store the rendered HTML alongside the Markdown in the database and update on write.
+- Cache invalidation strategy: either time-based expiry or update-on-write (re-render when Markdown is changed).
+
+== Security considerations
+
+- Always run an HTML sanitizer after rendering to eliminate dangerous elements and attributes (scripts, event handlers, dangerous URL schemes).
+- Restrict allowed tags and attributes to the minimal set required by your UI (formatting, links, images if needed).
+- If you allow images or iframes, consider additional policies (CSP headers, remote image proxying).
+
+== Authoring guidance
+
+- Prefer CommonMark-compliant Markdown and agree on a set of extensions (tables, task lists, footnotes) for the team.
+- Document allowed HTML features and how editors should embed content.
+- For complex content, consider storing metadata alongside Markdown (e.g.
+title, publish date, summary).
+
+== Example: enabling more flexmark extensions
+
+[source,java]
+----
+// Build parser with extensions
+Parser parser = Parser.builder()
+    .extensions(List.of(
+        com.vladsch.flexmark.ext.tables.TablesExtension.create(),
+        com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension.create(),
+        com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension.create()
+    ))
+    .build();
+HtmlRenderer renderer = HtmlRenderer.builder().extensions(List.of(...)).build();
+----
+
+Be sure to adapt the sanitizer policy if you allow additional HTML constructs (tables, images, etc.).
+
+== Migration notes (if replacing existing HTML storage)
+
+- If you currently store raw HTML in DB, decide whether to convert existing items to Markdown or keep them as HTML with explicit migration steps.
+- Option: store both Markdown and pre-rendered HTML columns during migration, and gradually migrate pages.
+
+== Example checklist for integrating into this project
+
+- [ ] add `flexmark-all` and sanitizer dependencies to `pom.xml`
+- [ ] implement `MarkdownService` as a Spring bean
+- [ ] update controllers to use the service and pass `contentHtml` to templates
+- [ ] update JTE templates to render the attribute as raw HTML where appropriate
+- [ ] add caching (Caffeine) if necessary
+- [ ] add unit tests for rendering and sanitization policies
+- [ ] document editor guidelines and allowed Markdown extensions
+
+== References
+
+* {flexmark} - flexmark-java
+* {owasp-java-html} - Java HTML Sanitizer
+* {jte} - JTE docs
+* {common-mark} - CommonMark spec
+

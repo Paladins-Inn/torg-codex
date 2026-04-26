@@ -1,0 +1,88 @@
+:adr-title: Encryption Strategy for Database Fields
+:adr-state: Accepted
+:adr-date: 2025-10-12
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 010
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+Sensitive data must be encrypted at rest in the database.
+The application uses Spring Boot with JPA/Hibernate and PostgreSQL.
+Two main approaches are available: application-side encryption using JPA AttributeConverter, or database-side encryption using PostgreSQL's pgcrypto extension with Hibernate's @ColumnTransformer.
+
+== Decision Drivers
+
+* {fs02}: Data protection and privacy requirements
+* {mt01}: Maintainability and testability
+* {mt01}: Transparent integration with JPA entities
+* {mt01}: Ease of migration and backup
+
+== Decision
+
+We choose **application-side encryption** using JPA AttributeConverter.
+
+This approach encrypts and decrypts field values in the application layer before persisting to or reading from the database.
+It is database-agnostic, integrates seamlessly with JPA entities, and simplifies migration and backup processes.
+
+== Consequences
+
+* Encryption logic is fully controlled in the application code
+* No dependency on database-specific features or extensions
+* Easier to test and maintain encryption routines
+* Database backups remain encrypted
+* Key management must be handled securely in the application
+* Slight performance overhead in the application layer
+
+== Options
+
+=== Option 1: Application-side encryption (JPA AttributeConverter)
+
+*Pros:*
+
+* Database-agnostic, works with any JPA-compatible database
+* Encryption logic is testable and maintainable in Java
+* No need for database extensions or custom SQL
+* Easy to migrate and backup encrypted data
+
+*Cons:*
+
+* Key management and rotation must be implemented in the application
+* Performance impact on application server
+* All developers must follow encryption conventions
+
+=== Option 2: Database-side encryption (pgcrypto + Hibernate @ColumnTransformer)
+
+*Pros:*
+
+* Encryption and decryption handled by the database
+* Keys can be managed by the database administrator
+* Transparent for non-JPA clients
+
+*Cons:*
+
+* Requires PostgreSQL and pgcrypto extension
+* Hibernate mapping with @ColumnTransformer is more complex
+* Migration to other databases is difficult
+* Backups may contain unencrypted data if not configured properly
+
+== Further Reading
+
+* https://www.postgresql.org/docs/current/pgcrypto.html[PostgreSQL: pgcrypto]
+* https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#jpa.entity-persistence.converters[Spring Data JPA: AttributeConverter]
+* https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#mapping-column-transformer[Hibernate: @ColumnTransformer]

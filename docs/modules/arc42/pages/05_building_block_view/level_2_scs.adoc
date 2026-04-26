@@ -1,0 +1,79 @@
+= Level 2: Components of the SCS
+include::partial$config.adoc[]
+
+== Overview Diagram
+[plantuml, scs-level-2]
+----
+@startuml scs-level-2
+
+actor "User" <<User>> as ingress
+
+  database "pandurart" <<Postgres>> as data
+  circle "Keycloak SSO" as keycloak
+
+component "pandurart" <<SCS,spring-boot>> as service {
+  component "Frontend" as frontend {
+    interface "Web Application" <<Java, JTE>> as app
+    interface "REST API" <<Java>> as api
+    [Controller] <<Java>> as controller
+  }
+
+
+  component "Core" as core {
+    [Service] <<Java>> as servicecore
+    [Persistence] <<JPA>> as persistence
+    component "Domain" <<Java>> as domain {
+      [API] <<Java>> as apicore
+      [Model] <<Java>> as model
+      [Services] <<Java>> as services
+    }
+  }
+
+
+  component "Integrations/Services" as integrations {
+    [Discord Bot Service] <<Java>> as discordsvc
+    [3words Service] <<Java>> as what3wordssvc
+    [OpenStreetMap Service] <<Java>> as osmsvc
+    [UMA Client] <<Java>> as uma
+  }
+}
+
+ingress --> app : HTML
+ingress --> api : REST\nGRAPHQL\nJSON
+
+app --> controller
+api --> controller
+
+controller --> servicecore
+controller --> uma
+
+servicecore --> services
+servicecore -left-> persistence
+servicecore .down.> apicore
+servicecore -right-> uma
+services -left-> model
+services .left.> apicore
+model .left.> apicore
+
+model <-- persistence
+persistence -left-> data : Postgres
+persistence .down.> apicore
+
+discordsvc <-up-> services
+what3wordssvc <-up- services
+osmsvc <-up- services
+
+circle "Discord" as discord
+circle "OpenStreetMap" as osm
+circle "3words" as what3words
+
+discordsvc <-down-> discord : Java-API
+what3wordssvc -down-> what3words : REST
+uma -down-> keycloak : REST
+osmsvc -down-> osm : REST
+
+@enduml
+----
+
+== List of Building Blocks
+include::_level2.adoc[]

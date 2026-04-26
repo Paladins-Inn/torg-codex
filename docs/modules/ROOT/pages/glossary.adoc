@@ -1,0 +1,106 @@
+[glossary]
+= Glossary
+include::partial$config.adoc[]
+
+This glossary tries to explain the terms used throughout this document.
+The glossary is shared between all documents of the {system} project.
+
+<<numbers>>, <<A>>, <<B>>, <<C>>, <<D>>, <<E>>, <<F>>, <<G>>, <<H>>, <<I>>, <<J>>, <<K>>, <<L>>, <<M>>, <<N>>, <<O>>, <<P>>, <<Q>>, <<R>>, <<S>>, <<T>>, <<U>>, <<V>>, <<W>>, <<X>>, <<Y>>, <<Z>>
+
+[cols="<.<1,<.<3a",options="header",frame="topbot",grid="rows"]
+|===
+|Term |Definition
+
+
+2+h| [[numbers,0-9]]0-9
+
+|[[factor12-app]]12--Factor-App
+|Some principles how to design a microservice application. Please check {12factor} for further information.
+
+
+2+h| [[A,AÄ]]AÄ
+
+|[[agile-manifesto]]Agile Manifesto
+|The Manifesto for Agile Software Development as published on {agilemanifesto}.
+
+|[[AMQP]]AMQP
+|A messaging protocol standard that defines also the wire protocol.
+That way the wire protocol is not proprietary which enables cross-organization communication via messaging.
+
+
+2+h| [[B,B]]B [[C,C]]C
+|[[clean-code]]Clean Code
+|Clean Code has been promoted by several books by Robert C. Martin.
+A nice website to describe it is {cleancode}.
+
+
+2+h| [[D,D]]D
+
+|[[discord]]Discord
+|Discord is a (voice) chat.
+It started as a chat system for video games to support creating and running guilds but evolved into a general chat system with different so-called servers for any topic possible.
+During the covid pandemic the {gloss_rpg} community discovered discord to play games on it.
+
+|[[principle-dry]]DRY-Principle
+|An architectural principle in software development:
+
+"**D**on't **R**epeat **Y**ourself".
+
+
+2+h| [[E,E]]E [[F,F]]F [[G,G]]G [[H,H]]H
+
+|[[hexagonal-architecture,Hexagonal Architecture]]Hexagonal Architecture
+(also: Ports and Adapters)
+|Hexagonal Architecture ({ddd-hexagonal} also known as {ports-adapters}) is a software architecture pattern that emphasizes the separation of concerns between the core business logic and the external systems or interfaces. The core application is surrounded by ports, which define the interfaces for communication with the outside world, and adapters, which implement these interfaces to connect to external systems such as databases, user interfaces, or third-party services. This architecture promotes maintainability, testability, and flexibility by allowing the core logic to remain independent of external dependencies.
+
+
+2+h| [[I,I]]I [[J,J]]J [[K,K]]K [[L,L]]L [[M,M]]M [[N,N]]N [[O,OÖ]]OÖ [[P,P]]P
+
+|[[ports-and-adapters,Ports and Adapters]]Ports and Adapters
+|{gloss_hexagonal}
+
+
+2+h| [[Q,Q]]Q [[R,R]]R
+
+|[[rpg]]RPG (Role Playing Game)
+|A tabletop role-playing game is a game where participants embody fictional characters in an imaginary world. A game master (also called GM or dungeon master) describes the game world and narrative, while players describe the actions of their characters. The gameplay is typically structured by rulebooks, dice, and other tools. Unlike computer games, tabletop RPGs take place around a table and thrive on direct social interaction between participants. Well-known examples include "Dungeons & Dragons," "Pathfinder," "The Dark Eye," or "Call of Cthulhu."
+
+
+2+h| [[S,S]]Sß
+
+|[[scs]]SCS
+|A self-contained system is a microservice with full UI responsibly and a database.
+Data is transferred asynchronously and fulfills eventual consistency.
+It offers fragments of HTML via HTTP to be included in UIs from other systems.
+Please check {scs} for more information.
+
+|[[principle-solid]]SOLID
+| In software programming, SOLID is a mnemonic acronym for five design principles intended to make object-oriented designs more understandable, flexible, and maintainable. Although the SOLID principles apply to any object-oriented design, they can also form a core philosophy for methodologies such as agile development or adaptive software development.
+
+* **S**ingle responsible principle
+* **O**pen-closed principle
+* **L**iskov substitution principle
+* **I**nterface segregation principle
+* **D**ependency inversion principle
+
+
+2+h| [[T,T]]T
+
+| Tabletop-RPG, TTRPG
+| see {gloss_rpg}.
+
+| [[Transclude]]Transclude
+| A transclude is a part of a page that is included in another page. It allows for modular content management, where common elements can be reused across multiple pages without duplication.
+
+2+h| [[U,UÜ]]UÜ [[V,V]]V [[W,W]]W [[X,X]]X [[Y,Y]]Y
+
+|[[principle-yagni]]YAGNI-Principle
+|An architectural principle in software development:
+
+"**Y**ou **A**in't **G**ona **N**eed **I**t".
+
+2+h| [[Z,Z]]Z
+
+|===
+
+<<<

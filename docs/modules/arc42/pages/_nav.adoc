@@ -1,0 +1,16 @@
+include::partial$config.adoc[]
+* xref:index.adoc[]
+** Context
+*** xref:01_introduction_and_goals.adoc[]
+*** xref:02_architecture_constraints.adoc[]
+include::03_system_scope_and_context/_nav.adoc[]
+** Systems
+*** xref:04_solution_strategy.adoc[]
+include::05_building_block_view/_nav.adoc[]
+** xref:06_runtime_view.adoc[]
+** xref:07_deployment_view.adoc[]
+** Appendix
+include::08_concepts/_nav.adoc[]
+include::09_architecture_decisions/_nav.adoc[]
+*** xref:10_quality_requirements.adoc[]
+*** xref:11_technical_risks.adoc[]

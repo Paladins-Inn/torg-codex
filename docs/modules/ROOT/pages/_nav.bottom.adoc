@@ -1,0 +1,4 @@
+include::ROOT:partial$config.adoc[]
+* Appendix
+** xref:ROOT:glossary.adoc[]
+** xref:ROOT:bibliography.adoc[]

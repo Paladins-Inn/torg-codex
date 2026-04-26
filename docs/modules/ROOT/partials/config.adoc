@@ -1,0 +1,18 @@
+:heading-font-color: #ff0000
+:sectnums:
+:sectnumlevels: 5
+:sectlinks:
+:sectids:
+:sectanchors:
+:chapter-label: Chapter
+:icons: font
+:partnums:
+:toc: preamble
+:system: `pandurart`
+include::arc42:page$_02_architecture_constraints.include.adoc[]
+include::arc42:page$03_system_scope_and_context/_include.adoc[]
+include::arc42:page$09_architecture_decisions/_include.adoc[]
+include::arc42:page$_10_quality_requirements.include.adoc[]
+include::arc42:page$_11_technical_risks.include.adoc[]
+include::ROOT:page$_bibliography.include.adoc[]
+include::ROOT:page$_glossary.include.adoc[]

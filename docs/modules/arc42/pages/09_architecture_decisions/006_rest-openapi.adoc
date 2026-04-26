@@ -1,0 +1,133 @@
+:adr-title: REST-API with OpenAPI Specification
+:adr-state: Accepted
+:adr-date: 2025-10-03
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 006
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+
+== Context
+We need to provide APIs for our services that will be consumed both internally and externally.
+Key considerations include:
+- A broad developer base should be able to use the APIs without a steep learning curve.
+- Documentation and client SDK generation are required for multiple programming languages.
+- Stability and long-term maintainability are more important than maximum client flexibility.
+- We evaluated REST with HATEOAS, classic REST with OpenAPI, and GraphQL.
+
+== Decision
+We will implement our APIs as **classic REST endpoints documented with OpenAPI**.
+HATEOAS will not be applied consistently, and GraphQL will not be used at this stage.
+
+== Consequences
+- The API surface will consist of well-defined endpoints that are stable and predictable.
+- We will maintain an OpenAPI specification as the single source of truth for API contracts.
+- API clients will rely on documented paths and operations, not on hypermedia navigation (HATEOAS).
+- If future use cases demand client-driven querying flexibility, a dedicated GraphQL layer may be considered separately.
+
+== Benefits
+- **Developer familiarity**: REST+OpenAPI is widely understood by backend and frontend developers.
+- **Tool support**: rich ecosystem for documentation, testing (Swagger UI, Postman), and code generation.
+- **Simplicity**: straightforward for consumers to implement without custom GraphQL clients or HATEOAS parsers.
+- **Compatibility**: aligns well with API gateways, monitoring, and HTTP caching strategies.
+
+== Challenges
+- **Limited flexibility**: clients cannot dynamically specify exactly which fields or relations to fetch (as in GraphQL).
+- **Potential overfetching/underfetching**: responses may include more or fewer data fields than a client ideally needs.
+- **Evolution management**: API versioning must be carefully planned when introducing breaking changes.
+- **HATEOAS omission**: navigation between related resources must be documented explicitly instead of being discoverable in responses.
+
+
+
+== Discussion: REST with HATEOAS vs. GraphQL
+
+=== 1. HATEOAS (Hypermedia as the Engine of Application State)
+
+*Idea:*
+A REST endpoint does not only deliver data, but also links ("where you can go next").
+
+.Example:
+[source,json]
+----
+{
+  "id": 4711,
+  "title": "Invoice",
+  "_links": {
+    "self": { "href": "/api/invoices/4711" },
+    "approve": { "href": "/api/invoices/4711/approve" },
+    "cancel": { "href": "/api/invoices/4711/cancel" }
+  }
+}
+----
+
+*Goal:*
+Clients do not hardcode URIs but follow links → loose coupling.
+
+*In practice:*
+
+- Often mentioned by REST purists, but rarely implemented consistently in typical business APIs.
+- Reasons: overhead, little support in common API clients (mobile/web).
+- Developers usually prefer "clear endpoints" instead of "navigable hypermedia".
+- Used in niche standards like HAL, Siren, or JSON:API, often in dynamic workflows.
+
+=== 2. GraphQL
+
+*Idea:*
+A single endpoint; the client formulates a query: "give me exactly these fields, optionally with relations."
+
+*Current status:*
+
+- Very common in frontend-driven applications (React/SPA/Mobile).
+- Big companies use GraphQL in production (e.g., GitHub, Shopify).
+- Advantages: avoids overfetching/underfetching, strong typing, tools (GraphiQL, codegen).
+- Disadvantages: more complex gateway, caching is harder, performance tuning (batching) can be tricky.
+
+=== 3. Typical reality (2025)
+
+- **Mostly:** classic REST/JSON without hypermedia.
+- **OpenAPI/Swagger:** standard for documentation and client generation.
+- **HATEOAS:** rarely a standard, mostly the exception.
+- **GraphQL:** established as an alternative in projects with strong frontend focus or for API aggregation.
+- **Trend:** APIs are usually built as REST+OpenAPI or GraphQL.
+
+=== 4. Decision Matrix
+
+[options="header",cols="1,1,1"]
+|===
+| Criterion | REST (classic) | GraphQL
+
+| API consumers | few, stable, controlled | many, diverse, fast-changing
+| Data access | relatively simple domain models | deeply nested, flexible queries required
+| Caching | HTTP caching works well | harder, requires a special layer
+| Tooling | OpenAPI/Swagger, many client generators | GraphQL schema, GraphiQL, codegen
+| Learning curve | low, widely known | higher, requires specific knowledge
+| HATEOAS usage | rarely, overhead outweighs benefits | not relevant (navigation via query)
+| Typical scenarios | B2B interfaces, microservices, stable endpoints | Public APIs, frontends/apps with high flexibility needs
+|===
+
+=== 5. Summary
+
+- HATEOAS is *theoretically part of the REST canon*, but rarely applied in practice.
+- Today, the common choices are **classic REST (with OpenAPI)** or **GraphQL**.
+- Decision depends on use case:
+* full client flexibility → GraphQL
+* stable, lean interfaces → REST/JSON
+
+
+=== Further Reading
+
+<<<

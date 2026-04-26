@@ -1,0 +1,58 @@
+= Introduction and Goals
+include::partial$config.adoc[]
+
+
+== Introduction
+include::partial$abstract.adoc[]
+
+
+== Requirements Overview
+
+* {fs01}
+* {fs02}
+* {fs03}
+* {fs04}
+* {fs05}
+
+* {us01}
+* {us02}
+* {us04}
+
+* {co01}
+* {co02}
+* {co03}
+* {co04}
+* {co05}
+
+
+== Quality Goals
+
+* {us03}
+* {re01}
+* {mt01}
+* {mt02}
+
+<<<
+== Stakeholders
+
+[cols="<.<6,<.<6,<.<8a",options="header",frame="topbot",grid="rows"]
+|===
+|Role/Name|Contact|Expectations
+
+|[[player]]RPG Player
+|Roland T. Lichti
+|Find conventions and events.
+Find tables to play on.
+Get notified about changes of my convention, events, or game tables.
+
+|[[gm]]Game Master
+|Roland T. Lichti
+|Run games at a convention or at an event.
+I want to promote my game table on the convention.
+
+|[[orga]]Convention Organizer
+|Roland T. Lichti
+|Manage one or more conventions or events.
+This should be as painless and easy as possible.
+
+|===

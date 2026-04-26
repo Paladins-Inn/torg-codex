@@ -1,0 +1,3 @@
+:stake_holder-player: &uparrow;xref:pandurart:arc42:03_system_scope_and_context.adoc#player[&uparrow;Stakeholder: player]
+:stake_holder-gm: &uparrow;xref:pandurart:arc42:03_system_scope_and_context.adoc#gm[&uparrow;Stakeholder: gm]
+:stake_holder-orga: &uparrow;xref:pandurart:arc42:03_system_scope_and_context.adoc#orga[&uparrow;Stakeholder: orga]

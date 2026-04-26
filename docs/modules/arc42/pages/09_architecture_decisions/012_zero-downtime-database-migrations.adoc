@@ -1,0 +1,94 @@
+:adr-title: Zero-Downtime Database Migrations
+:adr-state: Accepted
+:adr-date: 2026-03-26
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 012
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+{system} is deployed using rolling updates and canary deployments (see {adr-002}).
+During such deployments, multiple versions of the application run simultaneously against the same PostgreSQL database (see {adr-004}).
+
+A naive schema change — for example directly renaming or dropping a column — would break the old application version that is still running during the rollout window.
+This applies to any schema change that is not fully backward-compatible.
+
+In addition, the application itself must not perform schema changes.
+The JPA configuration uses `ddl-auto: validate`, meaning Hibernate only validates the schema but never modifies it.
+Schema migrations must therefore be executed by a dedicated, controlled process.
+
+== Decision Drivers
+
+* The application must be deployable without downtime.
+* Old and new application versions must be able to run in parallel against the same database schema.
+* Schema changes must be reproducible, version-controlled, and auditable.
+* Schema migrations must be decoupled from the application lifecycle.
+* The migration tooling must integrate with existing CI/CD pipelines.
+
+== Decision
+
+All database schema changes in {system} follow the *Parallel Change* pattern {parallel-change}
+(also known as *Expand and Contract* {expand-contract-fowler}, as described in *Evolutionary Database Design* {fowler-evodb}).
+
+Every breaking schema change is decomposed into three separate, individually deployable steps:
+
+[cols="^.^1h,<.<3h,<.<8a", frame="topbot", grid="rows"]
+|===
+| Step | Phase | Description
+
+| 1
+| Expand
+| New columns, tables, or indexes are *added alongside* existing ones.
+  New columns must be nullable or carry a default value so the old application version continues to function without modification.
+
+| 2
+| Migrate
+| The new application version is deployed.
+  It reads from and writes to both the old and the new structures simultaneously.
+  Existing rows may be backfilled by a dedicated Liquibase changeset.
+
+| 3
+| Contract
+| Once all old instances have been replaced, the old columns or tables are *removed* in a subsequent, separate deployment.
+|===
+
+Schema migrations are executed exclusively by the **`db-updater`** project, a dedicated CLI tool that runs Liquibase {liquibase} changesets.
+`db-updater` is the only component authorised to modify the database schema.
+It is executed as a Kubernetes Job *before* the new application version is rolled out.
+
+The detailed rules, naming conventions, and worked examples are documented in
+xref:08_concepts/db-migrations.adoc[Concept: Zero-Downtime Database Migrations].
+
+== Consequences
+
+*Positive:*
+
+* Deployments are fully non-disruptive — no maintenance window required.
+* Schema history is explicit, version-controlled, and auditable via Liquibase's `DATABASECHANGELOG` table.
+* Old application versions are never broken mid-rollout.
+* The separation between `db-updater` and the application prevents accidental schema drift.
+
+*Negative / Trade-offs:*
+
+* Every breaking schema change requires *at least two separate releases* (Expand in one release, Contract in a later release), increasing the number of deployment steps.
+* Developers must be aware of the pattern and consciously plan the three phases upfront.
+* The transition period (Phase 2) doubles the write load to the affected columns temporarily.
+* The `db-updater` job must succeed before the new application version can be deployed, adding a hard dependency to the pipeline.
+
+<<<
+

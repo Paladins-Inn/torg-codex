@@ -1,0 +1,121 @@
+:adr-title: Markdown and renderer selection
+:adr-state: Accepted
+:adr-date: 2025-10-25
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 011
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+Content in the application may be edited by humans and needs to be rendered into HTML for server-side templates (JTE).
+Requirements: human-editable source, stable diffs in VCS, CommonMark/GFM features, XSS-safe output, maintainability and reasonable runtime behaviour.
+
+== Decision Drivers
+
+* Editor-friendliness and portability of stored content
+* Security: protection against XSS
+* Feature completeness (tables, task lists, autolinks, etc.)
+* Active maintenance and ecosystem
+* Ease of integration with Spring Boot and JTE
+* Runtime performance and caching capabilities
+
+
+== Decision
+
+Store author content as **Markdown** and render server-side using **flexmark-java**.
+
+After rendering, sanitize produced HTML (e.g. OWASP Java HTML Sanitizer) and cache sanitized HTML where appropriate before injecting unescaped into JTE templates.
+
+
+== Consequences
+
+*Pros:*
+
+** Markdown bleibt menschlich lesbar, vektorisch diffbar und portabel.
+** Zentrale Rendering-Pipeline erlaubt einheitliche Feature-Policies.
+** `flexmark-java` bietet breite CommonMark/GFM-Unterstützung und Erweiterungen.
+** Sanitization step reduziert XSS risk; zentrale Kontrolle über erlaubte HTML-Elemente.
+** Möglichkeit, gerendertes HTML zu cachen und so Laufzeitkosten zu reduzieren.
+
+
+*Cons:*
+
+** Zusätzlicher Build-/Runtime-Abhängigkeit \(flexmark\) und optional Sanitizer.
+** Laufzeitaufwand für Render+Sanitize (mit Caching beherrschbar).
+** Migrationsaufwand beim Ersetzen bestehender HTML-speicherungs-Strategien.
+
+== Options
+
+=== Option 1: Store Markdown, render with `flexmark-java` (recommended)
+
+*Pros:*
+
+* Full CommonMark compliance, many official extensions.
+* Active maintenance and good documentation.
+* Fine-grained rendering options and good integration with sanitizers.
+* Centralized control of rendering policy; portable content.
+
+*Cons:*
+
+* Larger dependency footprint than minimal libraries.
+* Slightly more complex configuration.
+
+*Implementation notes:*
+
+* Add dependency: `com.vladsch.flexmark:flexmark-all:0.62.2`.
+* Typical flow: parse with `Parser.builder().extensions(...)`, render with `HtmlRenderer`, sanitize result and cache.
+
+=== Option 2: Store Markdown, use `txtmark` (lightweight)
+
+*Pros:*
+
+* Small, simple API; low footprint.
+* Minimal changes if already present.
+
+*Cons:*
+
+* Limited CommonMark/GFM support and fewer extensions.
+* Less active maintenance; harder to reach feature parity.
+
+=== Option 3: Store HTML directly
+
+*Pros:*
+
+* No render step at read time; exact WYSIWYG output from editors.
+* Simpler runtime if input is guaranteed safe.
+
+*Cons:*
+
+* High XSS risk if input sanitization is missed.
+* Poor VCS diffs and portability; inconsistent markup from different editors.
+* Harder to enforce centralized rendering policy.
+
+== Discussion: single decision rationale
+
+Storing Markdown preserves human editability and portability, and enables uniform rendering rules and easier migration.
+Rendering server-side with `flexmark-java` gives the most feature coverage and configurability among JVM libraries; pairing it with a robust sanitizer addresses security concerns.
+Caching rendered+sanitized HTML mitigates runtime cost.
+Choosing to store raw HTML trades security and portability for slightly simpler runtime behaviour but is not recommended for the project requirements.
+
+== Further Reading
+
+* https://github.com/vsch/flexmark-java[flexmark-java GitHub]
+* https://github.com/rjeschke/txtmark[txtmark GitHub]
+* https://commonmark.org[CommonMark Spec]
+* https://owasp.org/www-project-java-html-sanitizer/[OWASP Java HTML Sanitizer]
+* https://docs.gg.jte.net[JTE template engine docs — raw HTML output considerations]

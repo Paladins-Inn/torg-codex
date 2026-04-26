@@ -1,0 +1,82 @@
+= Runtime View
+include::partial$config.adoc[]
+
+[[runtime-users-pages]]
+== Pages
+
+.Web based UI of the {system} system
+[cols="<.<4,<.<4m,<.<8m,<.<4a",options="header",frame="topbot",grid="rows"]
+|===
+| Name | Method | URL | Permission
+
+4+h| Use case: _**TBD**_
+
+.2+h| _**TBD**_ | GET\|POST\|PUT\|DELETE\|PATCH\|HEAD | /
+| anon
+3+a| _**TBD**_
+
+|===
+
+[[runtime-rest]]
+== REST API
+
+.REST API of the {system} system
+[cols="<.<4,<.<4m,<.<8m,<.<4a",options="header",frame="topbot",grid="rows"]
+|===
+| Name | Method | URL | Permission
+
+.2+h| _**TBD**_ | GET\|POST\|PUT\|DELETE\|PATCH\|HEAD | /
+| anon
+3+a| _**TBD**_
+
+|===
+
+
+[[runtime-pandurart-transcludes]]
+== Transcludes
+.Transcludes of {system} to be included on other pages.
+[cols="<.<4,<.<12m,>.<1,>.<1,>.<1,>.<1",options="header",frame="topbot",grid="rows"]
+|===
+| Name | URL <| MinX <| MinY <| MaxX <| MaxY
+
+.2+h| _**TBD**_ | / | 0 | 0 | 0 | 0
+5+a| _**TBD**_
+|===
+
+
+[[runtime-pandurart-messaging]]
+== Messaging Channels
+
+This is an overview over existing general queues that exist in the whole system.
+
+.Messaging channels of the {system}.
+[cols="<.<4m,<.<4,<.<4,<.<8", options="header",frame="topbot",grid="rows"]
+|===
+| Name | Type | Direction | SCS
+
+.2+h| _**TBD**_ | Queue\|Topic | Inbound\|Outbound | pandurart
+3+a| _**TBD**_
+
+|===
+
+
+[[runtime-pandurart-scheduled]]
+== Scheduled Jobs
+
+.Scheduled jobs to do data house keeping
+[cols="<.<4,<.<16a", options="header",frame="topbot",grid="rows"]
+|===
+| Name | Period
+
+.2+h| Purge/Archive Old User Data | monthly
+| Purge or archive user data after 2 years after the reason for storing is not valid anymore.
+
+.2+h| Purge Logs | yearly
+| Purge logfiles after 10 years.
+
+.2+h| _**TBD**_ | hourly\|daily\|weekly\|monthly\|yearly
+| _**TBD**_
+
+|===
+
+<<<

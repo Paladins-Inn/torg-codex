@@ -1,0 +1,131 @@
+= Hexagonal Architecture: Concept Overview
+include::partial$config.adoc[]
+
+[NOTE]
+====
+Hexagonal Architecture (also known as Ports and Adapters) was first introduced by Alistair Cockburn {hexagonal} and has since become a fundamental approach for creating maintainable, testable software systems.
+Kaiserpfalz EDV-Service uses it by default ({co002}).
+Our {adr-005} documents our decision to adopt this architecture pattern to enhance the modularity and adaptability of our application.
+====
+
+The *Hexagonal Architecture*, also called *Ports and Adapters pattern*, is a software architecture pattern that allows an application to be equally driven by users, programs, automated tests, or batch scripts, and to be developed and tested in isolation from its eventual runtime devices and databases.
+
+== 🔁 Core Concept
+
+Hexagonal Architecture puts the *domain logic at the center* of the application and defines how this core interacts with the outside world through ports (interfaces) and adapters (implementations). This creates a clear separation between the business logic and external concerns like UI, databases, and third-party services.
+
+== 🧠 Key Features
+
+* *Domain-centric*: Business logic is isolated at the core of the application.
+* *Independent of frameworks*: The domain doesn't depend on UI, database, or external systems.
+* *Highly testable*: Core business logic can be tested without external dependencies.
+* *Adaptable*: External components can be replaced with minimal impact on the core.
+* *Clean dependencies*: Dependencies point inward toward the domain, never outward.
+
+== 🧱 Basic Components
+
+=== 1. Domain (Core)
+
+[source,java,opts=novalidate]
+----
+public class User {
+    private final String id;
+    private String username;
+    private String email;
+
+    // Business logic and validation rules
+    public void changeEmail(String newEmail) {
+        if (!isValidEmail(newEmail)) {
+            throw new InvalidEmailException(newEmail);
+        }
+        this.email = newEmail;
+    }
+}
+----
+
+=== 2. Ports (Interfaces)
+
+[source,java,opts=novalidate]
+----
+// Primary/Driving Port (used by the outside to interact with the domain)
+public interface UserService {
+    User createUser(String username, String email);
+    User findUserById(String id);
+}
+
+// Secondary/Driven Port (used by the domain to interact with external systems)
+public interface UserRepository {
+    void save(User user);
+    User findById(String id);
+}
+----
+
+=== 3. Adapters
+
+[source,java,opts=novalidate]
+----
+// Primary Adapter (e.g., REST Controller)
+@RestController
+public class UserController {
+    private final UserService userService;
+
+    @PostMapping("/users")
+    public ResponseEntity<UserDto> createUser(@RequestBody CreateUserRequest request) {
+        User user = userService.createUser(request.getUsername(), request.getEmail());
+        return ResponseEntity.ok(UserDto.from(user));
+    }
+}
+
+// Secondary Adapter (e.g., Database Repository)
+@Repository
+public class JpaUserRepository implements UserRepository {
+    private final UserJpaRepository jpaRepository;
+
+    @Override
+    public void save(User user) {
+        UserEntity entity = mapToEntity(user);
+        jpaRepository.save(entity);
+    }
+}
+----
+
+== ⚡ Use Cases
+
+* Complex business applications
+* Systems requiring high testability
+* Applications expected to evolve over time
+* Projects where different technical stacks might be used
+* When integrating with multiple external systems
+
+== 🔄 Integration with Spring Events
+
+Hexagonal Architecture works exceptionally well with the EventBus pattern. Events can be used to:
+
+* Communicate between different parts of the domain
+* Notify adapters about domain changes
+* Implement eventual consistency across bounded contexts
+
+[source,java,opts=novalidate]
+----
+// Domain service publishing events
+@Service
+public class UserServiceImpl implements UserService {
+    private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public User createUser(String username, String email) {
+        User user = new User(UUID.randomUUID().toString(), username, email);
+        userRepository.save(user);
+        eventPublisher.publishEvent(new UserCreatedEvent(user.getId(), username));
+        return user;
+    }
+}
+----
+
+== 📚 Further Reading
+
+* The original Hexagonal Architecture article {hexagonal}
+* Ports and Adapters Pattern {ports-adapters}
+* DDD and Hexagonal Architecture {ddd-hexagonal}
+* Implementing Domain-Driven Design {implementing-ddd}
+* Clean Architecture {clean-architecture}

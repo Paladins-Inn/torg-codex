@@ -1,0 +1,114 @@
+:adr-title: Access Management: Keycloak OIDC + UMA
+:adr-state: Accepted
+:adr-date: 2025-10-03
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 007
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+We build Spring Boot (3.x) services that expose REST APIs to multiple clients (web, mobile, service-to-service).
+Requirements:
+- Centralized identity, SSO, and token-based access (OIDC/OAuth 2.1).
+- Coarse-grained **RBAC** (roles/groups) for default gating.
+- Fine-grained, per-record authorization with **owner-managed sharing** (ABAC-style).
+- Standards-first approach; minimal custom security code; portable across services.
+- Clear audit trail for who owns, shares, and accesses resources.
+Assumptions:
+- Keycloak is available as the organization’s IdP.
+- Services run as OAuth2 Resource Servers validating JWTs via JWKS.
+
+== Drivers
+- Multitenancy support ({fs01}, {fs03}, {us01})
+- {us06}
+- Auditable sharing actions ({fs02})
+- Small team ({mt01})
+- Standards-based protocols (OIDC, OAuth 2.1, UMA 2.0) ({mt01})
+- Minimize custom authorization logic in services ({mt01})
+- Leverage the Spring Boot ecosystem ({mt01}, {mt02}, {fs03})
+
+== Decision
+We adopt a **hybrid model** using Keycloak + Spring Security:
+
+1. **OIDC with Keycloak**
+- Keycloak is the Authorization Server/IdP.
+- Groups and roles are authored and managed in Keycloak; issued in tokens (`realm_access`, `resource_access`).
+2. **RBAC (coarse-grained) in Spring Security**
+- Spring Boot apps validate JWTs and map Keycloak roles to Spring authorities for endpoint-level access control.
+3. **ABAC via UMA 2.0 (Keycloak Authorization Services)**
+- Each domain object that needs fine-grained control is registered as a **resource** in Keycloak (Protection API).
+- **Scope-based permissions** are defined per *resource type* (e.g., `event:read`, `event:write`).
+- When a client lacks access, the API returns **401 with UMA challenge** (`WWW-Authenticate: UMA ... ticket="..."`); the client exchanges the ticket for an **RPT** (Requesting Party Token) carrying a `permissions` claim.
+- Services map `permissions` (resource + scopes) to authorities (e.g., `PERM:event#read`) and enforce them in Spring Security.
+- **Owner-managed access** is enabled for resources requiring user-driven sharing.
+4. **Service Account for Protection API**
+- A confidential client’s service account (with `uma_protection`) obtains a PAT to call the Protection API for resource lifecycle operations.
+5. **Implementation Notes**
+- No legacy policy-enforcer adapters; enforcement is done with standard Spring Security (custom `JwtAuthenticationConverter`, optional `AccessDeniedHandler` to issue UMA tickets).
+- Maintain a mapping between domain IDs and Keycloak resource IDs.
+
+== Consequences
+- **Lifecycle management:** We must create/update/delete Keycloak resources in sync with domain objects and store their resource IDs.
+- **Client behavior:** Interactive clients must handle UMA challenges and obtain RPTs; non-interactive backends may use server-side exchanges where appropriate.
+- **Two token paths:** APIs must accept both plain Access Tokens (RBAC-only) and RPTs (RBAC+ABAC). Missing fine-grained permission triggers the UMA flow.
+- **Operational work:** Keycloak Authorization Services (policies, permissions, scopes) need governance and promotion across environments.
+- **Latency & calls:** First access without permission causes an extra round-trip (ticket → RPT). PAT and JWKS should be cached.
+- **Testing:** Integration tests need Keycloak (or mocks) to validate resource registration and UMA flows; contract tests must cover permission edge cases.
+- **Observability:** Logs and audit need to capture owner, sharer, ticket issuance, and granted scopes.
+
+== Benefits
+- **Standards-based:** OIDC + UMA 2.0 avoids bespoke ABAC implementations; portable across services.
+- **Separation of concerns:** Roles, groups, policies, and sharing live in Keycloak; services focus on enforcement.
+- **Least privilege:** Fine-grained, resource-level permissions with owner-managed sharing.
+- **Consistency:** Uniform security model for all services; common Spring Security patterns (authorities, voters).
+- **Scalability:** Scope-by-type permissions scale across many resource instances without per-endpoint hardcoding.
+
+== Challenges
+- **Client support & UX:** UMA/RPT is more complex than plain OAuth; clients must implement the ticket → RPT exchange and handle 401 challenges gracefully.
+- **Policy governance:** Designing maintainable scopes, resource types, and policies requires upfront modeling and documentation.
+- **Mapping & cleanup:** Keeping domain↔resource IDs consistent; ensuring resource deletion on domain removal.
+- **Cross-service alignment:** Shared resource types and scopes must be consistently named across teams.
+- **Operational maturity:** Keycloak upgrades, backup/restore of Authorization Services data, and troubleshooting permission mismatches.
+- **Performance:** Extra network hops for first-time access; careful caching and timeouts required.
+
+== Options
+. **RBAC-only with roles/scopes (no UMA)**
+*Pros:* Simple, fast, excellent tooling; minimal moving parts.
+*Cons:* Coarse-grained; no owner-managed sharing; complex cases push logic back into services.
+
+. **In-app ABAC (custom DB tables / rules)**
+*Pros:* Full control; fits domain tightly.
+*Cons:* Re-implements authorization per service; hard to keep consistent; higher maintenance and audit burden.
+
+. **Central policy engine (OPA/Rego)**
+*Pros:* Powerful, expressive ABAC; decoupled policies; can serve multiple stacks.
+*Cons:* Extra infra; identity/resource-context wiring needed; learning curve; still need an IdP.
+
+. **Keycloak Policy Enforcer adapters**
+*Pros:* Built-in enforcement.
+*Cons:* Not aligned with modern Spring Boot practices; tighter coupling to specific adapters; limited flexibility.
+
+. **Commercial IdP (e.g., Okta/Auth0) with fine-grained auth features**
+*Pros:* Managed service, enterprise features, SLAs.
+*Cons:* Cost, vendor lock-in, migration risk; UMA support varies.
+
+. **API Gateway–only enforcement**
+*Pros:* Central choke point; coarse policies and rate limiting.
+*Cons:* Hard to express per-record ABAC and ownership semantics at the edge; services still need context.
+
+
+<<<

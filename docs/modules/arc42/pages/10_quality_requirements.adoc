@@ -1,0 +1,168 @@
+= Quality Requirements
+include::partial$config.adoc[]
+
+[cols="<.<1,<.<4a",options="header",frame="topbot",grid="rows"]
+|===
+| Requirement | Description
+
+|[[REQ-FS,Functional Suitability]] **Functional Suitability**
+|* The software **has to** manage event data.
+This should include at least:
+** Locations
+** Sessions
+
+|[[REQ-CO,Compatibility]] **Compatibility**
+|* The managed data **has to** integrate into spring-security.
+
+|[[REQ-US,Usability]] **Usability**
+|* The software **has to** be accessible via Web Browsers
+* The software **has to** be internationalized.
+  There has to be localization for at least _German_ and _English_ languages.
+
+|[[REQ-RE,Reliability]] **Reliability**
+|The systems needs to operate for world wide consumption.
+
+|[[REQ-MT,Maintainability]] **Maintainability**
+|The software should be easily maintainable.
+This includes using widely used frameworks so help can be given quite easily.
+
+|[[REQ-SE,Security]] **Security**
+|The system needs to be secure and resilient.
+This includes IT security and data protection.
+
+|===
+
+
+== Quality Tree
+
+[plantuml,quality-tree,svg]
+----
+@startmindmap
++ **Requirements**
+-- Functional Suitability (FS)
+--- Provide Event Management (FS01)
+----_ Locations
+-----_ Rooms
+-----_ Tables
+-----_ Accommodations
+----_ Events
+-----_ Tracks
+-----_ Sessions
+---_ Self-Service for Users (Organizers, Speakers and Participants) (FS03)
+---_ Notification System to users (FS04)
+---_ Data Display for Events (FS05)
+-- Compatibility (CO)
+---_ Compatible with discord (CO01)
+---_ Compatible with 3words (CO02)
+---_ Compatible with OpenStreetMap (CO03)
+---_ Compatible with VTT systems (CO04)
+-- Security (SE)
+---_ Data Retention TTL (FS02)
+---_ Attribute based access control (ABAC) (US06)
+
+++ Usability (US)
++++_ Web based (US01)
++++_ Multi-language (US02)
++++_ Fast Responses (US03)
++++_ Accessible (US04)
++++_ Ready for tablet usage (US05)
+++ Reliability (RE)
++++_ Working Hours 24/7 (RE01)
+++ Maintainability (MT)
++++_ Small Team (MT01)
++++_ 12-Factor (MT02)
+@endmindmap
+----
+
+
+== Quality Scenarios
+
+[cols="<.<1,<.<9a",options="header",frame="topbot",grid="rows"]
+|===
+| ID | Scenario
+
+
+2+h| Functional Suitability
+
+|[[FS01,Provide Event Management (FS01)]] **FS01**
+| Provide a nice interface to manage events.
+This includes drill down to details.
+
+|[[FS03,Self-Service for Users (Gamers, Game Masters, Con Organizers) (FS03)]] **FS03**
+| Users should be able to use the system without help from admins.
+
+|[[FS04,Notification System to users (FS04)]] **FS04**
+| There should be push notifcations when events change.
+Users should be able to subscribe or mute events.
+
+|[[FS05,Data Display for Events (FS05)]] **FS05**
+| Event Organizers should be able to display their events ongoing for all sessions in public displays.
+
+
+2+h| Compatibility
+
+|[[CO01,Compatible with discord (CO01)]] **CO01**
+|The system should offer a discord bot to use the data.
+
+|[[CO02,Compatible with 3words (CO02)]] **CO02**
+|The system should be able to display and search for 3words locations.
+
+|[[CO03,Compatible with OpenStreetMap (CO03)]] **CO03**
+|The system should display events using OpenStreetMap.
+
+|[[CO04,Compatible with VTT systems (CO04)]] **CO04**
+|The system should offer direct links to Virtual Table Top systems like Roll20 or FoundryVTT.
+
+
+2+h| Usability
+
+|[[US01,Web based (US01)]] **US01**
+|The main interface should be web based.
+
+|[[US02,Multi Language (US02)]] **US02**
+|The system **has to** be available at least in *German* and *English*
+Other translations should be easy to add.
+
+|[[US03,Fast Response Times (US03)]] **US03**
+| Request have to be answered quickly. The following time percentiles are sufficient:
+[cols="<.<1,<.<1",width=40%,options="header",frame="topbot",grid="rows"]
+!===
+!Percentage of requests !Response Time
+!95%!1,5s
+!90%!2s
+!5%!5s
+!===
+
+|[[US04,Accessible (US04)]] **US04**
+|The system should be as accessible as possible.
+This includes following the {w3c01} and the {eu-barrierefreiheit}.
+
+|[[US05,Ready for tablet usage (US05)]] **US05**
+|The system should be usable on tablets as well as on desktop computers.
+
+2+h| Reliability
+
+|[[RE01,Working hours 24/7 (RE01)]] **RE01**
+| RPG events happen around the world.
+So the systems have to work 24/7. There is no maintenance window available where no users would be affected.
+
+
+2+h| Maintainability
+
+|[[MT01,Small Team (MT01)]] **MT01**
+|Maintaining the software and the data must be possible for a small team (basically the full army of myself, me, and I).
+
+|[[MT02,12 Factor (MT02)]] **MT02**
+|Following the guidelines of 'The Twelve-Factor App' {12factor} support the maintainability and resilience of the system.
+
+
+2+h| Security
+
+|[[FS02,Data Protection (FS02)]] **FS02**
+|The software needs to conform to the GDPR in Europe.
+
+|[[US06,Attribute based access control (ABAC) (US06)]] **US06**
+|The system should use ABAC (&uparrow;xref:08_concepts/abac.adoc[]) to manage permissions.
+Uses should be able to form groups and manage eents on group level.
+
+|===

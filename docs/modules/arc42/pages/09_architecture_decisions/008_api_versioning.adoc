@@ -1,0 +1,85 @@
+:adr-title: API Versioniong Strategy
+:adr-state: Accepted
+:adr-date: 2025-10-03
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 008
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+The API is used by multiple tenants and must remain stable and extensible over time.
+Development is handled by a small team relying on established standards and frameworks such as Spring Boot.
+API versioning is required to introduce changes in a controlled manner and ensure backward compatibility.
+
+== Decision Drivers
+
+- Multitenancy support ({fs01}, {fs03}, {us01})
+- Small team ({mt01})
+- Standards-based protocols ({mt01})
+- Minimize custom logic in controllers ({mt01})
+- Leverage the Spring Boot ecosystem ({mt01}, {mt02}, {fs03})
+- Clear separation of API versions for different tenants and clients
+- Easy maintainability and extensibility
+
+
+== Decision
+API versioning will be implemented using media-type versioning in the HTTP header (e.g. `Content-Type: application/vnd.1.3.6.1.4.1.33132.v1+json`).
+This approach provides flexibility, allowing different versions to operate in parallel and independently of the URL structure.
+It is especially suitable when clients and servers require precise control over exchanged data formats.
+
+The decision is based on the advantages described in the blog: better separation of version and resource, cleaner URLs, and the ability to manage versions via content negotiation.
+
+The format is `´application/vnd.1.3.6.1.4.1.<PEN>+<FORMAT>`.
+
+`PEN` is the private enterprise number assigned to the organization by IANA.
+This ensures global uniqueness of the media type.
+We use https://www.iana.org/assignments/enterprise-numbers/?q=33132[`PEN` 33132] assigned to **Kaiserpfalz EDV-Service**.
+
+`FORMAT` specifies the data format, such as `json`, `xml`, `yml`, or (please don.
+t use it) `csv`.
+
+== Consequences
+
+- Versioning is explicit and controlled by clients via the header.
+- URLs remain clean and unchanged, regardless of the version.
+- Frameworks and tools must explicitly support media-type versioning, which may require additional implementation effort.
+- Documentation and debugging can be more complex, as the version is not directly visible in the URL.
+- Clients must set the correct media-type to access the desired version.
+
+== Benefits
+
+- Clear separation of resource and versioning
+- Clean URLs without version information
+- Flexible and targeted version control via content negotiation
+- Good support for parallel versions and backward compatibility
+
+== Challenges
+
+- Increased implementation effort, as not all frameworks natively support media-type versioning
+- Clients must set headers correctly, which can be a source of errors
+- Version is not directly visible in the URL, reducing transparency for developers and users
+
+== Options
+
+- URL versioning (`/v1/resource`)
+- Header versioning (`X-API-Version: 1`)
+- Media-Type versioning (`Content-Type: application/vnd.company.v1+json`)
+
+== Further Reading
+
+* {parks01-full}
+<<<

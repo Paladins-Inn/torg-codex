@@ -1,0 +1,8 @@
+---
+name: torg-codex
+version: v2
+title: Torg Data Sheet Software
+nav:
+  - modules/ROOT/_nav.adoc
+  - modules/arc42/pages/_nav.adoc
+  - modules/ROOT/pages/_nav.bottom.adoc
