@@ -1,0 +1,926 @@
+databaseChangeLog:
+  - changeSet:
+      id: "1"
+      author: codex
+      changes:
+        - createTable:
+            tableName: torg_article
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: text
+                  type: text
+        - createTable:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: text
+                  type: text
+              - column:
+                  name: world_laws
+                  type: text
+        - createTable:
+            tableName: torg_cosm_products
+            columns:
+              - column:
+                  name: cosm_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_cosm_axioms
+            columns:
+              - column:
+                  name: cosm_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: axiom
+                  type: varchar(255)
+              - column:
+                  name: value
+                  type: int
+        - createTable:
+            tableName: torg_item
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: type
+                  type: varchar(32)
+              - column:
+                  name: cosm
+                  type: text
+              - column:
+                  name: axiom_tech
+                  type: varchar(8)
+              - column:
+                  name: axiom_magic
+                  type: varchar(8)
+              - column:
+                  name: price
+                  type: varchar(32)
+              - column:
+                  name: bonus
+                  type: varchar(16)
+              - column:
+                  name: ammo
+                  type: text
+              - column:
+                  name: range
+                  type: text
+              - column:
+                  name: features
+                  type: text
+              - column:
+                  name: additional_features
+                  type: text
+              - column:
+                  name: text
+                  type: text
+        - createTable:
+            tableName: torg_item_products
+            columns:
+              - column:
+                  name: item_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_miracle
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: axiom
+                  type: varchar(32)
+              - column:
+                  name: casting_time
+                  type: text
+              - column:
+                  name: dn_level
+                  type: varchar(32)
+              - column:
+                  name: dn_text
+                  type: varchar(255)
+              - column:
+                  name: range
+                  type: text
+              - column:
+                  name: duration
+                  type: text
+              - column:
+                  name: text
+                  type: text
+        - createTable:
+            tableName: torg_miracle_products
+            columns:
+              - column:
+                  name: miracle_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_miracle_required_skills
+            columns:
+              - column:
+                  name: miracle_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: skill
+                  type: varchar(255)
+              - column:
+                  name: required_value
+                  type: int
+        - createTable:
+            tableName: torg_miracle_list
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: cosm
+                  type: text
+              - column:
+                  name: unlocking_perk
+                  type: varchar(128)
+              - column:
+                  name: text
+                  type: text
+              - column:
+                  name: notes
+                  type: text
+              - column:
+                  name: disable_if
+                  type: varchar(128)
+        - createTable:
+            tableName: torg_miracle_list_products
+            columns:
+              - column:
+                  name: list_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_miracle_list_entries
+            columns:
+              - column:
+                  name: list_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: miracle_id
+                  type: uuid
+              - column:
+                  name: entry_order
+                  type: int
+        - createTable:
+            tableName: torg_perk
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: contradiction
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: cosm
+                  type: text
+              - column:
+                  name: perk_group
+                  type: text
+              - column:
+                  name: prerequisites
+                  type: text
+              - column:
+                  name: text
+                  type: text
+        - createTable:
+            tableName: torg_perk_products
+            columns:
+              - column:
+                  name: perk_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_perk_group
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: text
+                  type: text
+              - column:
+                  name: infos
+                  type: text
+        - createTable:
+            tableName: torg_perk_group_products
+            columns:
+              - column:
+                  name: group_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_power
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: axiom
+                  type: varchar(32)
+              - column:
+                  name: casting_time
+                  type: text
+              - column:
+                  name: dn_level
+                  type: varchar(32)
+              - column:
+                  name: dn_text
+                  type: varchar(255)
+              - column:
+                  name: range
+                  type: text
+              - column:
+                  name: duration
+                  type: text
+              - column:
+                  name: text
+                  type: text
+              - column:
+                  name: enhancements
+                  type: text
+              - column:
+                  name: limitations
+                  type: text
+        - createTable:
+            tableName: torg_power_products
+            columns:
+              - column:
+                  name: power_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_power_required_skills
+            columns:
+              - column:
+                  name: power_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: skill
+                  type: varchar(255)
+              - column:
+                  name: required_value
+                  type: int
+        - createTable:
+            tableName: torg_power_list
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: cosm
+                  type: text
+              - column:
+                  name: unlocking_perk
+                  type: varchar(128)
+              - column:
+                  name: text
+                  type: text
+              - column:
+                  name: notes
+                  type: text
+              - column:
+                  name: disable_if
+                  type: varchar(128)
+        - createTable:
+            tableName: torg_power_list_products
+            columns:
+              - column:
+                  name: list_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_power_list_entries
+            columns:
+              - column:
+                  name: list_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: power_id
+                  type: uuid
+              - column:
+                  name: entry_order
+                  type: int
+        - createTable:
+            tableName: torg_race
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: major
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: abilities
+                  type: text
+              - column:
+                  name: text
+                  type: text
+              - column:
+                  name: perk_text
+                  type: text
+        - createTable:
+            tableName: torg_race_products
+            columns:
+              - column:
+                  name: race_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_race_attribute_limits
+            columns:
+              - column:
+                  name: race_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: attribute
+                  type: varchar(255)
+              - column:
+                  name: max_value
+                  type: int
+        - createTable:
+            tableName: torg_shard
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: cosm
+                  type: text
+              - column:
+                  name: possibilities
+                  type: text
+              - column:
+                  name: tapping_difficulty
+                  type: text
+              - column:
+                  name: purpose
+                  type: text
+              - column:
+                  name: text
+                  type: text
+              - column:
+                  name: powers
+                  type: text
+              - column:
+                  name: restrictions
+                  type: text
+        - createTable:
+            tableName: torg_shard_products
+            columns:
+              - column:
+                  name: shard_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_spell
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: axiom
+                  type: varchar(32)
+              - column:
+                  name: casting_time
+                  type: text
+              - column:
+                  name: dn_level
+                  type: varchar(32)
+              - column:
+                  name: dn_text
+                  type: varchar(255)
+              - column:
+                  name: range
+                  type: text
+              - column:
+                  name: duration
+                  type: text
+              - column:
+                  name: text
+                  type: text
+        - createTable:
+            tableName: torg_spell_products
+            columns:
+              - column:
+                  name: spell_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_spell_required_skills
+            columns:
+              - column:
+                  name: spell_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: skill
+                  type: varchar(255)
+              - column:
+                  name: required_value
+                  type: int
+        - createTable:
+            tableName: torg_spell_list
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: cosm
+                  type: text
+              - column:
+                  name: unlocking_perk
+                  type: varchar(128)
+              - column:
+                  name: text
+                  type: text
+              - column:
+                  name: notes
+                  type: text
+              - column:
+                  name: disable_if
+                  type: varchar(128)
+        - createTable:
+            tableName: torg_spell_list_products
+            columns:
+              - column:
+                  name: list_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_spell_list_entries
+            columns:
+              - column:
+                  name: list_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: spell_id
+                  type: uuid
+              - column:
+                  name: entry_order
+                  type: int
+        - createTable:
+            tableName: torg_tag
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: parent_id
+                  type: uuid
+        - createTable:
+            tableName: torg_threat
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: cosm
+                  type: text
+              - column:
+                  name: unique
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sub_name
+                  type: varchar(255)
+              - column:
+                  name: quote
+                  type: text
+              - column:
+                  name: text
+                  type: text
+              - column:
+                  name: attr_charisma
+                  type: varchar(32)
+              - column:
+                  name: attr_dexterity
+                  type: varchar(32)
+              - column:
+                  name: attr_mind
+                  type: varchar(32)
+              - column:
+                  name: attr_spirit
+                  type: varchar(32)
+              - column:
+                  name: attr_strength
+                  type: varchar(32)
+              - column:
+                  name: move_walk
+                  type: varchar(8)
+              - column:
+                  name: move_fly
+                  type: varchar(8)
+              - column:
+                  name: move_swim
+                  type: varchar(8)
+              - column:
+                  name: tough
+                  type: varchar(32)
+              - column:
+                  name: shock
+                  type: varchar(32)
+              - column:
+                  name: wounds
+                  type: varchar(32)
+              - column:
+                  name: possibilities
+                  type: text
+        - createTable:
+            tableName: torg_threat_products
+            columns:
+              - column:
+                  name: threat_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_threat_skills
+            columns:
+              - column:
+                  name: threat_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: skill
+                  type: varchar(255)
+              - column:
+                  name: value
+                  type: varchar(64)
+        - createTable:
+            tableName: torg_threat_equipment
+            columns:
+              - column:
+                  name: threat_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_threat_perks
+            columns:
+              - column:
+                  name: threat_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: perk_id
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_threat_special_abilities
+            columns:
+              - column:
+                  name: threat_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ability_name
+                  type: varchar(128)
+              - column:
+                  name: ability_description
+                  type: text
+        - createTable:
+            tableName: torg_vehicle
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clearance_level
+                  type: varchar(4)
+              - column:
+                  name: type
+                  type: varchar(32)
+              - column:
+                  name: cosm
+                  type: text
+              - column:
+                  name: axiom_tech
+                  type: varchar(8)
+              - column:
+                  name: unique
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: speed
+                  type: varchar(16)
+              - column:
+                  name: speed_value
+                  type: varchar(16)
+              - column:
+                  name: speed_mod
+                  type: varchar(16)
+              - column:
+                  name: size
+                  type: varchar(16)
+              - column:
+                  name: passengers
+                  type: varchar(255)
+              - column:
+                  name: maneuver_rating
+                  type: varchar(8)
+              - column:
+                  name: wounds
+                  type: varchar(8)
+              - column:
+                  name: tough
+                  type: varchar(32)
+              - column:
+                  name: price
+                  type: varchar(32)
+              - column:
+                  name: text
+                  type: text
+        - createTable:
+            tableName: torg_vehicle_products
+            columns:
+              - column:
+                  name: vehicle_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_vehicle_weaponry
+            columns:
+              - column:
+                  name: vehicle_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: weapon_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ammo
+                  type: varchar(16)
+              - column:
+                  name: amount
+                  type: varchar(16)

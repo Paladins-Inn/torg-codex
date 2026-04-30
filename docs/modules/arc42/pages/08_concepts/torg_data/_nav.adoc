@@ -1,3 +1,4 @@
 **** xref:08_concepts/torg_data/index.adoc[]
 ***** xref:08_concepts/torg_data/markup-syntax.adoc[]
 ***** xref:08_concepts/torg_data/markup-parser.adoc[]
+***** xref:08_concepts/torg_data/role-mapping.adoc[]

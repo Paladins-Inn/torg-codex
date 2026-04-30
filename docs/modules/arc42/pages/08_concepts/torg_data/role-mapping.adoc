@@ -1,0 +1,201 @@
+= Role Mapping: Spring Security to Product IDs
+include::partial$config.adoc[]
+
+== Overview
+
+The TORG markup language uses `<IF:product-id>` / `<IF:!product-id>` conditional blocks to gate content behind product ownership.
+At runtime, the rendering pipeline needs to know which products the current user owns so it can resolve those conditions.
+
+This page describes how Spring Security roles are mapped to product IDs and how the `SecuredMarkupService` bridges the security layer and the markup pipeline.
+
+
+== Role Naming Convention
+
+Each TORG product corresponds to one Spring Security authority using the standard `ROLE_` prefix:
+
+[source]
+----
+Spring Security authority   product-id (used in markup)
+--------------------------  ---------------------------
+ROLE_core-rulebook       -> core-rulebook
+ROLE_sourcebook-aysle    -> sourcebook-aysle
+ROLE_delphi-missions     -> delphi-missions
+ROLE_digital-orrorsh     -> digital-orrorsh
+----
+
+The mapping rule is simple: strip the `ROLE_` prefix.
+Everything that follows becomes the product-id matched against `<IF:product-id>` tags in the markup.
+
+Non-product authorities (e.g., OAuth2 scopes such as `SCOPE_read`) do not carry the `ROLE_` prefix and are therefore ignored by the mapper.
+
+
+== Markup Semantics Revisited
+
+With the role mapping in place, the two conditional block forms have the following security semantics:
+
+.Conditional block semantics relative to Spring Security roles
+[cols="<.<4,<.<8",options="header",frame="topbot",grid="rows"]
+|===
+| Markup | Rendered when
+
+| `<IF:core-rulebook>…</IF>`
+| The authenticated user holds the authority `ROLE_core-rulebook`
+
+| `<IF:!core-rulebook>…</IF>`
+| The authenticated user does *not* hold `ROLE_core-rulebook`, or is not authenticated at all
+
+|===
+
+The second form is intentionally used as a "teaser" or "you need this book" notice: unauthenticated and anonymous users see only the negated blocks.
+
+
+== Unauthenticated and Anonymous Users
+
+If no `Authentication` is present in the security context, or the authentication is not flagged as authenticated, the resolved product-id set is *empty*.
+As a result:
+
+* All `<IF:product-id>` (positive) blocks are suppressed.
+* All `<IF:!product-id>` (negated) blocks are shown.
+
+This gives anonymous visitors the minimal, non-gated view of all content without requiring any authentication check in the rendering code itself.
+
+
+== Architecture
+
+The security integration lives entirely in the `torg-codex` application module.
+The `torg-codex-data` library module has no Spring Security dependency; it accepts a plain `Set<String>` of product IDs and does not know how that set was obtained.
+
+[source]
+----
+torg-codex-data (no Spring Security dependency)
+└── TorgMarkupService
+        render(String rawText, Set<String> ownedProducts)
+            |
+            └─> ConditionalBlockProcessor.process(text, ownedProducts)
+                    Resolves <IF:...> blocks against the Set
+
+torg-codex (Spring Security on classpath)
+└── SecuredMarkupService
+        render(String rawText)                    <1>
+        render(String rawText, Set<String> owned) <2>
+----
+<1> Reads `ROLE_*` authorities from `SecurityContextHolder`, strips the prefix, delegates to `TorgMarkupService`.
+<2> Accepts caller-supplied product IDs directly; bypasses the security context (useful for batch or programmatic rendering).
+
+
+== SecuredMarkupService
+
+`SecuredMarkupService` is a Spring `@Service` in the `de.paladinsinn.torg.codex.markup` package of the `torg-codex` module.
+
+=== Context-Aware Rendering
+
+[source,java]
+----
+// Web request: product IDs resolved from the current user's security context
+String html = securedMarkupService.render(rawText);
+----
+
+Internally the service extracts the owned product IDs from the security context:
+
+[source,java]
+----
+Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+// null or unauthenticated -> empty set
+// authenticated -> stream ROLE_* authorities, strip prefix
+Set<String> ownedProducts = auth.getAuthorities().stream()
+    .map(GrantedAuthority::getAuthority)
+    .filter(a -> a.startsWith("ROLE_"))
+    .map(a -> a.substring("ROLE_".length()))
+    .collect(Collectors.toUnmodifiableSet());
+----
+
+=== Explicit Product-ID Rendering
+
+[source,java]
+----
+// Batch processing or programmatic rendering: supply product IDs directly
+String html = securedMarkupService.render(rawText, Set.of("core-rulebook", "sourcebook-aysle"));
+----
+
+This overload passes the supplied set directly to `TorgMarkupService` without touching the security context.
+Use it when there is no active HTTP request scope, such as in scheduled jobs or data export pipelines.
+
+
+== Usage in Web Controllers
+
+A typical Spring MVC controller injects `SecuredMarkupService` instead of `TorgMarkupService`:
+
+[source,java]
+----
+@Controller
+public class CosmController {
+
+    private final CosmRepository cosmRepository;
+    private final SecuredMarkupService markupService;
+
+    public CosmController(CosmRepository cosmRepository,
+                          SecuredMarkupService markupService) {
+        this.cosmRepository = cosmRepository;
+        this.markupService = markupService;
+    }
+
+    @GetMapping("/cosms/{id}")
+    public String showCosm(@PathVariable String id, Model model) {
+        Cosm cosm = cosmRepository.findById(id).orElseThrow();
+        model.addAttribute("worldLaws", markupService.render(cosm.getWorldLaws()));
+        model.addAttribute("text",      markupService.render(cosm.getText()));
+        return "cosm-detail";
+    }
+}
+----
+
+The controller does not handle roles itself.
+`SecuredMarkupService` resolves the current user's product ownership transparently.
+
+
+== Module Boundary
+
+[cols="<.<4,<.<8",options="header",frame="topbot",grid="rows"]
+|===
+| Module | Responsibility
+
+| `torg-codex-data`
+| Markup parsing pipeline (`TorgMarkupService`, `ConditionalBlockProcessor`, …).
+No knowledge of Spring Security or HTTP sessions.
+Accepts `Set<String> ownedProducts` as a plain parameter.
+
+| `torg-codex`
+| Spring Security integration (`SecuredMarkupService`).
+Extracts product IDs from the authenticated user's `ROLE_*` authorities and passes them to the data module.
+|===
+
+This boundary keeps the data module independently testable and reusable without the application container.
+
+
+== Test Strategy
+
+`SecuredMarkupServiceTest` covers the following scenarios using Mockito (no Spring context required):
+
+.Test scenarios for SecuredMarkupService
+[cols="<.<7,<.<5",options="header",frame="topbot",grid="rows"]
+|===
+| Scenario | Expected product-id set
+
+| No `Authentication` in security context
+| Empty set
+
+| Anonymous authentication with `ROLE_ANONYMOUS`
+| `{ "ANONYMOUS" }` (stripped prefix)
+
+| Authenticated user with `ROLE_core-rulebook`, `ROLE_delphi-missions-aysle`
+| `{ "core-rulebook", "delphi-missions-aysle" }`
+
+| Non-`ROLE_` authority present (e.g., `SCOPE_read`)
+| Filtered out; not included in the set
+
+| Explicit product-IDs passed directly (no security context)
+| Exactly the supplied set, security context not consulted
+
+|===
+
+<<<

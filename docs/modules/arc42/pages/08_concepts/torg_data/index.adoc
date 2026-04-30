@@ -97,6 +97,15 @@ raw text + ownedProducts
 rendered HTML
 ----
 
-The pipeline is coordinated by `TorgMarkupService`, a Spring `@Service` in the `de.paladinsinn.torg.codex.torgcodex.markup` package.
+The pipeline is coordinated by `TorgMarkupService`, a Spring `@Service` in the `de.paladinsinn.torg.codex.data.markup` package of the `torg-codex-data` library module.
+
+== Security Layer
+
+The `torg-codex-data` module has no Spring Security dependency.
+It accepts a plain `Set<String>` of product IDs and does not know how those IDs were obtained.
+
+The `torg-codex` application module provides `SecuredMarkupService` (`de.paladinsinn.torg.codex.markup`), which reads the current user's Spring Security authorities, maps every `ROLE_<product-id>` authority to the product-id `<product-id>`, and delegates to `TorgMarkupService`.
+
+See xref:08_concepts/torg_data/role-mapping.adoc[] for details.
 
 <<<

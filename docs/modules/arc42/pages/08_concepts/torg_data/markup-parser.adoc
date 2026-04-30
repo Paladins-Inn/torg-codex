@@ -4,7 +4,7 @@ include::partial$config.adoc[]
 == Purpose
 
 The markup parser converts the custom markup in YAML `text` and `worldLaws` fields into rendered HTML for the web UI.
-It is implemented as a five-stage string-transformation pipeline in the `de.paladinsinn.torg.codex.torgcodex.markup` package.
+It is implemented as a five-stage string-transformation pipeline in the `de.paladinsinn.torg.codex.data.markup` package.
 
 
 == Architecture
@@ -59,7 +59,7 @@ Converting them to `<span>` HTML first prevents Markdown interference.
 
 == Class Descriptions
 
-All classes are in package `de.paladinsinn.torg.codex.torgcodex.markup`.
+All classes are in package `de.paladinsinn.torg.codex.data.markup`.
 
 === TorgMarkupService
 
@@ -200,32 +200,34 @@ The `commonmark-java` library is required for Markdown processing:
 
 == Usage Example
 
+Web controllers in the `torg-codex` application module use `SecuredMarkupService`, which resolves the current user's product IDs from Spring Security automatically.
+See xref:08_concepts/torg_data/role-mapping.adoc[] for the full mapping concept.
+
 [source,java]
 ----
 @Controller
 public class CosmController {
-    private final TorgMarkupService markupService;
 
-    public CosmController(TorgMarkupService markupService) {
+    private final CosmRepository cosmRepository;
+    private final SecuredMarkupService markupService; // <1>
+
+    public CosmController(CosmRepository cosmRepository,
+                          SecuredMarkupService markupService) {
+        this.cosmRepository = cosmRepository;
         this.markupService = markupService;
     }
 
     @GetMapping("/cosms/{id}")
     public String showCosm(@PathVariable String id, Model model) {
-        Cosm cosm = cosmRepository.findById(id);
-        Set<String> owned = currentUser.getOwnedProducts();
-
-        String renderedWorldLaws = markupService.render(
-            cosm.getWorldLaws(), owned);
-        String renderedText = markupService.render(
-            cosm.getText(), owned);
-
-        model.addAttribute("worldLaws", renderedWorldLaws);
-        model.addAttribute("text", renderedText);
+        Cosm cosm = cosmRepository.findById(id).orElseThrow();
+        model.addAttribute("worldLaws", markupService.render(cosm.getWorldLaws())); // <2>
+        model.addAttribute("text",      markupService.render(cosm.getText()));
         return "cosm-detail";
     }
 }
 ----
+<1> `SecuredMarkupService` is in the `torg-codex` module (`de.paladinsinn.torg.codex.markup`).
+<2> No explicit `Set<String>` needed — product IDs are resolved from the authenticated user's `ROLE_*` authorities.
 
 
 == Test Strategy

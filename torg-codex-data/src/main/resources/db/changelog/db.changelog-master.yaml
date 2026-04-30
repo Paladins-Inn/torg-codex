@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - include:
+      file: torg-data-entity.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: ../load/torg-data-load.yaml
+      relativeToChangelogFile: true
+

@@ -6,5 +6,6 @@ target/
 ### jte ###
 /jte-classes/
 ### Proprietary information ###
-/torg-codex-data/src/main/resources/db/
+/torg-codex-data/src/main/resources/db/load/
 /node_modules/
+/torg-codex-data/orig-data/
