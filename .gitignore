@@ -6,7 +6,11 @@ target/
 ### jte ###
 /jte-classes/
 ### Proprietary information ###
-/torg-codex-data/src/main/resources/db/load/
+/torg-codex-data/src/main/resources/db/load/*.csv
+/torg-codex-data/src/main/resources/db/load/*.yaml
+!/torg-codex-data/src/main/resources/db/load/torg-free-load.yaml
+!/torg-codex-data/src/main/resources/db/load/torg_publication.csv
+!/torg-codex-data/src/main/resources/db/load/torg_publication_product_ids.csv
 /node_modules/
 /torg-codex-data/orig-data/*
 !/torg-codex-data/orig-data/import-scripts/

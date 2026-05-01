@@ -906,6 +906,47 @@ databaseChangeLog:
                   name: product
                   type: varchar(255)
         - createTable:
+            tableName: torg_publication
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: codex_id
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: primary_product_id
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: third_party
+                  type: varchar(255)
+        - createTable:
+            tableName: torg_publication_product_ids
+            columns:
+              - column:
+                  name: publication_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product_id
+                  type: int
+                  constraints:
+                    nullable: false
+        - createTable:
             tableName: torg_vehicle_weaponry
             columns:
               - column:

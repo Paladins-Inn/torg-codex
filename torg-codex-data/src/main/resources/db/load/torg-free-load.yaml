@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: "free-1"
+      author: codex
+      changes:
+        - loadData:
+            tableName: torg_publication
+            file: db/load/torg_publication.csv
+            separator: ;
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+              - column:
+                  name: codex_id
+                  type: STRING
+              - column:
+                  name: name
+                  type: STRING
+              - column:
+                  name: primary_product_id
+                  type: NUMERIC
+              - column:
+                  name: third_party
+                  type: STRING
+        - loadData:
+            tableName: torg_publication_product_ids
+            file: db/load/torg_publication_product_ids.csv
+            separator: ;
+            columns:
+              - column:
+                  name: publication_id
+                  type: UUID
+              - column:
+                  name: product_id
+                  type: NUMERIC
+

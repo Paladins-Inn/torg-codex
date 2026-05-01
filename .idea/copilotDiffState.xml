@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/model/Publication.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/model/Publication.java" />
+              <option name="updatedContent" value="package de.paladinsinn.torg.codex.data.model;&#10;&#10;import jakarta.persistence.*;&#10;import lombok.Getter;&#10;import lombok.NoArgsConstructor;&#10;import lombok.Setter;&#10;&#10;import java.util.HashSet;&#10;import java.util.Set;&#10;import java.util.UUID;&#10;&#10;/**&#10; * A published Torg Eternity product (book, deck, supplement, etc.) available on DriveThruRPG.&#10; *&#10; * &lt;p&gt;Each publication is identified by a stable {@link #codexId} (e.g. {@code &quot;core-rulebook&quot;})&#10; * and may be sold under several DriveThru product IDs (English original + localised editions).&#10; * The {@link #primaryProductId} is the canonical English product ID used for cover images.&#10; */&#10;@Entity&#10;@Table(name = &quot;torg_publication&quot;)&#10;@Access(AccessType.FIELD)&#10;@Getter&#10;@Setter&#10;@NoArgsConstructor&#10;public class Publication {&#10;&#10;    private static final String DRIVETHRURPG_COVER_BASE = &quot;https://www.drivethrurpg.com/images/3444/&quot;;&#10;&#10;    /** Primary key – stable UUID generated from the codex id. */&#10;    @Id&#10;    private UUID id;&#10;&#10;    /**&#10;     * Stable human-readable identifier for this publication within the codex&#10;     * (e.g. {@code &quot;core-rulebook&quot;}, {@code &quot;sourcebook-aysle&quot;}).&#10;     */&#10;    @Column(name = &quot;codex_id&quot;, length = 128, nullable = false, unique = true)&#10;    private String codexId;&#10;&#10;    /** Full title of this publication. */&#10;    @Column(nullable = false)&#10;    private String name;&#10;&#10;    /**&#10;     * The canonical (English) DriveThruRPG product ID used for cover-image URLs.&#10;     */&#10;    @Column(name = &quot;primary_product_id&quot;, nullable = false)&#10;    private int primaryProductId;&#10;&#10;    /**&#10;     * Name of the third-party author/publisher, or {@code null} for official Ulisses / Pinnacle&#10;     * products.&#10;     */&#10;    @Column(name = &quot;third_party&quot;)&#10;    private String thirdParty;&#10;&#10;    /**&#10;     * All known DriveThruRPG product IDs for this publication (English + localised editions).&#10;     */&#10;    @ElementCollection(fetch = FetchType.EAGER)&#10;    @CollectionTable(&#10;            name = &quot;torg_publication_product_ids&quot;,&#10;            joinColumns = @JoinColumn(name = &quot;publication_id&quot;))&#10;    @Column(name = &quot;product_id&quot;)&#10;    private Set&lt;Integer&gt; productIds = new HashSet&lt;&gt;();&#10;&#10;    /**&#10;     * Returns the DriveThruRPG cover-image URL for this publication, based on the&#10;     * {@link #primaryProductId}.&#10;     *&#10;     * @return full cover URL, e.g.&#10;     *         {@code https://www.drivethrurpg.com/images/3444/216248.jpg}&#10;     */&#10;    public String getCoverURL() {&#10;        return DRIVETHRURPG_COVER_BASE + primaryProductId + &quot;.jpg&quot;;&#10;    }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
