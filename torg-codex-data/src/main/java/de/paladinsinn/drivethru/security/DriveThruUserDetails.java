@@ -26,6 +26,7 @@
 package de.paladinsinn.drivethru.security;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -43,6 +44,10 @@ import lombok.ToString;
  * <p>The {@link #getUsername()} returns the DriveThruRPG {@code customers_id};
  * the {@link #getBearerToken()} and {@link #getToken()} methods expose the
  * token data for downstream API calls.</p>
+ *
+ * <p>The {@link #getOwnedCodexIds()} method provides a read-only list of
+ * codex identifiers (e.g. {@code "core-rulebook"}) for all publications the
+ * authenticated user owns on DriveThruRPG.</p>
  */
 @RequiredArgsConstructor
 @Getter
@@ -55,6 +60,15 @@ public class DriveThruUserDetails implements UserDetails {
     /** The validated DriveThruRPG token obtained from the API. */
     @ToString.Include
     private final DrivethruToken token;
+
+    /**
+     * Codex identifiers of all publications owned by this user on DriveThruRPG
+     * (e.g. {@code "core-rulebook"}, {@code "sourcebook-aysle"}).
+     *
+     * <p>Populated at authentication time by looking up each owned DriveThruRPG
+     * product ID in the {@code torg_publication} table.</p>
+     */
+    private final List<String> ownedCodexIds;
 
     // -------------------------------------------------------------------------
     // UserDetails
@@ -102,6 +116,16 @@ public class DriveThruUserDetails implements UserDetails {
      */
     public String getBearerToken() {
         return token.getBearerToken();
+    }
+
+    /**
+     * Returns a read-only list of codex identifiers for all publications this
+     * user owns on DriveThruRPG (e.g. {@code "core-rulebook"}, {@code "sourcebook-aysle"}).
+     *
+     * @return unmodifiable list of owned codex ids; never {@code null}
+     */
+    public List<String> getOwnedCodexIds() {
+        return Collections.unmodifiableList(ownedCodexIds);
     }
 }
 

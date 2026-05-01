@@ -1,5 +1,3 @@
-The software is an event management system.
-
-Event organizers can manage their event and sessions.
-
-Event attendees can view the event and sessions, and register for sessions.
+The software is a rewrite of the original Torg Codex by vilenius.
+I promised to help him to get it modernized and failed for multiple years.
+Now I finally got back to it and started a modernization to spring-boot 4.
