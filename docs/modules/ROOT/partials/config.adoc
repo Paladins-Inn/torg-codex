@@ -8,7 +8,7 @@
 :icons: font
 :partnums:
 :toc: preamble
-:system: `pandurart`
+:system: `torg-codex`
 include::arc42:page$_02_architecture_constraints.include.adoc[]
 include::arc42:page$03_system_scope_and_context/_include.adoc[]
 include::arc42:page$09_architecture_decisions/_include.adoc[]

@@ -12,6 +12,11 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
+drivethru:
+  base-url: https://www.drivethrurpg.com/api/v1
+  connect-timeout: 5s
+  read-timeout: 10s
+
 logging:
   structured:
     format:

@@ -1,79 +1,198 @@
-= Level 2: Components of the SCS
+= Level 2: Bausteine von torg-codex-data
 include::partial$config.adoc[]
 
-== Overview Diagram
-[plantuml, scs-level-2]
+`torg-codex-data` ist die Datenschicht des {system}-Systems.
+Sie kapselt die gesamte Persistenz, die externe DriveThruRPG-Integration, die
+Authentifizierungsinfrastruktur und die Markup-Verarbeitung.
+
+== Übersichtsdiagramm
+
+[plantuml, torg-codex-data-level2]
 ----
-@startuml scs-level-2
+@startuml torg-codex-data-level2
+skinparam componentStyle rectangle
+skinparam defaultFontSize 12
 
-actor "User" <<User>> as ingress
+interface "DriveThruRPG API" <<external>> as drivethru
+database  "PostgreSQL"        <<external>> as db
 
-  database "pandurart" <<Postgres>> as data
-  circle "Keycloak SSO" as keycloak
+rectangle "torg-codex\n(Frontend)" <<torg-codex>> as frontend
 
-component "pandurart" <<SCS,spring-boot>> as service {
-  component "Frontend" as frontend {
-    interface "Web Application" <<Java, JTE>> as app
-    interface "REST API" <<Java>> as api
-    [Controller] <<Java>> as controller
+rectangle "torg-codex-data" <<Spring Boot, JPA>> {
+
+  component "DriveThruRPG Client\nde.paladinsinn.drivethru.client" as dtclient {
+    interface "DriveThruRPGClient"  <<@HttpExchange>> as dtif
+    [DriveThruRPGClientConfig]      <<@Configuration>> as dtcfg
+    [DriveThruRPGService]           <<@Service>>       as dtsvc
+    [DriveThruProperties]           <<@ConfigurationProperties>> as dtprop
   }
 
-
-  component "Core" as core {
-    [Service] <<Java>> as servicecore
-    [Persistence] <<JPA>> as persistence
-    component "Domain" <<Java>> as domain {
-      [API] <<Java>> as apicore
-      [Model] <<Java>> as model
-      [Services] <<Java>> as services
-    }
+  component "Security & UserService\nde.paladinsinn.drivethru.security" as security {
+    [ApiKeyAuthenticationFilter]    <<OncePerRequestFilter>> as filter
+    [DriveThruAuthenticationProvider] <<AuthenticationProvider>> as provider
+    [DriveThruUserDetails]          <<UserDetails>>      as userdetails
+    [DriveThruUserService]          <<@Service>>         as usersvc
+    [DriveThruSecurityConfig]       <<@Configuration>>   as seccfg
   }
 
-
-  component "Integrations/Services" as integrations {
-    [Discord Bot Service] <<Java>> as discordsvc
-    [3words Service] <<Java>> as what3wordssvc
-    [OpenStreetMap Service] <<Java>> as osmsvc
-    [UMA Client] <<Java>> as uma
+  component "Markup-Generator\nde.paladinsinn.torg.codex.data.markup" as markup {
+    [TorgMarkupService]             <<@Service>>         as markupsvc
+    [Censor]                        <<@Component>>       as censor
+    [ConditionalBlockProcessor]     as condblock
+    [EntityReferenceProcessor]      as entityref
+    [GameTokenProcessor]            as gametok
+    [MarkdownProcessor]             as mdproc
   }
+
+  component "Datenmodell & Repositories\nde.paladinsinn.torg.codex.data.model\nde.paladinsinn.torg.codex.data.repository" as model {
+    [TorgEntity]                    <<@MappedSuperclass>> as entity
+    [Entities]                      <<@Entity>>           as entities
+    [Repositories]                  <<JpaRepository<E,UUID>>> as repos
+  }
+
+  ' --- interne Abhängigkeiten ---
+  filter   -down->  provider    : delegates
+  provider -right-> dtsvc       : getToken()
+  usersvc  -down->  dtsvc       : delegates
+  usersvc  .right.> userdetails : unwraps from SecurityContext
+
+  dtsvc    -right-> dtif        : calls
+  dtcfg    .down.> dtif         : creates proxy
+
+  markupsvc -down-> censor
+  censor    -down-> condblock
+  censor    -down-> entityref
+  censor    -down-> gametok
+  censor    -down-> mdproc
+
+  entities -up-|> entity
+  repos    .down.> entities     : manages
+
+  entity   -right-> censor      : uses for render()
 }
 
-ingress --> app : HTML
-ingress --> api : REST\nGRAPHQL\nJSON
-
-app --> controller
-api --> controller
-
-controller --> servicecore
-controller --> uma
-
-servicecore --> services
-servicecore -left-> persistence
-servicecore .down.> apicore
-servicecore -right-> uma
-services -left-> model
-services .left.> apicore
-model .left.> apicore
-
-model <-- persistence
-persistence -left-> data : Postgres
-persistence .down.> apicore
-
-discordsvc <-up-> services
-what3wordssvc <-up- services
-osmsvc <-up- services
-
-circle "Discord" as discord
-circle "OpenStreetMap" as osm
-circle "3words" as what3words
-
-discordsvc <-down-> discord : Java-API
-what3wordssvc -down-> what3words : REST
-uma -down-> keycloak : REST
-osmsvc -down-> osm : REST
+' --- externe Abhängigkeiten ---
+frontend -down-> model      : reads entities & repos
+frontend -down-> usersvc    : calls getCurrentUser()
+dtif     -down-> drivethru  : REST (HTTPS)
+repos    -down-> db         : JPA / Liquibase
 
 @enduml
 ----
 
-== List of Building Blocks
-include::_level2.adoc[]
+== Bausteine im Detail
+
+=== DriveThruRPG Client
+
+Deklaratives HTTP-Interface-Paket, das den Zugriff auf
+https://www.drivethrurpg.com/api/v1[die DriveThruRPG-REST-API] kapselt.
+
+[cols="<.<3h,<.<9a",frame="topbot",grid="rows"]
+|===
+| Klasse / Interface | Verantwortung
+
+| `DriveThruRPGClient`
+| `@HttpExchange`-Schnittstelle mit den vier Operationen `getToken`, `getOwnedProducts`,
+  `getPublisher`, `getProduct`.
+
+| `DriveThruRPGClientConfig`
+| Erzeugt den `RestClient` und den `HttpServiceProxyFactory`-Proxy; liest Timeout-Werte aus
+  `DriveThruProperties`.
+
+| `DriveThruRPGService`
+| Anwendungsdienst mit Cacheing (`@Cacheable`). Kapselt Token-Management, Paginierung über
+  `getIdsOfOwnedProducts` und delegiert einzelne Aufrufe an `DriveThruRPGClient`.
+
+| `DriveThruProperties`
+| `@ConfigurationProperties(prefix="drivethru")` – konfiguriert `base-url`,
+  `connect-timeout`, `read-timeout`.
+|===
+
+=== Security & UserService
+
+Implementiert eine zustandslose (stateless) API-Key-Authentifizierung gegen Spring Security 6.
+
+[cols="<.<3h,<.<9a",frame="topbot",grid="rows"]
+|===
+| Klasse | Verantwortung
+
+| `ApiKeyAuthenticationFilter`
+| `OncePerRequestFilter`; liest `Authorization: ApiKey <key>` aus dem HTTP-Header und
+  erzeugt ein `ApiKeyAuthenticationToken`.
+
+| `DriveThruAuthenticationProvider`
+| `AuthenticationProvider`; ruft `DriveThruRPGService.getToken(apiKey)` auf und gibt bei Erfolg
+  ein vollständig authentifiziertes Token zurück. `NoValidTokenException` → `BadCredentialsException`.
+
+| `ApiKeyAuthenticationToken`
+| `AbstractAuthenticationToken`-Subklasse; unauthentifiziert (enthält API-Key) oder
+  authentifiziert (enthält `DriveThruUserDetails`).
+
+| `DriveThruUserDetails`
+| `UserDetails`-Implementierung; wraps `DrivethruToken` und liefert `getCustomerId()` sowie
+  `getBearerToken()` für Folge-Calls an die DriveThruRPG-API.
+
+| `DriveThruUserService`
+| Bequemer Zugriff auf den aktuell eingeloggten Nutzer aus dem `SecurityContext`;
+  delegiert `getOwnedProducts()` und `getOwnedProductIds()` an `DriveThruRPGService`.
+
+| `DriveThruSecurityConfig`
+| Konfiguriert die stateless `SecurityFilterChain`; CSRF off;
+  `/actuator/health/**` ist öffentlich; alle anderen Endpunkte erfordern Authentifizierung.
+  Aktiviert `@EnableCaching` und `@EnableMethodSecurity`.
+|===
+
+=== Markup-Generator
+
+Verarbeitet das proprietäre Torg-Markup in Freitextfeldern der Entitäten und gibt HTML zurück.
+
+[cols="<.<3h,<.<9a",frame="topbot",grid="rows"]
+|===
+| Klasse | Verantwortung
+
+| `TorgMarkupService`
+| Einstiegspunkt; verkettet alle Prozessoren in der richtigen Reihenfolge und gibt
+  finales HTML zurück.
+
+| `Censor`
+| Filtert `<IF:product>`-Blöcke abhängig von den freigeschalteten Produkten des Nutzers;
+  wird in `TorgEntity.render()` verwendet.
+
+| `ConditionalBlockProcessor`
+| Auflösung von `<IF:product>…</IF>`-Blöcken.
+
+| `EntityReferenceProcessor`
+| Auflösung von `<perk:slug>`, `<item:slug>` u.ä. zu verlinkbaren HTML-Snippets.
+
+| `GameTokenProcessor`
+| Ersetzt spielspezifische Token (z. B. Würfelsymbole) durch HTML-Darstellungen.
+
+| `MarkdownProcessor`
+| CommonMark-basiertes Markdown-Rendering als letzter Schritt in der Pipeline.
+|===
+
+=== Datenmodell & Repositories
+
+Persistenz aller Torg-Eternity-Spielobjekte via JPA/Hibernate; Schema-Migration via Liquibase.
+
+[cols="<.<3h,<.<9a",frame="topbot",grid="rows"]
+|===
+| Klasse / Interface | Verantwortung
+
+| `TorgEntity`
+| Gemeinsame Basisklasse (`@MappedSuperclass`) mit `UUID id`, `name`, `clearanceLevel` und
+  dem injizierenden `Censor`-Mechanismus (`withCensor()` / `render()`).
+
+| Entitätsklassen
+| `Threat`, `Item`, `Perk`, `Spell`, `Power`, `Miracle`, `SpellList`, `PowerList`, `MiracleList`,
+  `Cosm`, `Shard`, `Vehicle`, `Race`, `Tag`, `Article`, `PerkGroup` – allesamt `@Entity`-Klassen
+  mit UUID-Primärschlüssel.
+
+| Repository-Interfaces
+| `JpaRepository<Entität, UUID>` für jede Entitätsklasse; typisierte Finder-Methoden
+  (`findByCosm`, `findByClearanceLevel`, `findByProduct` u.ä.).
+
+| Liquibase-Changesets
+| Changeset 1: Schema-Erstellung (`torg-data-entity.yaml`). +
+  Changeset 2: Testdaten-Import via CSV (`torg-data-load.yaml`).
+|===

@@ -1,51 +1,51 @@
 include::partial$config.adoc[]
-.Level 3 Building blocks of {system}
+
+.Level-2-Building-Blocks von {system}
 [cols="<.<4h,<.<8a,<.<4a",options="header",frame="topbot",grid="rows"]
 |===
-| Name | Description | Technology
+| Name | Beschreibung | Technologie
 
-3+h| Frontend
+3+h| Level 1: Bausteine des Systems
 
-| [[bb-webapp,Web Application]] **Web Application**
-| The web application is the user interface of the system.
-| Java, JTE
-| [[bb-restapi,REST API]] **REST API**
-| The REST API is used to access the system programmatically.
-| Java, Spring REST
+| [[bb-torg-codex-data,torg-codex-data]] **torg-codex-data**
+| Datenschicht des Systems. Stellt Entitäten, Repositories, Markup-Verarbeitung und
+  DriveThruRPG-Integration inkl. Authentifizierung bereit.
+  Wird von `torg-codex` (Frontend) als Bibliothek genutzt.
+| Java 25, Spring Boot 4, JPA, Liquibase, PostgreSQL
 
-
-3+h| Core
-
-| [[bb-domain,Domain]] **Domain**
-| The domain contains the business logic of the system.
-| Java, Spring
-| [[bb-model,Model]] **Model**
-| The model contains the data structures of the system.
-| Java
-| [[bb-persistence,Persistence]] **Persistence**
-| The persistence port of the {gloss_ports_adapters}.
-| Java, JPA
-
-| [[bb-database,Database]] **Database**
-| The database is used to persist the data of the system.
-| Postgresql
+| [[bb-torg-codex,torg-codex]] **torg-codex**
+| Frontend-Schicht des Systems. Stellt die Weboberfläche (JTE-Templates) und REST-Endpunkte
+  bereit. Derzeit noch leer.
+| Java 25, Spring Boot 4, JTE
 
 
-3+h| Services
+3+h| Level 2: Bausteine von torg-codex-data
 
-| [[bb-gcalsvc,Google Calendar Service]] **Google Calendar Service**
-| The Google Calendar Service is used to integrate with Google Calendar.
-| Java, Spring, Google Calendar API
-| [[bb-ical,iCal Service]] **iCal Service**
-| The iCal Service is used to integrate with iCal calendars.
-| Java, Spring, iCal API
-| [[bb-discordsvc,Discord Bot Service]] **Discord Bot Service**
-| The Discord Bot Service is used to integrate with Discord.
-| Java, Spring, Discord API
-| [[bb-what3wordssvc,3words Service]] **3words Service**
-| The 3words Service is used to integrate with what3words.
-| Java, Spring, what3words API
-| [[bb-osmsvc,OpenStreetMap Service]] **OpenStreetMap Service**
-| The OpenStreetMap Service is used to integrate with OpenStreetMap.
-| Java, Spring, OpenStreetMap API
+| [[bb-dt-client,DriveThruRPG Client]] **DriveThruRPG Client**
+| HTTP-Client gegen die DriveThruRPG-REST-API. Implementiert als deklaratives Spring-6-
+  `@HttpExchange`-Interface, das von einem `RestClient` via `HttpServiceProxyFactory` bedient
+  wird. Zuständig für Token-Beschaffung, Produkt- und Verlagsabfragen sowie gelistete
+  Eigentumsprodukte (paginiert).
+| Java, Spring `RestClient`, `HttpServiceProxyFactory`
+
+| [[bb-dt-security,Security & UserService]] **Security & UserService**
+| Authentifizierungsschicht auf Basis von Spring Security. Ein `ApiKeyAuthenticationFilter`
+  liest den `Authorization: ApiKey <key>`-Header; der `DriveThruAuthenticationProvider` validiert
+  den Schlüssel gegen die DriveThruRPG-API und befüllt den `SecurityContext` mit einem
+  `DriveThruUserDetails`-Objekt (enthält Bearer-Token und Customer-ID).
+  Der `DriveThruUserService` bietet bequemen Zugriff auf den aktuell angemeldeten Nutzer.
+| Java, Spring Security 6, Spring Cache
+
+| [[bb-markup,Markup-Generator]] **Markup-Generator**
+| Verarbeitet das Torg-interne Markup in Texten der Entitäten.  Unterstützt bedingte Blöcke
+  (`<IF:product>`), Entitätsreferenzen (`<perk:slug>`), Spieltoken-Ersetzungen und
+  Markdown-Rendering. Einstiegspunkt ist der `TorgMarkupService`; der `Censor` filtert inhalte
+  nach Produktfreigaben.
+| Java, CommonMark
+
+| [[bb-model,Datenmodell & Repositories]] **Datenmodell & Repositories**
+| JPA-Entitäten für alle Torg-Eternity-Spielobjekte (Threats, Spells, Items, Perks, …) mit
+  UUID-Primärschlüsseln. Datenbankschema und Testdaten werden durch Liquibase-Changesets
+  verwaltet. Spring-Data-JPA-Repositories ermöglichen typisierten CRUD- und Abfragezugriff.
+| Java, JPA/Hibernate, Spring Data JPA, Liquibase, PostgreSQL
 |===

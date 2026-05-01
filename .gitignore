@@ -8,4 +8,5 @@ target/
 ### Proprietary information ###
 /torg-codex-data/src/main/resources/db/load/
 /node_modules/
-/torg-codex-data/orig-data/
+/torg-codex-data/orig-data/*
+!/torg-codex-data/orig-data/import-scripts/

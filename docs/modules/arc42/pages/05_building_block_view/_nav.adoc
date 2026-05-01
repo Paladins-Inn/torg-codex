@@ -1,4 +1,4 @@
-*** xref:05_building_block_view/index.adoc[]
-**** xref:05_building_block_view/level_2_scs.adoc[]
-**** xref:05_building_block_view/level_3_iam.adoc[]
-**** xref:05_building_block_view/level_3_uma.adoc[]
+*** xref:05_building_block_view/index.adoc[Building Block View]
+**** xref:05_building_block_view/level_2_scs.adoc[Level 2: torg-codex-data]
+**** xref:05_building_block_view/level_3_iam.adoc[Level 3: Security & UserService]
+**** xref:05_building_block_view/level_3_uma.adoc[Level 3: Markup-Generator]

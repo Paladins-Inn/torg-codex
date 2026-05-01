@@ -1,57 +1,37 @@
 include::partial$config.adoc[]
-.Level 1 Overview of the {system} system.
-[plantuml, whitebox-scs]
+
+.Level 1 – Übersicht des {system}-Systems
+[plantuml, whitebox-torg-codex]
 ----
-@startuml whitebox-scs
+@startuml whitebox-torg-codex
+skinparam componentStyle rectangle
 
-interface pandurart <<Ingress>> as ingress
+actor "User / Player" as user
 
-component "pandurart" <<SCS,spring-boot>> as service {
-  [Frontend] <<Java, JTE, Bootstrap, REST, JSON>> as frontend
+interface "DriveThruRPG API" as drivethru
+database  "PostgreSQL"        as db
 
-  [Locations] <<Java, spring-data-jpa>> as locations
-  [Events] <<Java, spring-data-jpa>> as events
-  interface "data" as eventPersonData
-  [Persons] <<Java, spring-data-jpa>> as persons
-  interface "data" as locationPersonData
+rectangle "torg-codex" <<SCS, Spring Boot>> {
 
-  persons -up-( eventPersonData
-  eventPersonData -up- events
-  persons -up-( locationPersonData
-  locationPersonData -up- locations
+  component "torg-codex\n(Frontend)" <<Spring Boot, JTE>> as frontend {
+    interface "Web UI"   <<JTE, HTML>> as webui
+    interface "REST API" <<JSON>>      as restapi
+  }
 
-  locations --( communication
-  events --( communication
-  communication -- persons
+  component "torg-codex-data\n(Data Layer)" <<Spring Boot, JPA>> as data {
+    component "DriveThruRPG\nClient"    as dtclient
+    component "Security &\nUserService" as security
+    component "Markup\nGenerator"       as markup
+    component "Data Model\n& Repository" as model
+  }
 
-  database "pandurart" <<Postgres>> as data
+  frontend -down-> data : uses
+  security -right-> dtclient : authenticates via
+  model    -down-> db        : persists via JPA
 }
 
-
-ingress --> frontend
-frontend -down-> locations
-frontend -down-> events
-frontend -down-> persons
-
-locations -right- data
-events -right- data
-persons -right- data
-
-together {
-  interface SMS as sms
-  interface Fediverse as fediverse
-  interface Mail as mail
-  interface Discord as discord
-  interface OpenStreetMap as osm
-  interface 3words as what3words
-}
-
-persons -down-( discord : API
-persons -down-( mail : SMTP
-persons -down-( fediverse : API
-persons -down-(  sms : API
-locations -down-( osm : REST
-locations -down-( what3words : REST
+user       -right-> frontend  : HTTP / REST
+dtclient   -down->  drivethru : REST (HTTPS)
 
 @enduml
 ----

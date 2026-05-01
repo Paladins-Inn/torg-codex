@@ -6,6 +6,10 @@ include::partial$config.adoc[]
 
 include::partial$whitebox-overall-system.adoc[]
 
-== List of Building Blocks
+== Liste der Building Blocks
 
 include::_level2.adoc[]
+
+== Level 2: torg-codex-data
+
+include::level_2_scs.adoc[]
