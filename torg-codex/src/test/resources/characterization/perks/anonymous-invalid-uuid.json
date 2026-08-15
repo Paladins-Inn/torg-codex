@@ -1,0 +1,1 @@
+{"name":"anonymous-invalid-uuid","request":{"method":"GET","path":"/api/perks/not-a-uuid","queryParameters":{},"authVariant":"ANONYMOUS"},"response":{"status":400,"headers":{"Cache-Control":["no-cache, no-store, max-age=0, must-revalidate"],"Expires":["0"],"Pragma":["no-cache"],"X-Content-Type-Options":["nosniff"],"X-Frame-Options":["DENY"],"X-XSS-Protection":["0"]},"body":null}}

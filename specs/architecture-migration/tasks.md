@@ -73,28 +73,28 @@ Catalog families (17, per data-model.md and contracts/rest-compatibility.md): Ar
 
 **Independent Test**: Run the fixture-capture and replay harness against the current (unmigrated) application and confirm 100% self-consistent pass results, independent of any US2/US3 work having started.
 
-- [ ] T016 [US1] Create the characterization fixture directory structure and recording/comparison tooling (WireMock-based DriveThruRPG stub, JSON fixture format for status/headers/body/ordering) under `torg-codex/src/test/resources/characterization/` per `contracts/rest-compatibility.md`
-- [ ] T017 [P] [US1] Capture baseline REST characterization fixtures (list, detail, not-found, invalid UUID, full role/censorship matrix) for **Articles** in `torg-codex/src/test/resources/characterization/articles/`
-- [ ] T018 [P] [US1] Capture baseline REST characterization fixtures for **Cosms** in `torg-codex/src/test/resources/characterization/cosms/`
-- [ ] T019 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Items** in `torg-codex/src/test/resources/characterization/items/`
-- [ ] T020 [P] [US1] Capture baseline REST characterization fixtures for **Miracles** in `torg-codex/src/test/resources/characterization/miracles/`
-- [ ] T021 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Miracle Lists** in `torg-codex/src/test/resources/characterization/miracle-lists/`
-- [ ] T022 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Perks** in `torg-codex/src/test/resources/characterization/perks/`
-- [ ] T023 [P] [US1] Capture baseline REST characterization fixtures for **Perk Groups** in `torg-codex/src/test/resources/characterization/perk-groups/`
-- [ ] T024 [P] [US1] Capture baseline REST characterization fixtures for **Powers** in `torg-codex/src/test/resources/characterization/powers/`
-- [ ] T025 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Power Lists** in `torg-codex/src/test/resources/characterization/power-lists/`
-- [ ] T026 [P] [US1] Capture baseline REST characterization fixtures for **Publications** in `torg-codex/src/test/resources/characterization/publications/`
-- [ ] T027 [P] [US1] Capture baseline REST characterization fixtures for **Races** in `torg-codex/src/test/resources/characterization/races/`
-- [ ] T028 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Shards** in `torg-codex/src/test/resources/characterization/shards/`
-- [ ] T029 [P] [US1] Capture baseline REST characterization fixtures for **Spells** in `torg-codex/src/test/resources/characterization/spells/`
-- [ ] T030 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Spell Lists** in `torg-codex/src/test/resources/characterization/spell-lists/`
-- [ ] T031 [P] [US1] Capture baseline REST characterization fixtures for **Tags** in `torg-codex/src/test/resources/characterization/tags/`
-- [ ] T032 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Threats** in `torg-codex/src/test/resources/characterization/threats/`
-- [ ] T033 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Vehicles** in `torg-codex/src/test/resources/characterization/vehicles/`
-- [ ] T034 [US1] Implement the automated fixture-replay/comparison test suite (`CharacterizationReplayTest`, comparing status, headers incl. IANA PEN 33132 media-type version, body, and collection/map ordering) under Testcontainers/Failsafe in `torg-codex/src/test/java/de/paladinsinn/torg/codex/characterization/`, covering all 17 catalog families from T017–T033
-- [ ] T035 [US1] Implement a Liquibase changelog diff-guard test verifying no changeset is added, modified, or removed relative to the pre-migration baseline, in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/LiquibaseChangelogGuardTest.java`
-- [ ] T036 [US1] Wire the characterization replay suite (T034) and the Liquibase diff guard (T035) into the Failsafe/Surefire phases exercised by `./mvnw clean verify`
-- [ ] T037 [US1] Run `./mvnw clean verify` and the full characterization replay against the current, unmigrated application; confirm 100% pass — this proves the US1 safety net works standalone before any Phase 4 (US2) work begins
+- [X] T016 [US1] Create the characterization fixture directory structure and recording/comparison tooling (WireMock-based DriveThruRPG stub, JSON fixture format for status/headers/body/ordering) under `torg-codex/src/test/resources/characterization/` per `contracts/rest-compatibility.md`
+- [X] T017 [P] [US1] Capture baseline REST characterization fixtures (list, detail, not-found, invalid UUID, full role/censorship matrix) for **Articles** in `torg-codex/src/test/resources/characterization/articles/`
+- [X] T018 [P] [US1] Capture baseline REST characterization fixtures for **Cosms** in `torg-codex/src/test/resources/characterization/cosms/`
+- [X] T019 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Items** in `torg-codex/src/test/resources/characterization/items/`
+- [X] T020 [P] [US1] Capture baseline REST characterization fixtures for **Miracles** in `torg-codex/src/test/resources/characterization/miracles/`
+- [X] T021 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Miracle Lists** in `torg-codex/src/test/resources/characterization/miracle-lists/`
+- [X] T022 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Perks** in `torg-codex/src/test/resources/characterization/perks/`
+- [X] T023 [P] [US1] Capture baseline REST characterization fixtures for **Perk Groups** in `torg-codex/src/test/resources/characterization/perk-groups/`
+- [X] T024 [P] [US1] Capture baseline REST characterization fixtures for **Powers** in `torg-codex/src/test/resources/characterization/powers/`
+- [X] T025 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Power Lists** in `torg-codex/src/test/resources/characterization/power-lists/`
+- [X] T026 [P] [US1] Capture baseline REST characterization fixtures for **Publications** in `torg-codex/src/test/resources/characterization/publications/`
+- [X] T027 [P] [US1] Capture baseline REST characterization fixtures for **Races** in `torg-codex/src/test/resources/characterization/races/`
+- [X] T028 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Shards** in `torg-codex/src/test/resources/characterization/shards/`
+- [X] T029 [P] [US1] Capture baseline REST characterization fixtures for **Spells** in `torg-codex/src/test/resources/characterization/spells/`
+- [X] T030 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Spell Lists** in `torg-codex/src/test/resources/characterization/spell-lists/`
+- [X] T031 [P] [US1] Capture baseline REST characterization fixtures for **Tags** in `torg-codex/src/test/resources/characterization/tags/`
+- [X] T032 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Threats** in `torg-codex/src/test/resources/characterization/threats/`
+- [X] T033 [P] [US1] Capture baseline REST characterization fixtures (incl. `cosm` filter variants) for **Vehicles** in `torg-codex/src/test/resources/characterization/vehicles/`
+- [X] T034 [US1] Implement the automated fixture-replay/comparison test suite (`CharacterizationReplayTest`, comparing status, headers incl. IANA PEN 33132 media-type version, body, and collection/map ordering) under Testcontainers/Failsafe in `torg-codex/src/test/java/de/paladinsinn/torg/codex/characterization/`, covering all 17 catalog families from T017–T033
+- [X] T035 [US1] Implement a Liquibase changelog diff-guard test verifying no changeset is added, modified, or removed relative to the pre-migration baseline, in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/LiquibaseChangelogGuardTest.java`
+- [X] T036 [US1] Wire the characterization replay suite (T034) and the Liquibase diff guard (T035) into the Failsafe/Surefire phases exercised by `./mvnw clean verify`
+- [X] T037 [US1] Run `./mvnw clean verify` and the full characterization replay against the current, unmigrated application; confirm 100% pass — this proves the US1 safety net works standalone before any Phase 4 (US2) work begins
 
 **Checkpoint**: The compatibility safety net is in place and self-verified. Every subsequent migration task in Phase 4/5 must keep this suite green.
 
