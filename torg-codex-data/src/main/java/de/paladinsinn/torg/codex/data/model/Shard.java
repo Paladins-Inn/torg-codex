@@ -64,4 +64,40 @@ public class Shard extends TorgEntity {
     public String getRestrictions() {
         return render(restrictions);
     }
+
+    /**
+     * Returns the raw, un-rendered {@link #purpose} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawPurpose() {
+        return purpose;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #text} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawText() {
+        return text;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #powers} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawPowers() {
+        return powers;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #restrictions} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawRestrictions() {
+        return restrictions;
+    }
 }

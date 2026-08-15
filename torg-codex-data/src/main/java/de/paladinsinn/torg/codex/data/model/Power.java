@@ -77,4 +77,31 @@ public class Power extends TorgEntity {
     public String getLimitations() {
         return render(limitations);
     }
+
+    /**
+     * Returns the raw, un-rendered {@link #text} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawText() {
+        return text;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #enhancements} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawEnhancements() {
+        return enhancements;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #limitations} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawLimitations() {
+        return limitations;
+    }
 }

@@ -187,4 +187,31 @@ public class Threat extends TorgEntity {
                         LinkedHashMap::new
                 ));
     }
+
+    /**
+     * Returns the raw, un-rendered {@link #quote} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawQuote() {
+        return quote;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #text} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawText() {
+        return text;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #specialAbilities} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public java.util.Map<String, String> getRawSpecialAbilities() {
+        return specialAbilities;
+    }
 }

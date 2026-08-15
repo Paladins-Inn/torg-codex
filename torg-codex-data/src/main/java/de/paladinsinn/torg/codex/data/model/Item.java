@@ -66,4 +66,22 @@ public class Item extends TorgEntity {
     public String getText() {
         return render(text);
     }
+
+    /**
+     * Returns the raw, un-rendered {@link #additionalFeatures} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawAdditionalFeatures() {
+        return additionalFeatures;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #text} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawText() {
+        return text;
+    }
 }

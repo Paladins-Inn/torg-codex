@@ -61,4 +61,31 @@ public class Race extends TorgEntity {
     public String getPerkText() {
         return render(perkText);
     }
+
+    /**
+     * Returns the raw, un-rendered {@link #abilities} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawAbilities() {
+        return abilities;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #text} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawText() {
+        return text;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #perkText} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawPerkText() {
+        return perkText;
+    }
 }

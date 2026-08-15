@@ -57,4 +57,22 @@ public class MiracleList extends TorgEntity {
     public String getNotes() {
         return render(notes);
     }
+
+    /**
+     * Returns the raw, un-rendered {@link #text} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawText() {
+        return text;
+    }
+
+    /**
+     * Returns the raw, un-rendered {@link #notes} without applying the censor.
+     * Used by the entity&#8596;domain persistence mapper, which must preserve the
+     * exact persisted value; product-gate rendering is a presentation concern.
+     */
+    public String getRawNotes() {
+        return notes;
+    }
 }
