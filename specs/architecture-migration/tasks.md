@@ -231,7 +231,7 @@ Catalog families (17, per data-model.md and contracts/rest-compatibility.md): Ar
 - [X] T117n [US2] Relocate `@Transactional` to the inbound-adapter boundary for **SpellList** read operations; run `./mvnw clean verify` plus the Spell List Phase 3 characterization fixtures before moving to the next area
 - [X] T117o [US2] Relocate `@Transactional` to the inbound-adapter boundary for **Tag** read operations; run `./mvnw clean verify` plus the Tag Phase 3 characterization fixtures before moving to the next area
 - [X] T117p [US2] Relocate `@Transactional` to the inbound-adapter boundary for **Threat** read operations; run `./mvnw clean verify` plus the Threat Phase 3 characterization fixtures before moving to the next area
-- [ ] T117q [US2] Relocate `@Transactional` to the inbound-adapter boundary for **Vehicle** read operations; run `./mvnw clean verify` plus the Vehicle Phase 3 characterization fixtures before moving to the next area, confirming all 17 areas now carry zero `@Transactional` in `torg-codex-application`/`torg-codex-domain`
+- [X] T117q [US2] Relocate `@Transactional` to the inbound-adapter boundary for **Vehicle** read operations; run `./mvnw clean verify` plus the Vehicle Phase 3 characterization fixtures before moving to the next area, confirming all 17 areas now carry zero `@Transactional` in `torg-codex-application`/`torg-codex-domain`
 - [ ] T118 [P] [US2] Add a `TransactionBoundaryArchitectureTest` ArchUnit test asserting zero `@Transactional` usage anywhere in `torg-codex-application` and `torg-codex-domain`
 - [ ] T119 [US2] Run `./mvnw clean verify` and the Phase 3 characterization replay, confirming transaction relocation preserves existing read/write behavior for all 17 areas
 
