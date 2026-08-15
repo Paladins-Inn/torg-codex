@@ -1,4 +1,5 @@
 ---
+model: gpt-5.6-terra
 description: Execute the implementation planning workflow using the plan template to generate design artifacts.
 handoffs:
   - label: Create Tasks

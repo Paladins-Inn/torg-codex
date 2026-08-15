@@ -7,4 +7,5 @@
 **** xref:08_concepts/observability.adoc[]
 **** xref:08_concepts/data-protection.adoc[]
 **** xref:08_concepts/db-migrations.adoc[]
+**** xref:08_concepts/wiremock.adoc[]
 include::torg_data/_nav.adoc[]

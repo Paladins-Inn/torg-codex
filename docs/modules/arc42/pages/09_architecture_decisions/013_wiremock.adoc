@@ -1,0 +1,82 @@
+:adr-title: Mocking external HTTP services with WireMock
+:adr-state: Accepted
+:adr-date: 2026-08-15
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 013
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+The {system} application interacts with external HTTP services and APIs, such as the DriveThruRPG store and API services, and may integrate with remote identity providers or webhook endpoints.
+
+Testing these HTTP interactions directly against live third-party services during automated builds is problematic:
+* Real endpoints may experience downtime, rate limiting, or network latency.
+* Tests cannot reliably simulate fault conditions such as HTTP 5xx errors, timeouts, or malformed payloads.
+* Tests would require external API credentials or internet access in CI/CD environments.
+* In-memory mocks using Mockito on client beans do not verify the actual HTTP serialization, header handling, status code processing, or URL routing.
+
+We need a standardized, reliable HTTP mocking solution for our test suites.
+
+== Decision
+
+We choose **WireMock** as the standard HTTP service virtualization and mocking framework for all external HTTP integration testing.
+
+We mandate the support and use of two complementary configuration approaches:
+
+1. **Annotation-based configuration:**
+   - Use `@WireMockTest` (JUnit 5 extension) for slice and unit tests.
+   - Use `@AutoConfigureWireMock(port = 0)` in Spring Boot integration tests to spin up an ephemeral in-memory mock server bound to a dynamic port.
+
+2. **File-based configuration:**
+   - Define reusable and complex HTTP stubs as declarative JSON mapping files under `src/test/resources/mappings`.
+   - Store static response payloads in `src/test/resources/__files`.
+   - This decouples long fixture bodies from test code, prevents clutter in test classes, and enables reusable test scenarios across test classes.
+
+== Consequences
+
+=== Benefits
+
+* **High Fidelity:** Tests execute against a real HTTP server over TCP, validating HTTP clients, converters, interceptors, and error handlers.
+* **Deterministic & Fast:** Zero network dependencies or rate limiting; tests run in-memory and execute rapidly.
+* **Clean Separation:** File-based stubs keep test code clean and maintainable, while annotation-based configuration manages the lifecycle automatically.
+* **Fault Simulation:** Easily test timeout handling, connection failures, rate limits (HTTP 429), and upstream error responses.
+* **Seamless Integration:** Works cleanly with JUnit 5, Spring Boot Test, Spring Cloud Contract WireMock, and Testcontainers.
+
+=== Challenges
+
+* **Stub Maintenance:** Stub mappings and payload fixtures must be maintained and updated when external API contracts evolve.
+* **Port Management:** Must always use dynamic ports (`port = 0`) to prevent port collision issues during parallel test execution.
+
+== Options
+
+=== Option 1: WireMock with annotation-based and file-based configuration (Selected)
+* Comprehensive HTTP simulation, mature Spring Boot integration, clean separation between test logic and payload fixtures.
+
+=== Option 2: Mockito bean mocking (`@MockBean RestClient` / `@MockBean WebClient`)
+* Does not test actual HTTP serialization, headers, status codes, or network error handling; easily gets out of sync with real HTTP behavior.
+
+=== Option 3: Spring `MockRestServiceServer`
+* Bound tightly to Spring's `RestTemplate` / `RestClient`; does not run a real HTTP server socket and lacks the advanced file-based stubbing and multi-client flexibility of WireMock.
+
+== Further Reading
+
+* xref:08_concepts/wiremock.adoc[Concept: WireMock]
+* https://wiremock.org/docs/[WireMock Documentation]
+* https://docs.spring.io/spring-cloud-contract/docs/current/reference/html/project-features.html#features-wiremock[Spring Cloud Contract WireMock]
+
+<<<

@@ -34,8 +34,7 @@ import org.springframework.stereotype.Component;
 import de.paladinsinn.drivethru.DriveThruRPGService;
 import de.paladinsinn.drivethru.token.DrivethruToken;
 import de.paladinsinn.drivethru.token.NoValidTokenException;
-import de.paladinsinn.torg.codex.data.model.Publication;
-import de.paladinsinn.torg.codex.data.repository.PublicationRepository;
+import de.paladinsinn.torg.codex.data.application.port.in.CatalogReferenceQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -44,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  * are wrapped in a {@link DriveThruUserDetails} and stored in the security context.
  *
  * <p>Additionally, all DriveThruRPG product IDs owned by the customer are resolved
- * to their {@code codexId} strings via {@link PublicationRepository} and stored in
+ * to their {@code codexId} strings via {@link CatalogReferenceQuery} and stored in
  * {@link DriveThruUserDetails#getOwnedCodexIds()}.</p>
  */
 @Component
@@ -52,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DriveThruAuthenticationProvider implements AuthenticationProvider {
     private final DriveThruRPGService driveThruRPGService;
-    private final PublicationRepository publicationRepository;
+    private final CatalogReferenceQuery catalogReferenceQuery;
     @Override
     public Authentication authenticate(final Authentication authentication) throws AuthenticationException {
         final String apiKey = (String) authentication.getPrincipal();
@@ -91,8 +90,8 @@ public class DriveThruAuthenticationProvider implements AuthenticationProvider {
             return Collections.emptyList();
         }
         final List<String> codexIds = productIds.stream()
-                .flatMap(pid -> publicationRepository.findByProductId(pid).stream())
-                .map(Publication::getCodexId)
+                .flatMap(pid -> catalogReferenceQuery.findPublicationsByProductId(pid).stream())
+                .map(reference -> reference.codexId())
                 .distinct()
                 .toList();
         log.debug("Resolved {} owned codex ids from {} product ids.", codexIds.size(), productIds.size());

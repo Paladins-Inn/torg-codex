@@ -1,0 +1,144 @@
+= WireMock: Concept Overview
+include::partial$config.adoc[]
+
+[NOTE]
+====
+Testing integrations with external HTTP services (e.g., DriveThruRPG API, third-party authentication or REST providers) requires deterministic, isolated, and fast test execution.
+Kaiserpfalz EDV-Service uses WireMock by default for all HTTP mocking ({co002}).
+Our {adr-013} documents our decision to adopt WireMock using both annotation-based and file-based configuration modes.
+====
+
+*WireMock* is an HTTP mock server and API test library for Java and other languages. It allows developers to simulate HTTP-based APIs by defining request matching rules and stubbing corresponding responses.
+
+== 🔁 Core Concept
+
+WireMock runs an in-memory HTTP server during test execution. Outbound HTTP clients (such as Spring `RestClient`, `WebClient`, or `RestTemplate`) are configured to point to the WireMock port instead of the real external service. WireMock matches incoming requests against configured stubs and returns pre-recorded or dynamically specified responses without making actual network calls.
+
+== 🧠 Key Features
+
+* *Deterministic Testing*: Simulates external APIs without network instability or rate limits.
+* *Annotation-driven Configuration*: Declarative test lifecycle management via `@WireMockTest` or `@AutoConfigureWireMock`.
+* *File-based Stubbing*: Decouples request/response payloads from test code into JSON mapping files and body fixtures.
+* *Fault and Latency Simulation*: Easily simulates network delays, connection drops, and HTTP error statuses (4xx/5xx).
+* *Verification*: Verifies that the expected HTTP calls were made with the exact headers, query parameters, and payloads.
+
+== 🧱 Basic Components
+
+=== 1. Annotation-Based Configuration
+
+Tests use WireMock annotations to manage the server lifecycle and inject the port dynamically:
+
+[source,java,opts=novalidate]
+----
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureWireMock(port = 0)
+class DriveThruClientIntegrationTest {
+
+    @Autowired
+    private DriveThruClient client;
+
+    @Test
+    void shouldFetchProductDetails() {
+        // WireMock is automatically started and bound to a random port
+        Product product = client.getProduct("12345");
+        assertThat(product.getTitle()).isEqualTo("Torg Eternity Core Rules");
+    }
+}
+----
+
+For isolated unit or slice tests, the JUnit 5 extension or `@WireMockTest` is used:
+
+[source,java,opts=novalidate]
+----
+@WireMockTest
+class DriveThruApiUnitTest {
+
+    @Test
+    void shouldHandleServerError(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(get("/api/products/999")
+            .willReturn(serverError()));
+
+        DriveThruClient client = new DriveThruClient(wmRuntimeInfo.getHttpBaseUrl());
+        assertThatThrownBy(() -> client.getProduct("999"))
+            .isInstanceOf(RemoteServiceException.class);
+    }
+}
+----
+
+=== 2. File-Based Configuration (Mappings and Fixtures)
+
+For complex, reusable, or contract-level stubs, WireMock loads stub definitions declaratively from the classpath under `src/test/resources`:
+
+* `src/test/resources/mappings/`: Contains JSON mapping files defining URL patterns, headers, query params, and response status/body references.
+* `src/test/resources/__files/`: Contains static response payload files (JSON, XML, HTML).
+
+.Example Mapping File (`src/test/resources/mappings/drivethru-product-12345.json`):
+[source,json]
+----
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v1/products/12345",
+    "headers": {
+      "Authorization": {
+        "matches": "Bearer .*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "bodyFileName": "drivethru/product-12345-response.json"
+  }
+}
+----
+
+.Example Payload Fixture (`src/test/resources/__files/drivethru/product-12345-response.json`):
+[source,json]
+----
+{
+  "productId": "12345",
+  "name": "Torg Eternity Core Rules",
+  "publisher": "Ulisses Spiele",
+  "status": "AVAILABLE"
+}
+----
+
+=== 3. Combining Annotation-Based Lifecycle with File Mappings
+
+When using `@AutoConfigureWireMock` or `@WireMockTest`, WireMock automatically scans the default `mappings` and `__files` directories on the classpath:
+
+[source,java,opts=novalidate]
+----
+@SpringBootTest
+@AutoConfigureWireMock(port = 0, files = "classpath:wiremock/drivethru")
+class DriveThruOrderSyncTest {
+
+    @Test
+    void shouldLoadStubsFromFile() {
+        // Automatically uses mappings defined in classpath:wiremock/drivethru/mappings/
+    }
+}
+----
+
+== ⚡ Use Cases
+
+* Testing external REST/HTTP clients (e.g. DriveThruRPG API integration).
+* Testing authentication and token exchange with external identity providers.
+* Simulating edge cases, rate-limiting (HTTP 429), timeouts, and upstream server errors (HTTP 500/503).
+* Verifying HTTP client retry, backoff, and circuit breaker behaviors.
+
+== 🔄 Integration with the Testing Pipeline
+
+WireMock tests run seamlessly alongside JUnit 5 and Testcontainers during `./mvnw test` and `./mvnw verify`:
+
+* Unit and service-level tests use `@WireMockTest` or `WireMockExtension` for fast in-memory execution.
+* Full integration tests (`*IT`) combine Spring Boot, Testcontainers (for PostgreSQL), and WireMock (for external HTTP dependencies).
+
+== 📚 Further Reading
+
+* https://wiremock.org/docs/[WireMock Official Documentation]
+* https://docs.spring.io/spring-cloud-contract/docs/current/reference/html/project-features.html#features-wiremock[Spring Cloud Contract WireMock]
+* {adr-013}

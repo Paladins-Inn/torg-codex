@@ -37,13 +37,13 @@ API versioning is required to introduce changes in a controlled manner and ensur
 
 
 == Decision
-API versioning will be implemented using media-type versioning in the HTTP header (e.g. `Content-Type: application/vnd.1.3.6.1.4.1.33132.v1+json`).
+API versioning will be implemented using media-type versioning in the HTTP header (e.g. `Content-Type: application/vnd.1.3.6.1.4.1.33132.1.v1+json`).
 This approach provides flexibility, allowing different versions to operate in parallel and independently of the URL structure.
 It is especially suitable when clients and servers require precise control over exchanged data formats.
 
 The decision is based on the advantages described in the blog: better separation of version and resource, cleaner URLs, and the ability to manage versions via content negotiation.
 
-The format is `´application/vnd.1.3.6.1.4.1.<PEN>+<FORMAT>`.
+The format is `´application/vnd.1.3.6.1.4.1.<PEN>.1+<FORMAT>`.
 
 `PEN` is the private enterprise number assigned to the organization by IANA.
 This ensures global uniqueness of the media type.

@@ -28,9 +28,8 @@ package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.CosmRefDto;
 import de.paladinsinn.torg.codex.api.dto.DifficultyNumberDto;
 import de.paladinsinn.torg.codex.api.dto.PublicationRefDto;
+import de.paladinsinn.torg.codex.data.application.port.in.CatalogReferenceQuery;
 import de.paladinsinn.torg.codex.data.model.DifficultyNumber;
-import de.paladinsinn.torg.codex.data.repository.CosmRepository;
-import de.paladinsinn.torg.codex.data.repository.PublicationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -42,15 +41,14 @@ import java.util.Set;
 /**
  * Helper component used by all MapStruct mappers (via {@code uses = TorgMappingSupport.class}).
  *
- * <p>Provides type-conversion methods that require repository access (cosm lookup,
+ * <p>Provides type-conversion methods that require catalog reference lookups (cosm lookup,
  * publication resolution) as well as simple value-object mappings (difficulty number).</p>
  */
 @Component
 @RequiredArgsConstructor
 public class TorgMappingSupport {
 
-    private final CosmRepository cosmRepository;
-    private final PublicationRepository publicationRepository;
+    private final CatalogReferenceQuery catalogReferenceQuery;
 
     /**
      * Converts a cosm name (String) held in an entity into a {@link CosmRefDto}.
@@ -58,8 +56,8 @@ public class TorgMappingSupport {
      */
     public CosmRefDto toCosmRef(String cosmName) {
         if (cosmName == null || cosmName.isBlank()) return null;
-        return cosmRepository.findByNameIgnoreCase(cosmName)
-                .map(c -> new CosmRefDto(c.getId(), c.getName()))
+        return catalogReferenceQuery.findCosmByName(cosmName)
+                .map(c -> new CosmRefDto(c.id(), c.name()))
                 .orElse(new CosmRefDto(null, cosmName));
     }
 
@@ -70,8 +68,8 @@ public class TorgMappingSupport {
         if (products == null || products.isEmpty()) return List.of();
         final List<PublicationRefDto> result = new ArrayList<>();
         for (final String codexId : products) {
-            publicationRepository.findByCodexId(codexId)
-                    .ifPresent(p -> result.add(new PublicationRefDto(p.getId(), p.getName())));
+            catalogReferenceQuery.findPublicationByCodexId(codexId)
+                    .ifPresent(p -> result.add(new PublicationRefDto(p.id(), p.name())));
         }
         return Collections.unmodifiableList(result);
     }
@@ -82,4 +80,3 @@ public class TorgMappingSupport {
         return new DifficultyNumberDto(dn.getLevel(), dn.getText());
     }
 }
-

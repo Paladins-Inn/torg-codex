@@ -9,3 +9,4 @@
 :adr-010: xref:pandurart:arc42:09_architecture_decisions/010_encryption-for-database-fields.adoc[&uparrow;ADR-010]
 :adr-011: xref:pandurart:arc42:09_architecture_decisions/011_markdown.adoc[&uparrow;ADR-011]
 :adr-012: xref:pandurart:arc42:09_architecture_decisions/012_zero-downtime-database-migrations.adoc[&uparrow;ADR-012]
+:adr-013: xref:pandurart:arc42:09_architecture_decisions/013_wiremock.adoc[&uparrow;ADR-013]

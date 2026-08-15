@@ -97,6 +97,21 @@ public class JpaUserRepository implements UserRepository {
 * Projects where different technical stacks might be used
 * When integrating with multiple external systems
 
+== Torg Codex Package Boundaries
+
+Read use cases are implemented in `torg-codex-data` using these dependency
+directions:
+
+* `application.port.in` contains the interfaces used by HTTP and security adapters.
+* `application.service` implements those use cases and depends only on
+  `application.port.out`.
+* `adapter.out.persistence` translates the outgoing ports to Spring Data JPA.
+* `api.controller`, `api.mapper`, and security components are primary adapters;
+  they call incoming ports and do not access Spring Data repositories directly.
+
+The Spring configuration classes are composition roots. They are the sole places
+where ports are wired to concrete adapters.
+
 == 🔄 Integration with Spring Events
 
 Hexagonal Architecture works exceptionally well with the EventBus pattern. Events can be used to:
