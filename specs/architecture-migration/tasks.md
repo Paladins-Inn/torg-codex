@@ -263,9 +263,9 @@ Catalog families (17, per data-model.md and contracts/rest-compatibility.md): Ar
 - [X] T126 Resolve and remove every remaining entry in `specs/architecture-migration/freeze-list.md`, confirming the corresponding ArchUnit rule now passes without suppression for each one
 - [X] T127 Confirm `specs/architecture-migration/freeze-list.md` has zero open entries and update its status header to "Migration complete"
 - [X] T128 [P] Update `docs/modules/arc42/pages/04_solution_strategy.adoc` and `docs/modules/arc42/pages/02_architecture_constraints.adoc` (adding a building-block view page if none exists) to reflect the finalized four-module hexagonal structure, per FR-027
-- [ ] T129 [P] Add a final validation note to `specs/architecture-migration/quickstart.md` recording that the completion validation (T130) passed
+- [X] T129 [P] Add a final validation note to `specs/architecture-migration/quickstart.md` recording that the completion validation (T130) passed
 - [X] T129a **(G2 prerequisite)** Extend the T080a/T080b persistence-equivalence harness into a full-database snapshot-comparison tool (`PersistedDataSnapshotComparisonTest`, in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/equivalence/`) that dumps a normalized snapshot (all rows, all 17 catalog tables) from a Testcontainers database seeded via the pre-migration path and compares it field-by-field against the same seed data round-tripped through the fully-migrated (post-Phase-4e) domain-model/adapter path, so T130 has a concrete snapshot-comparison test to run
-- [ ] T130 Run `./mvnw clean verify`, the full Phase 3 characterization replay, the Liquibase diff guard, and the T129a persisted-data snapshot comparison as the completion gate for SC-001 through SC-006
+- [X] T130 Run `./mvnw clean verify`, the full Phase 3 characterization replay, the Liquibase diff guard, and the T129a persisted-data snapshot comparison as the completion gate for SC-001 through SC-006
 
 ---
 

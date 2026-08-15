@@ -100,3 +100,30 @@ Spring/JPA/Hibernate, and (2) `DomainPurityArchitectureTest` (and its sibling
 `ApplicationPurityArchitectureTest`, `TransactionBoundaryArchitectureTest`) would still catch
 any equivalent violation that *did* have a legitimate compile-time path (e.g. a
 transitively-available class), naming the specific rule violated in the failure report.
+
+## Completion validation note (T129/T130)
+
+`./mvnw clean verify` was run as the final completion gate (T130) after all Phase 4, 5, and 6
+tasks. Result: **BUILD SUCCESS**, 146 tests in the `torg-codex` reactor (0 failures, 1 skipped
+placeholder in `CharacterizationFixtureCaptureTest`) plus 65 tests + 25 Failsafe integration
+tests in `torg-codex-data` (0 failures), specifically including:
+
+- the full Phase 3 characterization replay (`CharacterizationReplayTest`, 118 tests) — zero
+  regression against the pre-migration REST API baseline for all 17 catalog areas;
+- the Liquibase diff guard (`LiquibaseChangelogGuardTest`, `LiquibaseImportIT`) — no schema or
+  changelog drift;
+- the T129a persisted-data snapshot comparison (`PersistedDataSnapshotComparisonTest`, 17
+  tests, one per catalog area) — every persisted row of every catalog table round-trips through
+  the domain-model/MapStruct path with zero field-level drift versus the pre-migration raw-JPA
+  path, on the same Testcontainers-backed PostgreSQL database;
+- the sampled persistence-equivalence harness (`PersistenceEquivalenceIT`, 17 tests) and the
+  full architecture-enforcement test suite (8 test classes covering domain purity, application
+  purity, transaction-boundary purity, adapter conventions, module boundaries, and the
+  freeze-list mechanism itself).
+
+`specs/architecture-migration/freeze-list.md` has zero `open` entries (status header updated
+to "Migration complete"); the single remaining row, FL-007, is a permanent, spec-level
+accepted deviation unrelated to any code-level architecture boundary.
+
+SC-001 through SC-006 (see spec.md) are satisfied: the migration is functionally complete,
+behavior-preserving, and continuously self-verifying.
