@@ -1,9 +1,9 @@
-package de.paladinsinn.torg.codex.data.application.service;
+package de.paladinsinn.torg.codex.application.service;
 
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogReference;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogPublicationReference;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogReferenceQuery;
-import de.paladinsinn.torg.codex.data.application.port.out.CatalogReferencePersistencePort;
+import de.paladinsinn.torg.codex.application.port.in.CatalogReference;
+import de.paladinsinn.torg.codex.application.port.in.CatalogPublicationReference;
+import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
+import de.paladinsinn.torg.codex.application.port.out.CatalogReferencePersistencePort;
 
 import java.util.List;
 import java.util.Optional;

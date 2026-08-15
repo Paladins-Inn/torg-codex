@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.controller;
 import de.paladinsinn.torg.codex.api.dto.VehicleDetailDto;
 import de.paladinsinn.torg.codex.api.dto.VehicleSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.VehicleMapper;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.data.model.Vehicle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

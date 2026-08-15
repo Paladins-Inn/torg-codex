@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.controller;
 import de.paladinsinn.torg.codex.api.dto.PublicationDetailDto;
 import de.paladinsinn.torg.codex.api.dto.PublicationSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.PublicationMapper;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.data.model.Publication;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

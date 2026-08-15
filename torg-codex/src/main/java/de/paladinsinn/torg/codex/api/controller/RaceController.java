@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.controller;
 import de.paladinsinn.torg.codex.api.dto.RaceDetailDto;
 import de.paladinsinn.torg.codex.api.dto.RaceSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.RaceMapper;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.data.model.Race;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

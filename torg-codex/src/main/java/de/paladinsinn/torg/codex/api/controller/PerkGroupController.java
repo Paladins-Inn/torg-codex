@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.controller;
 import de.paladinsinn.torg.codex.api.dto.PerkGroupDetailDto;
 import de.paladinsinn.torg.codex.api.dto.PerkGroupSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.PerkGroupMapper;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.data.model.PerkGroup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

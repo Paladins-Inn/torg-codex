@@ -1,6 +1,6 @@
-package de.paladinsinn.torg.codex.data.application.service;
+package de.paladinsinn.torg.codex.application.service;
 
-import de.paladinsinn.torg.codex.data.application.port.out.CatalogPersistencePort;
+import de.paladinsinn.torg.codex.application.port.out.CatalogPersistencePort;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

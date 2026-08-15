@@ -1,15 +1,15 @@
-package de.paladinsinn.torg.codex.data.application.port.out;
+package de.paladinsinn.torg.codex.application.port.in;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Driven port for retrieving codex entries from persistence.
+ * Driving port for reading codex entries.
  *
  * @param <T> the entry type
  */
-public interface CatalogPersistencePort<T> {
+public interface CatalogQuery<T> {
 
     List<T> findAll();
 

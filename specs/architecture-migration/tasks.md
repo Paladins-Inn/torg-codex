@@ -110,11 +110,11 @@ Catalog families (17, per data-model.md and contracts/rest-compatibility.md): Ar
 
 ### Phase 4a: Ports/use-case interfaces relocation
 
-- [ ] T038 [US2] Move `CatalogQuery<T>` and `CatalogReferenceQuery<T>` (driving ports) from `torg-codex-data/src/main/java/.../data/application/port/in/` to `torg-codex-application/src/main/java/de/paladinsinn/torg/codex/application/port/in/`, keeping them generic over a domain type parameter only (no JPA/DTO import)
-- [ ] T039 [US2] Move `CatalogPersistencePort<T>` and `CatalogReferencePersistencePort<T>` (driven ports) from `torg-codex-data/src/main/java/.../data/application/port/out/` to `torg-codex-application/src/main/java/de/paladinsinn/torg/codex/application/port/out/`
-- [ ] T040 [US2] Move `CatalogQueryService<T>` and `CatalogReferenceQueryService<T>` (framework-free use-case implementations) from `torg-codex-data/src/main/java/.../data/application/service/` to `torg-codex-application/src/main/java/de/paladinsinn/torg/codex/application/service/`
-- [ ] T041 [US2] Delete the now-empty `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/application/` package and remove its corresponding entries from `specs/architecture-migration/freeze-list.md` (added in T011)
-- [ ] T042 [US2] Fix all import references in `torg-codex-data` and `torg-codex` to the new `torg-codex-application` port/service packages (no behavior change) and run `./mvnw clean verify` plus the Phase 3 characterization replay to confirm zero regression
+- [X] T038 [US2] Move `CatalogQuery<T>` and `CatalogReferenceQuery<T>` (driving ports) from `torg-codex-data/src/main/java/.../data/application/port/in/` to `torg-codex-application/src/main/java/de/paladinsinn/torg/codex/application/port/in/`, keeping them generic over a domain type parameter only (no JPA/DTO import)
+- [X] T039 [US2] Move `CatalogPersistencePort<T>` and `CatalogReferencePersistencePort<T>` (driven ports) from `torg-codex-data/src/main/java/.../data/application/port/out/` to `torg-codex-application/src/main/java/de/paladinsinn/torg/codex/application/port/out/`
+- [X] T040 [US2] Move `CatalogQueryService<T>` and `CatalogReferenceQueryService<T>` (framework-free use-case implementations) from `torg-codex-data/src/main/java/.../data/application/service/` to `torg-codex-application/src/main/java/de/paladinsinn/torg/codex/application/service/`
+- [X] T041 [US2] Delete the now-empty `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/application/` package and remove its corresponding entries from `specs/architecture-migration/freeze-list.md` (added in T011)
+- [X] T042 [US2] Fix all import references in `torg-codex-data` and `torg-codex` to the new `torg-codex-application` port/service packages (no behavior change) and run `./mvnw clean verify` plus the Phase 3 characterization replay to confirm zero regression
 
 **Checkpoint**: Ports and use-case services now live in the correct module for every catalog area.
 

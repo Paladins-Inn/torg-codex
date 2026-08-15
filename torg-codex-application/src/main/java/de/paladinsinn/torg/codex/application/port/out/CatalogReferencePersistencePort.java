@@ -1,7 +1,7 @@
-package de.paladinsinn.torg.codex.data.application.port.out;
+package de.paladinsinn.torg.codex.application.port.out;
 
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogReference;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogPublicationReference;
+import de.paladinsinn.torg.codex.application.port.in.CatalogReference;
+import de.paladinsinn.torg.codex.application.port.in.CatalogPublicationReference;
 
 import java.util.List;
 import java.util.Optional;

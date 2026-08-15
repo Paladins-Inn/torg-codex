@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.controller;
 import de.paladinsinn.torg.codex.api.dto.MiracleListDetailDto;
 import de.paladinsinn.torg.codex.api.dto.MiracleListSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.MiracleListMapper;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.data.model.MiracleList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

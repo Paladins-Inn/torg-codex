@@ -1,6 +1,6 @@
 package de.paladinsinn.torg.codex.api.security;
 
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.data.model.TorgEntity;
 
 import java.util.List;

@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.controller;
 import de.paladinsinn.torg.codex.api.dto.ShardDetailDto;
 import de.paladinsinn.torg.codex.api.dto.ShardSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.ShardMapper;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.data.model.Shard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

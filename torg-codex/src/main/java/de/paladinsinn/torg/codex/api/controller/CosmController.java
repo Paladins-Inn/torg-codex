@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.controller;
 import de.paladinsinn.torg.codex.api.dto.CosmDetailDto;
 import de.paladinsinn.torg.codex.api.dto.CosmSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.CosmMapper;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.data.model.Cosm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

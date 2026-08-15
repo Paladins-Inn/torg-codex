@@ -28,7 +28,7 @@ package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.CosmRefDto;
 import de.paladinsinn.torg.codex.api.dto.DifficultyNumberDto;
 import de.paladinsinn.torg.codex.api.dto.PublicationRefDto;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogReferenceQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
 import de.paladinsinn.torg.codex.data.model.DifficultyNumber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.controller;
 import de.paladinsinn.torg.codex.api.dto.PowerListDetailDto;
 import de.paladinsinn.torg.codex.api.dto.PowerListSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.PowerListMapper;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.data.model.PowerList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

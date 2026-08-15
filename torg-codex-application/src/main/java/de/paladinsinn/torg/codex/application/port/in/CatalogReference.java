@@ -1,4 +1,4 @@
-package de.paladinsinn.torg.codex.data.application.port.in;
+package de.paladinsinn.torg.codex.application.port.in;
 
 import java.util.UUID;
 

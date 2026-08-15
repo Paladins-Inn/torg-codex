@@ -1,6 +1,6 @@
 package de.paladinsinn.torg.codex.data.adapter.out.persistence;
 
-import de.paladinsinn.torg.codex.data.application.port.out.CatalogPersistencePort;
+import de.paladinsinn.torg.codex.application.port.out.CatalogPersistencePort;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

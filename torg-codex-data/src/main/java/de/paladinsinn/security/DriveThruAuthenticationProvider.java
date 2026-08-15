@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 import de.paladinsinn.drivethru.DriveThruRPGService;
 import de.paladinsinn.drivethru.token.DrivethruToken;
 import de.paladinsinn.drivethru.token.NoValidTokenException;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogReferenceQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 /**

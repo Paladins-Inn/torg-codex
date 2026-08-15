@@ -1,8 +1,8 @@
 package de.paladinsinn.torg.codex.data.adapter.out.persistence;
 
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogReference;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogPublicationReference;
-import de.paladinsinn.torg.codex.data.application.port.out.CatalogReferencePersistencePort;
+import de.paladinsinn.torg.codex.application.port.in.CatalogReference;
+import de.paladinsinn.torg.codex.application.port.in.CatalogPublicationReference;
+import de.paladinsinn.torg.codex.application.port.out.CatalogReferencePersistencePort;
 import de.paladinsinn.torg.codex.data.model.Cosm;
 import de.paladinsinn.torg.codex.data.model.Publication;
 import de.paladinsinn.torg.codex.data.repository.CosmRepository;

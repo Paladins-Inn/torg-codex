@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.controller;
 import de.paladinsinn.torg.codex.api.dto.TagDetailDto;
 import de.paladinsinn.torg.codex.api.dto.TagSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.TagMapper;
-import de.paladinsinn.torg.codex.data.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.data.model.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
