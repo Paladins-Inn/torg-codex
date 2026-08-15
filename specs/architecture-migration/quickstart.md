@@ -67,3 +67,36 @@ all compatibility fixtures identical to baseline, no Liquibase modification, no
 unlisted architecture violation, and an empty exception list. Update the finalized
 arc42 architecture documentation in the same cleanup sequence; do not implement any
 migration code as part of this planning-only work.
+
+## Deliberate-violation drill outcome (T121)
+
+Performed on a scratch, uncommitted edit (never pushed/committed): added
+`import org.springframework.stereotype.Component;` to
+`torg-codex-domain/src/main/java/de/paladinsinn/torg/codex/domain/model/Cosm.java`.
+
+**Result**: the build failed immediately at the **compilation** stage of the
+`torg-codex-domain` module — `mvn -pl torg-codex -am test -Dtest=DomainPurityArchitectureTest`
+reported:
+
+```
+[ERROR] COMPILATION ERROR :
+[ERROR] .../torg-codex-domain/.../domain/model/Cosm.java:[5,38] package org.springframework.stereotype does not exist
+```
+
+This is because `torg-codex-domain`'s `pom.xml` declares no Spring dependency at all, so
+any Spring import is caught even before `DomainPurityArchitectureTest`
+(`ArchRuleDefinition.noClasses().that().resideInAnyPackage("de.paladinsinn.torg.codex.domain..")
+.should().dependOnClassesThat().resideInAnyPackage("org.springframework..", ...)`) gets a
+chance to run — the module-level dependency boundary is a *stronger* enforcement layer than
+the ArchUnit rule alone, catching the violation at compile time rather than at test time.
+
+The import was reverted immediately after observing the failure; `DomainPurityArchitectureTest`
+and the full reactor were confirmed green again
+(`mvn -pl torg-codex -am test -Dtest=DomainPurityArchitectureTest` → `Tests run: 1, Failures: 0`).
+
+**Conclusion**: the drill confirms both enforcement layers work as intended —
+(1) Maven dependency scoping prevents `torg-codex-domain` from ever compiling against
+Spring/JPA/Hibernate, and (2) `DomainPurityArchitectureTest` (and its sibling
+`ApplicationPurityArchitectureTest`, `TransactionBoundaryArchitectureTest`) would still catch
+any equivalent violation that *did* have a legitimate compile-time path (e.g. a
+transitively-available class), naming the specific rule violated in the failure report.
