@@ -208,7 +208,7 @@ Catalog families (17, per data-model.md and contracts/rest-compatibility.md): Ar
 - [X] T113 [P] [US2] Update `TagController` and `TagMapper` to consume `CatalogQuery<Tag>` and map to `TagSummaryDto`/`TagDetailDto`
 - [X] T114 [P] [US2] Update `ThreatController` and `ThreatMapper` to consume `CatalogQuery<Threat>` and map to `ThreatSummaryDto`/`ThreatDetailDto`, preserving the `cosm` query parameter behavior
 - [X] T115 [P] [US2] Update `VehicleController` and `VehicleMapper` to consume `CatalogQuery<Vehicle>` and map to `VehicleSummaryDto`/`VehicleDetailDto`, preserving the `cosm` query parameter behavior
-- [ ] T116 [US2] Run `./mvnw clean verify` and the full Phase 3 characterization replay for all 17 areas; confirm zero regression after inbound rewiring, including RBAC/ABAC/UMA outcomes and DRM-censored fields
+- [X] T116 [US2] Run `./mvnw clean verify` and the full Phase 3 characterization replay for all 17 areas; confirm zero regression after inbound rewiring, including RBAC/ABAC/UMA outcomes and DRM-censored fields
 
 **Checkpoint**: Every catalog area's controller and DTO mapper now depend only on the driving port and a domain model; no controller references a JPA entity.
 
