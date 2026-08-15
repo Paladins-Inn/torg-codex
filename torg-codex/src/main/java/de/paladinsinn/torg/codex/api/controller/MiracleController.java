@@ -8,12 +8,14 @@ import de.paladinsinn.torg.codex.data.markup.Censor;
 import de.paladinsinn.torg.codex.domain.model.Miracle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 @RestController
 @RequestMapping("/api/miracles")
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MiracleController {
     private final CatalogQuery<Miracle> catalogQuery;
     private final MiracleMapper mapper;
