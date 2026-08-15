@@ -8,12 +8,14 @@ import de.paladinsinn.torg.codex.data.markup.Censor;
 import de.paladinsinn.torg.codex.domain.model.Perk;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 @RestController
 @RequestMapping("/api/perks")
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PerkController {
     private final CatalogQuery<Perk> catalogQuery;
     private final PerkMapper mapper;
