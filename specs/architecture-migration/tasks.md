@@ -233,7 +233,7 @@ Catalog families (17, per data-model.md and contracts/rest-compatibility.md): Ar
 - [X] T117p [US2] Relocate `@Transactional` to the inbound-adapter boundary for **Threat** read operations; run `./mvnw clean verify` plus the Threat Phase 3 characterization fixtures before moving to the next area
 - [X] T117q [US2] Relocate `@Transactional` to the inbound-adapter boundary for **Vehicle** read operations; run `./mvnw clean verify` plus the Vehicle Phase 3 characterization fixtures before moving to the next area, confirming all 17 areas now carry zero `@Transactional` in `torg-codex-application`/`torg-codex-domain`
 - [X] T118 [P] [US2] Add a `TransactionBoundaryArchitectureTest` ArchUnit test asserting zero `@Transactional` usage anywhere in `torg-codex-application` and `torg-codex-domain`
-- [ ] T119 [US2] Run `./mvnw clean verify` and the Phase 3 characterization replay, confirming transaction relocation preserves existing read/write behavior for all 17 areas
+- [X] T119 [US2] Run `./mvnw clean verify` and the Phase 3 characterization replay, confirming transaction relocation preserves existing read/write behavior for all 17 areas
 
 **Checkpoint**: User Story 2 complete — every catalog area is fully migrated through ports, domain models, outbound adapters, inbound adapters, transactions, and events, with zero characterization regressions.
 
