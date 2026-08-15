@@ -1,0 +1,14 @@
+package de.paladinsinn.torg.codex.api.mapper;
+import de.paladinsinn.torg.codex.api.dto.MiracleDetailDto;
+import de.paladinsinn.torg.codex.api.dto.MiracleSummaryDto;
+import de.paladinsinn.torg.codex.data.model.Miracle;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+@Mapper(componentModel = "spring", uses = TorgMappingSupport.class)
+public interface MiracleMapper {
+    @Mapping(target = "publications", source = "products")
+    MiracleSummaryDto toSummary(Miracle miracle);
+    @Mapping(target = "publications", source = "products")
+    @Mapping(target = "dn", source = "dn")
+    MiracleDetailDto toDetail(Miracle miracle);
+}

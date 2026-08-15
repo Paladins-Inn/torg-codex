@@ -28,44 +28,47 @@ package de.paladinsinn.drivethru.products;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.paladinsinn.drivethru.resource.DriveThruResource;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 /**
  * A product owned by a DriveThruRPG customer.
  */
-@Jacksonized
-@SuperBuilder(toBuilder = true, setterPrefix = "")
-@RequiredArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
 @Getter
+@Setter
 @ToString(doNotUseGetters = true, includeFieldNames = true, onlyExplicitlyIncluded = true)
-@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
 public class OwnedProduct extends DriveThruResource {
 
     @JsonProperty("products_id")
     @ToString.Include
     @EqualsAndHashCode.Include
-    private final int id;
+    private int id;
 
     @JsonProperty("products_name")
     @ToString.Include
-    private final String name;
+    private String name;
 
     @JsonProperty("is_archived")
-    private final Optional<String> archived;
+    private String archived;
 
     @JsonProperty("cover_url")
-    private final Optional<String> coverURL;
+    private String coverURL;
 
     @JsonProperty("date_purchased")
     @ToString.Include
-    private final Optional<OffsetDateTime> datePurchased;
-}
+    private OffsetDateTime datePurchased;
 
+    public Optional<String> getArchived() { return Optional.ofNullable(archived); }
+    public Optional<String> getCoverURL() { return Optional.ofNullable(coverURL); }
+    public Optional<OffsetDateTime> getDatePurchased() { return Optional.ofNullable(datePurchased); }
+}

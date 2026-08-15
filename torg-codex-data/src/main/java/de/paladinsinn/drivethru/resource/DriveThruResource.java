@@ -27,16 +27,14 @@ package de.paladinsinn.drivethru.resource;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 /**
  * Base class for all DriveThruRPG API resources.
  */
-@Jacksonized
-@SuperBuilder(toBuilder = true, setterPrefix = "")
+@JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 public class DriveThruResource implements Serializable {
 }
-

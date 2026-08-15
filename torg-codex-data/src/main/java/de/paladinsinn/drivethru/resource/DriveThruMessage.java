@@ -28,13 +28,14 @@ package de.paladinsinn.drivethru.resource;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 /**
  * Wrapper for a single-object DriveThruRPG API response.
@@ -43,9 +44,10 @@ import lombok.extern.jackson.Jacksonized;
  *
  * @param <T> payload type
  */
-@Jacksonized
-@SuperBuilder(toBuilder = true, setterPrefix = "")
-@RequiredArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
+@Getter
+@Setter
 @ToString(doNotUseGetters = true, includeFieldNames = true, onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class DriveThruMessage<T> {
@@ -53,16 +55,15 @@ public class DriveThruMessage<T> {
     @JsonProperty("status")
     @EqualsAndHashCode.Include
     @ToString.Include
-    private final String status;
+    private String status;
 
     @JsonProperty("message")
     @EqualsAndHashCode.Include
     @ToString.Include
-    private final T message;
+    private T message;
 
     @JsonIgnore
     public Optional<T> getData() {
         return Optional.ofNullable(message);
     }
 }
-

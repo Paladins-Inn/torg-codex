@@ -25,34 +25,33 @@
 
 package de.paladinsinn.drivethru.publishers;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.paladinsinn.drivethru.resource.DriveThruResource;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 /**
  * A publisher from DriveThruRPG.
  */
-@Jacksonized
-@SuperBuilder(toBuilder = true, setterPrefix = "")
-@RequiredArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
 @Getter
+@Setter
 @ToString(doNotUseGetters = true, includeFieldNames = true)
-@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
 public class Publisher extends DriveThruResource {
 
     /** DriveThruRPG publisher id. */
     @JsonProperty("publishers_id")
     @EqualsAndHashCode.Include
-    private final int publisherId;
+    private int publisherId;
 
     /** DriveThruRPG publisher name. */
     @JsonProperty("publishers_name")
-    private final String publisherName;
+    private String publisherName;
 }
-

@@ -33,6 +33,7 @@
   <properties>
     <java.version>25</java.version>
     <datasource-micrometer.version>2.2.1</datasource-micrometer.version>
+    <mapstruct.version>1.6.3</mapstruct.version>
     <spring-cloud.version>2025.1.1</spring-cloud.version>
     <spring-modulith.version>2.0.6</spring-modulith.version>
   </properties>
@@ -64,6 +65,17 @@
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-aspectj</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+      <version>${mapstruct.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>de.paladins-inn.torg.codex</groupId>
       <artifactId>torg-codex-data</artifactId>
@@ -109,14 +121,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security-oauth2-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -227,16 +231,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-quartz-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security-oauth2-client-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security-oauth2-resource-server-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -358,12 +352,22 @@
             <configuration>
               <annotationProcessorPaths>
                 <path>
+                  <groupId>org.projectlombok</groupId>
+                  <artifactId>lombok-mapstruct-binding</artifactId>
+                  <version>0.2.0</version>
+                </path>
+                <path>
                   <groupId>org.springframework.boot</groupId>
                   <artifactId>spring-boot-configuration-processor</artifactId>
                 </path>
                 <path>
                   <groupId>org.projectlombok</groupId>
                   <artifactId>lombok</artifactId>
+                </path>
+                <path>
+                  <groupId>org.mapstruct</groupId>
+                  <artifactId>mapstruct-processor</artifactId>
+                  <version>${mapstruct.version}</version>
                 </path>
               </annotationProcessorPaths>
             </configuration>
@@ -378,7 +382,17 @@
               <annotationProcessorPaths>
                 <path>
                   <groupId>org.projectlombok</groupId>
+                  <artifactId>lombok-mapstruct-binding</artifactId>
+                  <version>0.2.0</version>
+                </path>
+                <path>
+                  <groupId>org.projectlombok</groupId>
                   <artifactId>lombok</artifactId>
+                </path>
+                <path>
+                  <groupId>org.mapstruct</groupId>
+                  <artifactId>mapstruct-processor</artifactId>
+                  <version>${mapstruct.version}</version>
                 </path>
               </annotationProcessorPaths>
             </configuration>

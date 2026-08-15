@@ -31,11 +31,12 @@ public abstract class TorgEntity {
     private String name;
 
     /**
-     * Access clearance level for product-gating (e.g. {@code "α"}, {@code "β"}).
+     * Access clearance level for product-gating.
      * {@code null} means publicly accessible.
+     * Stored as the Greek symbol (e.g. {@code "α"}) via {@link ClearanceLevelConverter}.
      */
     @Column(name = "clearance_level", length = 4)
-    private String clearanceLevel;
+    private ClearanceLevel clearanceLevel;
 
     /**
      * The {@link Censor} to use when rendering product-gated text fields.

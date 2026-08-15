@@ -28,44 +28,44 @@ package de.paladinsinn.drivethru.token;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.paladinsinn.drivethru.resource.DriveThruResource;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 /**
  * An access token for the DriveThruRPG API.
  */
-@Jacksonized
-@SuperBuilder(toBuilder = true, setterPrefix = "")
-@RequiredArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
 @Getter
+@Setter
 @ToString(includeFieldNames = true, doNotUseGetters = true, onlyExplicitlyIncluded = true)
 public class DrivethruToken extends DriveThruResource {
 
     @JsonProperty("access_token")
-    private final String accessToken;
+    private String accessToken;
 
     @JsonProperty("customers_id")
     @ToString.Include
-    private final String customerId;
+    private String customerId;
 
     @JsonProperty("expires")
     @ToString.Include
-    private final LocalDateTime expireTime;
+    private LocalDateTime expireTime;
 
     @JsonProperty("server_time")
-    private final LocalDateTime serverTime;
+    private LocalDateTime serverTime;
 
     @JsonIgnore
-    private final LocalDateTime localTime;
+    private LocalDateTime localTime;
 
     @JsonIgnore
-    private final Long expires;
+    private Long expires;
 
     /**
      * Returns the Bearer token string ready for use in an {@code Authorization} header.
@@ -77,4 +77,3 @@ public class DrivethruToken extends DriveThruResource {
         return "Bearer " + accessToken;
     }
 }
-

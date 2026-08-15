@@ -12,6 +12,9 @@
     <option name="ignoredFiles">
       <set>
         <option value="$PROJECT_DIR$/../kp-rpg-drivethru/pom.xml" />
+        <option value="$PROJECT_DIR$/../../torg-codex/torg-codex/pom.xml" />
+        <option value="$PROJECT_DIR$/../../torg-codex/torg-codex/postprocessor/pom.xml" />
+        <option value="$PROJECT_DIR$/../../torg-codex/torg-codex/web/pom.xml" />
       </set>
     </option>
   </component>

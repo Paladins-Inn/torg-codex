@@ -81,23 +81,23 @@ public class DriveThruRPGService {
 
         @SuppressWarnings("unchecked")
         final LinkedHashMap<String, String> response =
-                (LinkedHashMap<String, String>) client.getToken("Bearer " + apiKey)
-                        .getData()
-                        .orElseThrow(() -> new NoValidTokenException(apiKey));
+            client.getToken("Bearer " + apiKey)
+                    .getData()
+                    .orElseThrow(() -> new NoValidTokenException(apiKey))
+            ;
 
         final LocalDateTime serverTime = parse(response.get("server_time"));
         final LocalDateTime expireTime = parse(response.get("expires"));
         final LocalDateTime localTime  = LocalDateTime.now();
         final long expiresSeconds      = Duration.between(serverTime, expireTime).getSeconds();
 
-        final DrivethruToken token = DrivethruToken.builder()
-                .accessToken(response.get("access_token"))
-                .customerId(response.get("customers_id"))
-                .expireTime(expireTime)
-                .serverTime(serverTime)
-                .localTime(localTime)
-                .expires(expiresSeconds)
-                .build();
+        final DrivethruToken token = new DrivethruToken();
+        token.setAccessToken(response.get("access_token"));
+        token.setCustomerId(response.get("customers_id"));
+        token.setExpireTime(expireTime);
+        token.setServerTime(serverTime);
+        token.setLocalTime(localTime);
+        token.setExpires(expiresSeconds);
 
         log.debug("Obtained DriveThruRPG token. token={}", token);
         return token;
