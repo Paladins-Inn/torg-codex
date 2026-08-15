@@ -10,3 +10,5 @@
 :adr-011: xref:pandurart:arc42:09_architecture_decisions/011_markdown.adoc[&uparrow;ADR-011]
 :adr-012: xref:pandurart:arc42:09_architecture_decisions/012_zero-downtime-database-migrations.adoc[&uparrow;ADR-012]
 :adr-013: xref:pandurart:arc42:09_architecture_decisions/013_wiremock.adoc[&uparrow;ADR-013]
+:adr-014: xref:pandurart:arc42:09_architecture_decisions/014_lombok.adoc[&uparrow;ADR-014]
+:adr-015: xref:pandurart:arc42:09_architecture_decisions/015_mapstruct.adoc[&uparrow;ADR-015]

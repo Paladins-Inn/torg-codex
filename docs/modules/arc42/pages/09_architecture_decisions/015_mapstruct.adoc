@@ -1,0 +1,91 @@
+:adr-title: Converting between layers with MapStruct
+:adr-state: Accepted
+:adr-date: 2026-08-15
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 015
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+Hexagonal architecture (ADR-005) requires strictly separated models across layers: JPA entities (persistence), domain models (business core), and DTOs (web/REST). Every request and response therefore crosses at least one model boundary:
+
+* Outbound persistence adapters must convert between JPA entities and domain models.
+* Inbound web adapters (REST controllers) must convert between domain models and DTOs.
+* Domain models MUST NOT depend on Spring or JPA (ADR-005), so conversion logic cannot live inside the domain classes themselves.
+
+Hand-written mapping code between these models is repetitive, easy to get out of sync when fields are added or renamed, and mixes cleanly with none of the layers without leaking dependencies (e.g. a hand-written mapper inside the domain module would need to know about JPA entity types).
+
+We need a standardized, compile-time-checked mapping mechanism that keeps conversion logic out of the domain core while remaining consistent and low-maintenance across all layer boundaries.
+
+== Decision
+
+We choose **MapStruct** as the standard mapping framework for all conversions between JPA entities, domain models, and DTOs.
+
+We mandate the following usage:
+
+1. **Placement:**
+   - Domain <-> JPA entity mappers live in the outbound persistence adapter package, next to the adapter that uses them; they MUST NOT be referenced from or placed inside domain modules.
+   - Domain <-> DTO mappers live in the inbound web adapter package (alongside REST controllers).
+   - Mappers MUST NOT be used to smuggle framework or persistence types into the domain core; the domain module only ever sees its own domain types.
+
+2. **Spring Integration:**
+   - All MapStruct mappers MUST be generated as Spring components (`componentModel = "spring"`) so they can be injected into adapters like any other collaborator.
+
+3. **Shared Mapping Rules:**
+   - Common conversion rules (e.g. shared value-object mappings, enum mappings) are centralized and reused via `TorgMappingSupport` (or an equivalent shared mapping configuration) rather than duplicated across mappers.
+
+4. **DTO Shape:**
+   - Mappers produce summary DTOs for list endpoints and detail DTOs for single-item endpoints, keeping REST controllers thin and free of manual field-by-field conversion code.
+
+5. **Compile-Time Safety:**
+   - Mapping code is generated at compile time; unmapped target properties MUST be treated as build warnings/errors (not silently ignored) so that model drift between layers is caught early.
+
+== Consequences
+
+=== Benefits
+
+* **Compile-Time Verified:** Mapping methods are generated and type-checked at build time; renamed or removed fields surface as compile errors instead of silent runtime bugs.
+* **Performance:** Generated mapping code is plain Java method calls with no reflection at runtime, unlike reflection-based mappers.
+* **Clean Layer Separation:** Keeps conversion logic in the adapters where it belongs, letting the domain module stay framework- and persistence-agnostic (ADR-005, ADR-014).
+* **Consistency:** Shared mapping configuration (`TorgMappingSupport`) avoids duplicated, drifting conversion rules across mappers.
+* **Low Maintenance:** Adding a field to a domain model or DTO typically requires no mapper code changes when property names match; MapStruct infers direct mappings automatically.
+
+=== Challenges
+
+* **Generated Code Location:** Generated mapper implementations are build artifacts (`target/generated-sources`); reviewers must inspect the mapper *interface* and its annotations, not hand-edit generated code.
+* **Explicit Mapping for Renames:** Fields with different names or nested/derived values require explicit `@Mapping` annotations, which must be kept up to date as models evolve.
+* **Build Tooling:** Requires the MapStruct annotation processor (and its interaction with Lombok's own annotation processor, see ADR-014) to be correctly ordered in the Maven build.
+
+== Options
+
+=== Option 1: MapStruct for all Domain <-> JPA and Domain <-> DTO conversions (Selected)
+* Compile-time safety, no runtime reflection overhead, mature Spring Boot integration, consistent across all layer boundaries.
+
+=== Option 2: Hand-written mapper classes
+* Full control but repetitive, error-prone on model drift, and increases review burden for every model change.
+
+=== Option 3: Reflection-based mapping libraries (e.g. ModelMapper, Dozer)
+* Convenient initially but relies on runtime reflection (slower, harder to debug), with mapping errors surfacing only at runtime instead of compile time.
+
+== Further Reading
+
+* xref:09_architecture_decisions/005_hexagonal-architecture.adoc[]
+* xref:09_architecture_decisions/014_lombok.adoc[]
+* https://mapstruct.org/documentation/stable/reference/html/[MapStruct Reference Guide]
+
+<<<

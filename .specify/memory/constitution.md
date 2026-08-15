@@ -5,7 +5,7 @@
 ### I. Hexagonal Architecture & Clean Ports
 Business and domain logic MUST remain at the center of the system, decoupled from framework, database, and transport concerns (ADR-005, concept: hexagonal-architecture).
 - Domain modules MUST NOT depend on the Spring Framework or JPA.
-- Domain objects SHOULD use Lombok (including Lombok constructors like `@AllArgsConstructor`, `@Builder`, etc.) to minimize boilerplate.
+- Domain objects SHOULD use Lombok (including Lombok constructors like `@AllArgsConstructor`, `@Builder`, etc.), `@Slf4j` for logging, and `@EqualsAndHashCode`/`@ToString`/`@Getter` to minimize boilerplate (ADR-014). JPA entities MUST restrict `@EqualsAndHashCode` to the identity field only (`onlyExplicitlyIncluded = true`).
 - Bean validation MUST be used outside of constructors (e.g., in domain services, use cases, or dedicated factory methods) rather than directly in the domain constructors.
 - Separate models MUST be used for persistence (JPA entities) and the Domain core.
 - Application services expose use cases through ports (interfaces).
@@ -13,7 +13,7 @@ Business and domain logic MUST remain at the center of the system, decoupled fro
 - Adapters translate between external protocols and domain ports. REST controllers are inbound adapters; Persistence implementations are outbound adapters.
 - Dependencies MUST always point inward toward the domain/application core.
 - Module boundaries MUST be enforceable through automated architecture tests.
-- Mapping between layers (Domain <-> DTOs, Domain <-> JPA Entities) MUST be done using MapStruct.
+- Mapping between layers (Domain <-> DTOs, Domain <-> JPA Entities) MUST be done using MapStruct (`componentModel = "spring"`), placed in the adapter package that performs the conversion, never inside domain modules (ADR-015).
 
 ### II. Self-Contained Systems & Asynchronous Integration
 Services operate as autonomous vertical slices (UI, backend logic, persistence) with no shared databases or synchronous inter-service runtime couplings (ADR-003, concepts: scs, asynchronus-data-handling).
@@ -84,5 +84,5 @@ All new features, schema updates, external integrations, and bug fixes MUST incl
 - Amendments require an approved Architecture Decision Record (ADR) and updates to `docs/modules/arc42`.
 - All PRs, code reviews, and AI-generated plans must verify compliance with this constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-08-15
+**Version**: 1.0.1 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-08-15
 

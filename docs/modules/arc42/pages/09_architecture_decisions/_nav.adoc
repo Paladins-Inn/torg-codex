@@ -11,3 +11,5 @@
 **** xref:pandurart:arc42:09_architecture_decisions/011_markdown.adoc[]
 **** xref:pandurart:arc42:09_architecture_decisions/012_zero-downtime-database-migrations.adoc[]
 **** xref:pandurart:arc42:09_architecture_decisions/013_wiremock.adoc[]
+**** xref:pandurart:arc42:09_architecture_decisions/014_lombok.adoc[]
+**** xref:pandurart:arc42:09_architecture_decisions/015_mapstruct.adoc[]

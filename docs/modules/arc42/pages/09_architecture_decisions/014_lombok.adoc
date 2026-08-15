@@ -1,0 +1,93 @@
+:adr-title: Reducing boilerplate with Lombok
+:adr-state: Accepted
+:adr-date: 2026-08-15
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 014
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+The {system} application separates persistence models (JPA entities), domain models, and DTOs (ADR-005). This separation of models, combined with strict architecture layering, multiplies the number of classes that need constructors, getters, `equals`/`hashCode`/`toString`, builders, and loggers.
+
+Hand-writing this boilerplate by hand is repetitive and error-prone:
+
+* Constructors for immutable domain objects and value types must be kept in sync with fields as they evolve.
+* Correct and consistent `equals`/`hashCode`/`toString` implementations are easy to get subtly wrong (e.g. forgetting a field, breaking symmetry, or leaking sensitive data into `toString`).
+* Logger fields (`private static final Logger log = LoggerFactory.getLogger(...)`) are copy-pasted into almost every class.
+* Builders for objects with many optional fields (domain models, JPA entities, DTOs) are tedious to hand-write and maintain.
+
+We need a standardized, low-boilerplate approach that works consistently across domain objects, JPA entities, and DTOs, without pulling framework or persistence concerns into the domain (ADR-005).
+
+== Decision
+
+We choose **Project Lombok** as the standard mechanism to eliminate boilerplate across all layers (domain, application, persistence, web).
+
+We mandate the following usage:
+
+1. **Constructors:**
+   - Domain objects and value types use Lombok constructor annotations (`@NoArgsConstructor`, `@AllArgsConstructor`, `@RequiredArgsConstructor`) instead of hand-written constructors.
+   - Bean validation annotations (`@NotNull`, `@Size`, etc.) MUST be placed on fields, not inside constructor bodies, so that Lombok-generated constructors remain the single source of object creation (see constitution Principle I).
+
+2. **Logging:**
+   - Use Lombok's `@Slf4j` annotation to inject an SLF4J `Logger` field (`log`) instead of manually declaring logger fields.
+
+3. **`equals`, `hashCode`, `toString`:**
+   - Use `@EqualsAndHashCode` and `@ToString` where value semantics are required (domain value objects, DTOs).
+   - JPA entities use `@EqualsAndHashCode(onlyExplicitlyIncluded = true)` restricted to the identity field (typically the UUID primary key) to avoid proxy-initialization and collection-hashing pitfalls typical of JPA-managed entities.
+   - Exclude sensitive or lazily-loaded fields explicitly via `@EqualsAndHashCode.Exclude` / `@ToString.Exclude` (e.g. large collections, encrypted fields, credentials).
+
+4. **Getters/Setters:**
+   - Use `@Getter` (and `@Setter` only where mutability is required, e.g. JPA entities) instead of hand-written accessors.
+   - Prefer immutable domain objects: `@Getter` without `@Setter`, combined with constructors/builders.
+
+5. **Builders:**
+   - Use `@Builder` (combined with `@AllArgsConstructor` where a matching all-args constructor is also needed) for objects with several optional fields or fluent construction needs, across domain models, JPA entities, and DTOs.
+
+== Consequences
+
+=== Benefits
+
+* **Less Boilerplate:** Classes shrink to fields plus annotations; constructors, accessors, `equals`/`hashCode`/`toString`, loggers, and builders are generated at compile time.
+* **Consistency:** A single, well-tested library generates these members uniformly across all layers, reducing subtle bugs.
+* **Framework-Neutral:** Lombok is a compile-time annotation processor with no runtime dependency, so using it in domain modules does not violate the "no Spring/JPA in domain" rule (ADR-005).
+* **Readability:** Domain classes stay focused on business fields and behavior rather than mechanical code.
+
+=== Challenges
+
+* **IDE/Build Tooling:** Requires the Lombok annotation processor to be correctly configured in the build (Maven) and IDE (annotation processing enabled); a missing setup leads to compile errors that can look confusing to newcomers.
+* **`equals`/`hashCode` on JPA Entities:** Naive use of `@EqualsAndHashCode` (including all fields) on JPA entities breaks with lazy proxies and mutable collections; entities MUST explicitly restrict inclusion to the identity field.
+* **Generated Code Invisibility:** Generated methods are not visible in the source file, which can be confusing when debugging or reviewing diffs; delombok tooling or IDE support mitigates this.
+
+== Options
+
+=== Option 1: Project Lombok for constructors, logging, equals/hashCode/toString, getters, and builders (Selected)
+* Mature, widely adopted, minimal runtime footprint (compile-time only), consistent across all layers.
+
+=== Option 2: Hand-written boilerplate
+* Full control but highly repetitive, error-prone, and increases review burden for every new class.
+
+=== Option 3: Java `record` types only
+* Good fit for immutable value types and DTOs, but does not cover JPA entities (which require mutable state and framework-required no-args constructors) or logger injection; would require mixing two different boilerplate-reduction strategies.
+
+== Further Reading
+
+* xref:09_architecture_decisions/005_hexagonal-architecture.adoc[]
+* xref:09_architecture_decisions/015_mapstruct.adoc[]
+* https://projectlombok.org/features/[Project Lombok Features]
+
+<<<

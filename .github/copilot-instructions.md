@@ -24,6 +24,8 @@
 - **ADR-011 (Markdown Rendering):** Author content is stored as Markdown and rendered server-side using `flexmark-java`, sanitized via OWASP Java HTML Sanitizer, cached, and safely injected into JTE templates unescaped.
 - **ADR-012 (Zero-Downtime Database Migrations):** Breaking schema changes follow Parallel Change / Expand-and-Contract (Phase 1 Expand [nullable/defaults], Phase 2 Migrate/backfill, Phase 3 Contract [drop in separate release]). Applied via Liquibase changesets named `<ISO-date>-<sequence>-<phase>` and executed by `db-updater` with `ddl-auto: validate`.
 - **ADR-013 (WireMock HTTP Testing):** Testing of external HTTP services (e.g. DriveThruRPG API) must use WireMock with both annotation-based (`@AutoConfigureWireMock`, `@WireMockTest`) and file-based (`src/test/resources/mappings` and `src/test/resources/__files`) configurations.
+- **ADR-014 (Lombok for Boilerplate Reduction):** Use Lombok across all layers: constructor annotations (`@NoArgsConstructor`, `@AllArgsConstructor`, `@RequiredArgsConstructor`) instead of hand-written constructors; `@Slf4j` instead of manual logger fields; `@EqualsAndHashCode`/`@ToString` for value semantics (JPA entities restrict `@EqualsAndHashCode` to the identity field only); `@Getter`/`@Setter` instead of hand-written accessors; `@Builder` for objects with several optional fields.
+- **ADR-015 (MapStruct for Layer Conversion):** Use MapStruct for all Domain <-> JPA entity and Domain <-> DTO conversions. Mappers are Spring components (`componentModel = "spring"`), placed in the adapter package that uses them (never inside domain modules), and share common rules via `TorgMappingSupport`.
 
 ## Cross-Cutting Concepts (arc42 08_concepts)
 
