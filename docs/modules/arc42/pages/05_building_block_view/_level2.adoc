@@ -7,16 +7,36 @@ include::partial$config.adoc[]
 
 3+h| Level 1: Bausteine des Systems
 
+| [[bb-torg-codex-domain,torg-codex-domain]] **torg-codex-domain**
+| Framework-unabhängige Domänenschicht. Enthält die reinen Domänenmodelle (`Item`, `Spell`,
+  `Race`, `Publication`, …), Werttypen und Domain Events. Keine Spring-, JPA- oder
+  Hibernate-Abhängigkeit (weder im Maven-POM noch im Bytecode) — durchgesetzt durch
+  `DomainPurityArchitectureTest`.
+| Java 25, Lombok
+
+| [[bb-torg-codex-application,torg-codex-application]] **torg-codex-application**
+| Anwendungsschicht mit treibenden Ports (`CatalogQuery`, `CatalogReferenceQuery`) und
+  getriebenen Ports (`CatalogPersistencePort`) sowie deren framework-unabhängigen
+  Use-Case-Implementierungen (`CatalogQueryService`). Keine `@Transactional`-Annotation und
+  kein Spring-/JPA-Import — durchgesetzt durch `ApplicationPurityArchitectureTest` und
+  `TransactionBoundaryArchitectureTest`.
+| Java 25
+
 | [[bb-torg-codex-data,torg-codex-data]] **torg-codex-data**
-| Datenschicht des Systems. Stellt Entitäten, Repositories, Markup-Verarbeitung und
-  DriveThruRPG-Integration inkl. Authentifizierung bereit.
-  Wird von `torg-codex` (Frontend) als Bibliothek genutzt.
-| Java 25, Spring Boot 4, JPA, Liquibase, PostgreSQL
+| Ausgehende (getriebene) Adapter-Schicht. Stellt JPA-Persistenz-Adapter
+  (`Jpa<Area>PersistenceAdapter` mit MapStruct-Entity-Domain-Mappern), den DriveThruRPG-
+  HTTP-Client-Adapter und den Spring-`ApplicationEventPublisher`-Brücken-Adapter für
+  Domain Events bereit, alle unterhalb von `data.adapter.out..`. Zusätzlich: Entitäten,
+  Repositories, Markup-Verarbeitung und DriveThruRPG-Authentifizierung.
+| Java 25, Spring Boot 4, JPA, MapStruct, Liquibase, PostgreSQL
 
 | [[bb-torg-codex,torg-codex]] **torg-codex**
-| Frontend-Schicht des Systems. Stellt die Weboberfläche (JTE-Templates) und REST-Endpunkte
-  bereit. Derzeit noch leer.
-| Java 25, Spring Boot 4, JTE
+| Eingehende (treibende) Adapter-Schicht und Composition Root. Stellt REST-Controller
+  (`api.controller..`), die treibende Ports konsumieren, DTO-Mapper (`api.mapper..`,
+  MapStruct) und die Spring-Boot-Konfiguration (`CatalogQueryConfiguration`) bereit, die
+  getriebene-Port-Beans mit ihren Adaptern verdrahtet. Die Transaktionsgrenze
+  (`@Transactional(readOnly = true)`) für Lesezugriffe liegt an dieser eingehenden Grenze.
+| Java 25, Spring Boot 4, JTE, MapStruct
 
 
 3+h| Level 2: Bausteine von torg-codex-data

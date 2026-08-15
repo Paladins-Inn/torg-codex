@@ -10,6 +10,36 @@ The core domain is separated from the outside world (UI, DB, Messaging, etc.) vi
 This allows to easily exchange parts of the system without affecting the core domain.
 Also testing the core domain is much easier this way.
 
+The hexagonal architecture is implemented as four Maven reactor modules with a strict,
+one-directional dependency chain (`torg-codex` and `torg-codex-data` both depend on
+`torg-codex-application`, which depends on `torg-codex-domain`; `torg-codex-domain` depends
+on nothing else in the reactor):
+
+* **torg-codex-domain** — framework-independent domain models (e.g. `Item`, `Spell`, `Race`,
+  `Publication`), value objects, and domain events. Contains no Spring, JPA, or Hibernate
+  dependency at all; enforced both by Maven dependency scoping and by
+  `DomainPurityArchitectureTest`.
+* **torg-codex-application** — driving ports (e.g. `CatalogQuery`) and driven ports
+  (e.g. `CatalogPersistencePort`), plus their framework-independent use-case service
+  implementations (e.g. `CatalogQueryService`). Carries no Spring/JPA import and no
+  `@Transactional` annotation; enforced by `ApplicationPurityArchitectureTest` and
+  `TransactionBoundaryArchitectureTest`.
+* **torg-codex-data** — outbound (driven) adapters: JPA persistence adapters
+  (`Jpa<Area>PersistenceAdapter`) with MapStruct entity-to-domain mappers, the DriveThruRPG
+  HTTP client adapter, and the Spring `ApplicationEventPublisher` bridge adapter for domain
+  events, all under `data.adapter.out..`.
+* **torg-codex** — inbound (driving) adapters: REST controllers under `api.controller..`
+  that consume driving ports and map domain models to DTOs via MapStruct
+  (`api.mapper..`), plus the Spring Boot composition root
+  (`CatalogQueryConfiguration`) that wires driven-port beans to their adapters. Read
+  transaction demarcation (`@Transactional(readOnly = true)`) lives at this inbound boundary,
+  not in `torg-codex-application` or `torg-codex-domain`.
+
+An ArchUnit test suite (`torg-codex/src/test/java/.../architecture/`) continuously enforces
+these boundaries as part of the standard Maven test lifecycle, backed by a version-controlled,
+format-checked freeze list (`specs/architecture-migration/freeze-list.md`) for any temporary,
+rationale-backed exception.
+
 
 == Single Sign On
 
