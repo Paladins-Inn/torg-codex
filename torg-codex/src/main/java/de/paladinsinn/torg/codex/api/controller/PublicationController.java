@@ -6,12 +6,14 @@ import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.domain.model.Publication;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 @RestController
 @RequestMapping("/api/publications")
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PublicationController {
     private final CatalogQuery<Publication> catalogQuery;
     private final PublicationMapper mapper;
