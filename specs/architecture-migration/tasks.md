@@ -260,7 +260,7 @@ Catalog families (17, per data-model.md and contracts/rest-compatibility.md): Ar
 **Purpose**: Remove every temporary exception, finalize documentation, and run the completion gate.
 
 - [X] T125 [P] Remove any remaining deprecated transitional classes/packages left over from the pre-migration `torg-codex-data/.../data/application` structure (if any remain beyond T041)
-- [ ] T126 Resolve and remove every remaining entry in `specs/architecture-migration/freeze-list.md`, confirming the corresponding ArchUnit rule now passes without suppression for each one
+- [X] T126 Resolve and remove every remaining entry in `specs/architecture-migration/freeze-list.md`, confirming the corresponding ArchUnit rule now passes without suppression for each one
 - [ ] T127 Confirm `specs/architecture-migration/freeze-list.md` has zero open entries and update its status header to "Migration complete"
 - [ ] T128 [P] Update `docs/modules/arc42/pages/04_solution_strategy.adoc` and `docs/modules/arc42/pages/02_architecture_constraints.adoc` (adding a building-block view page if none exists) to reflect the finalized four-module hexagonal structure, per FR-027
 - [ ] T129 [P] Add a final validation note to `specs/architecture-migration/quickstart.md` recording that the completion validation (T130) passed
