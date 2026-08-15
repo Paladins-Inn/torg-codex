@@ -6,7 +6,8 @@ architecture rules enforced by the ArchUnit tests introduced in this migration
 resolved (migrated away) or explicitly re-classified as a permanent, accepted deviation
 before the migration (Phase 6 / T126–T127) is considered complete.
 
-Status header: **Migration in progress**
+Status header: **Migration complete** (zero `open` entries; FL-007 remains as a
+permanent, spec-level `accepted deviation` — see rationale in its row above)
 
 | id | module | violating class/dependency | violated rule | rationale | baseline task | planned removal phase | status |
 |----|--------|------------------------------|----------------|-----------|----------------|------------------------|--------|
