@@ -3,7 +3,9 @@ import de.paladinsinn.torg.codex.api.dto.PowerListDetailDto;
 import de.paladinsinn.torg.codex.api.dto.PowerListSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.PowerListMapper;
 import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
-import de.paladinsinn.torg.codex.data.model.PowerList;
+import de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory;
+import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.model.PowerList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,13 +17,18 @@ import java.util.UUID;
 public class PowerListController {
     private final CatalogQuery<PowerList> catalogQuery;
     private final PowerListMapper mapper;
+    private final CurrentUserCensorFactory censorFactory;
     @GetMapping
     public List<PowerListSummaryDto> list(@RequestParam(required = false) String cosm) {
-        final var entities = cosm != null ? catalogQuery.findByCosm(cosm) : catalogQuery.findAll();
-        return entities.stream().map(mapper::toSummary).toList();
+        final var results = cosm != null ? catalogQuery.findByCosm(cosm) : catalogQuery.findAll();
+        return results.stream().map(mapper::toSummary).toList();
     }
     @GetMapping("/{id}")
     public ResponseEntity<PowerListDetailDto> getById(@PathVariable UUID id) {
-        return catalogQuery.findById(id).map(mapper::toDetail).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        final Censor censor = censorFactory.create();
+        return catalogQuery.findById(id)
+                .map(e -> mapper.toDetail(e, censor))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

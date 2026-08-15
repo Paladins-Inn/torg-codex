@@ -100,4 +100,21 @@ public class TorgMappingSupport {
     public String censorText(String rawText, @Context Censor censor) {
         return censor.apply(rawText);
     }
+
+    /**
+     * Renders every value of a raw (un-censored) text map held by a domain model using the
+     * request's {@link Censor}, preserving insertion order and keys, exactly mirroring the
+     * behavior the JPA entity map getters previously performed at read time.
+     */
+    @Named("censorMap")
+    public java.util.Map<String, String> censorMap(
+            java.util.Map<String, String> rawMap, @Context Censor censor) {
+        if (rawMap == null) return null;
+        return rawMap.entrySet().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        java.util.Map.Entry::getKey,
+                        e -> censor.apply(e.getValue()),
+                        (a, b) -> b,
+                        java.util.LinkedHashMap::new));
+    }
 }

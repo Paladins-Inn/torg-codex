@@ -1,7 +1,9 @@
 package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.ItemDetailDto;
 import de.paladinsinn.torg.codex.api.dto.ItemSummaryDto;
-import de.paladinsinn.torg.codex.data.model.Item;
+import de.paladinsinn.torg.codex.domain.model.Item;
+import de.paladinsinn.torg.codex.data.markup.Censor;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = TorgMappingSupport.class)
@@ -11,5 +13,7 @@ public interface ItemMapper {
     ItemSummaryDto toSummary(Item item);
     @Mapping(target = "cosm", source = "cosm")
     @Mapping(target = "publications", source = "products")
-    ItemDetailDto toDetail(Item item);
+    @Mapping(target = "additionalFeatures", qualifiedByName = "censorText")
+    @Mapping(target = "text", qualifiedByName = "censorText")
+    ItemDetailDto toDetail(Item item, @Context Censor censor);
 }

@@ -1,7 +1,9 @@
 package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.SpellDetailDto;
 import de.paladinsinn.torg.codex.api.dto.SpellSummaryDto;
-import de.paladinsinn.torg.codex.data.model.Spell;
+import de.paladinsinn.torg.codex.domain.model.Spell;
+import de.paladinsinn.torg.codex.data.markup.Censor;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = TorgMappingSupport.class)
@@ -10,5 +12,6 @@ public interface SpellMapper {
     SpellSummaryDto toSummary(Spell spell);
     @Mapping(target = "publications", source = "products")
     @Mapping(target = "dn", source = "dn")
-    SpellDetailDto toDetail(Spell spell);
+    @Mapping(target = "text", qualifiedByName = "censorText")
+    SpellDetailDto toDetail(Spell spell, @Context Censor censor);
 }

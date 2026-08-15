@@ -172,42 +172,42 @@ Catalog families (17, per data-model.md and contracts/rest-compatibility.md): Ar
 ### Phase 4d: Inbound adapter rewiring — composition root, controllers, DTO mappers (per catalog area)
 
 - [X] T082 [US2] Update the `articleCatalogQuery` bean in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/configuration/CatalogQueryConfiguration.java` to type `CatalogQuery`/`CatalogPersistencePort` against the `Article` domain model and wire `JpaArticlePersistenceAdapter` instead of the raw JPA entity
-- [ ] T083 [US2] Update the `cosmCatalogQuery` bean in `CatalogQueryConfiguration.java` to type against the `Cosm` domain model and wire `JpaCosmPersistenceAdapter`
-- [ ] T084 [US2] Update the `itemCatalogQuery` bean in `CatalogQueryConfiguration.java` to type against the `Item` domain model and wire `JpaItemPersistenceAdapter`
-- [ ] T085 [US2] Update the `miracleCatalogQuery` bean in `CatalogQueryConfiguration.java` to type against the `Miracle` domain model and wire `JpaMiraclePersistenceAdapter`
-- [ ] T086 [US2] Update the miracle-list catalog query bean in `CatalogQueryConfiguration.java` to type against the `MiracleList` domain model and wire `JpaMiracleListPersistenceAdapter`
-- [ ] T087 [US2] Update the perk catalog query bean in `CatalogQueryConfiguration.java` to type against the `Perk` domain model and wire `JpaPerkPersistenceAdapter`
-- [ ] T088 [US2] Update the perk-group catalog query bean in `CatalogQueryConfiguration.java` to type against the `PerkGroup` domain model and wire `JpaPerkGroupPersistenceAdapter`
-- [ ] T089 [US2] Update the power catalog query bean in `CatalogQueryConfiguration.java` to type against the `Power` domain model and wire `JpaPowerPersistenceAdapter`
-- [ ] T090 [US2] Update the power-list catalog query bean in `CatalogQueryConfiguration.java` to type against the `PowerList` domain model and wire `JpaPowerListPersistenceAdapter`
-- [ ] T091 [US2] Update the publication catalog query bean in `CatalogQueryConfiguration.java` to type against the `Publication` domain model and wire `JpaPublicationPersistenceAdapter`
-- [ ] T092 [US2] Update the race catalog query bean in `CatalogQueryConfiguration.java` to type against the `Race` domain model and wire `JpaRacePersistenceAdapter`
-- [ ] T093 [US2] Update the shard catalog query bean in `CatalogQueryConfiguration.java` to type against the `Shard` domain model and wire `JpaShardPersistenceAdapter`
-- [ ] T094 [US2] Update the spell catalog query bean in `CatalogQueryConfiguration.java` to type against the `Spell` domain model and wire `JpaSpellPersistenceAdapter`
-- [ ] T095 [US2] Update the spell-list catalog query bean in `CatalogQueryConfiguration.java` to type against the `SpellList` domain model and wire `JpaSpellListPersistenceAdapter`
-- [ ] T096 [US2] Update the tag catalog query bean in `CatalogQueryConfiguration.java` to type against the `Tag` domain model and wire `JpaTagPersistenceAdapter`
-- [ ] T097 [US2] Update the threat catalog query bean in `CatalogQueryConfiguration.java` to type against the `Threat` domain model and wire `JpaThreatPersistenceAdapter`
-- [ ] T098 [US2] Update the vehicle catalog query bean in `CatalogQueryConfiguration.java` to type against the `Vehicle` domain model and wire `JpaVehiclePersistenceAdapter`
+- [X] T083 [US2] Update the `cosmCatalogQuery` bean in `CatalogQueryConfiguration.java` to type against the `Cosm` domain model and wire `JpaCosmPersistenceAdapter`
+- [X] T084 [US2] Update the `itemCatalogQuery` bean in `CatalogQueryConfiguration.java` to type against the `Item` domain model and wire `JpaItemPersistenceAdapter`
+- [X] T085 [US2] Update the `miracleCatalogQuery` bean in `CatalogQueryConfiguration.java` to type against the `Miracle` domain model and wire `JpaMiraclePersistenceAdapter`
+- [X] T086 [US2] Update the miracle-list catalog query bean in `CatalogQueryConfiguration.java` to type against the `MiracleList` domain model and wire `JpaMiracleListPersistenceAdapter`
+- [X] T087 [US2] Update the perk catalog query bean in `CatalogQueryConfiguration.java` to type against the `Perk` domain model and wire `JpaPerkPersistenceAdapter`
+- [X] T088 [US2] Update the perk-group catalog query bean in `CatalogQueryConfiguration.java` to type against the `PerkGroup` domain model and wire `JpaPerkGroupPersistenceAdapter`
+- [X] T089 [US2] Update the power catalog query bean in `CatalogQueryConfiguration.java` to type against the `Power` domain model and wire `JpaPowerPersistenceAdapter`
+- [X] T090 [US2] Update the power-list catalog query bean in `CatalogQueryConfiguration.java` to type against the `PowerList` domain model and wire `JpaPowerListPersistenceAdapter`
+- [X] T091 [US2] Update the publication catalog query bean in `CatalogQueryConfiguration.java` to type against the `Publication` domain model and wire `JpaPublicationPersistenceAdapter`
+- [X] T092 [US2] Update the race catalog query bean in `CatalogQueryConfiguration.java` to type against the `Race` domain model and wire `JpaRacePersistenceAdapter`
+- [X] T093 [US2] Update the shard catalog query bean in `CatalogQueryConfiguration.java` to type against the `Shard` domain model and wire `JpaShardPersistenceAdapter`
+- [X] T094 [US2] Update the spell catalog query bean in `CatalogQueryConfiguration.java` to type against the `Spell` domain model and wire `JpaSpellPersistenceAdapter`
+- [X] T095 [US2] Update the spell-list catalog query bean in `CatalogQueryConfiguration.java` to type against the `SpellList` domain model and wire `JpaSpellListPersistenceAdapter`
+- [X] T096 [US2] Update the tag catalog query bean in `CatalogQueryConfiguration.java` to type against the `Tag` domain model and wire `JpaTagPersistenceAdapter`
+- [X] T097 [US2] Update the threat catalog query bean in `CatalogQueryConfiguration.java` to type against the `Threat` domain model and wire `JpaThreatPersistenceAdapter`
+- [X] T098 [US2] Update the vehicle catalog query bean in `CatalogQueryConfiguration.java` to type against the `Vehicle` domain model and wire `JpaVehiclePersistenceAdapter`
 
 > Note: T082–T098 all edit the same file (`CatalogQueryConfiguration.java`) and its reference-query counterpart, so they MUST be done sequentially, each followed by a build/characterization check for that area, not in parallel.
 
 - [X] T099 [P] [US2] Update `ArticleController` and `ArticleMapper` in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/{controller,mapper}/` to consume `CatalogQuery<Article>` and map the domain model to the existing `ArticleSummaryDto`/`ArticleDetailDto` via MapStruct, preserving byte-for-byte JSON output
-- [ ] T100 [P] [US2] Update `CosmController` and `CosmMapper` to consume `CatalogQuery<Cosm>` and map to `CosmSummaryDto`/`CosmDetailDto`
-- [ ] T101 [P] [US2] Update `ItemController` and `ItemMapper` to consume `CatalogQuery<Item>` and map to `ItemSummaryDto`/`ItemDetailDto`, preserving the `cosm` query parameter behavior
-- [ ] T102 [P] [US2] Update `MiracleController` and `MiracleMapper` to consume `CatalogQuery<Miracle>` and map to `MiracleSummaryDto`/`MiracleDetailDto`
-- [ ] T103 [P] [US2] Update `MiracleListController` and `MiracleListMapper` to consume `CatalogQuery<MiracleList>` and map to `MiracleListSummaryDto`/`MiracleListDetailDto`, preserving the `cosm` query parameter behavior
-- [ ] T104 [P] [US2] Update `PerkController` and `PerkMapper` to consume `CatalogQuery<Perk>` and map to `PerkSummaryDto`/`PerkDetailDto`, preserving the `cosm` query parameter behavior
-- [ ] T105 [P] [US2] Update `PerkGroupController` and `PerkGroupMapper` to consume `CatalogQuery<PerkGroup>` and map to `PerkGroupSummaryDto`/`PerkGroupDetailDto`
-- [ ] T106 [P] [US2] Update `PowerController` and `PowerMapper` to consume `CatalogQuery<Power>` and map to `PowerSummaryDto`/`PowerDetailDto`
-- [ ] T107 [P] [US2] Update `PowerListController` and `PowerListMapper` to consume `CatalogQuery<PowerList>` and map to `PowerListSummaryDto`/`PowerListDetailDto`, preserving the `cosm` query parameter behavior
-- [ ] T108 [P] [US2] Update `PublicationController` and `PublicationMapper` to consume `CatalogQuery<Publication>` and map to `PublicationSummaryDto`/`PublicationDetailDto`
-- [ ] T109 [P] [US2] Update `RaceController` and `RaceMapper` to consume `CatalogQuery<Race>` and map to `RaceSummaryDto`/`RaceDetailDto`
-- [ ] T110 [P] [US2] Update `ShardController` and `ShardMapper` to consume `CatalogQuery<Shard>` and map to `ShardSummaryDto`/`ShardDetailDto`, preserving the `cosm` query parameter behavior
-- [ ] T111 [P] [US2] Update `SpellController` and `SpellMapper` to consume `CatalogQuery<Spell>` and map to `SpellSummaryDto`/`SpellDetailDto`
-- [ ] T112 [P] [US2] Update `SpellListController` and `SpellListMapper` to consume `CatalogQuery<SpellList>` and map to `SpellListSummaryDto`/`SpellListDetailDto`, preserving the `cosm` query parameter behavior
-- [ ] T113 [P] [US2] Update `TagController` and `TagMapper` to consume `CatalogQuery<Tag>` and map to `TagSummaryDto`/`TagDetailDto`
-- [ ] T114 [P] [US2] Update `ThreatController` and `ThreatMapper` to consume `CatalogQuery<Threat>` and map to `ThreatSummaryDto`/`ThreatDetailDto`, preserving the `cosm` query parameter behavior
-- [ ] T115 [P] [US2] Update `VehicleController` and `VehicleMapper` to consume `CatalogQuery<Vehicle>` and map to `VehicleSummaryDto`/`VehicleDetailDto`, preserving the `cosm` query parameter behavior
+- [X] T100 [P] [US2] Update `CosmController` and `CosmMapper` to consume `CatalogQuery<Cosm>` and map to `CosmSummaryDto`/`CosmDetailDto`
+- [X] T101 [P] [US2] Update `ItemController` and `ItemMapper` to consume `CatalogQuery<Item>` and map to `ItemSummaryDto`/`ItemDetailDto`, preserving the `cosm` query parameter behavior
+- [X] T102 [P] [US2] Update `MiracleController` and `MiracleMapper` to consume `CatalogQuery<Miracle>` and map to `MiracleSummaryDto`/`MiracleDetailDto`
+- [X] T103 [P] [US2] Update `MiracleListController` and `MiracleListMapper` to consume `CatalogQuery<MiracleList>` and map to `MiracleListSummaryDto`/`MiracleListDetailDto`, preserving the `cosm` query parameter behavior
+- [X] T104 [P] [US2] Update `PerkController` and `PerkMapper` to consume `CatalogQuery<Perk>` and map to `PerkSummaryDto`/`PerkDetailDto`, preserving the `cosm` query parameter behavior
+- [X] T105 [P] [US2] Update `PerkGroupController` and `PerkGroupMapper` to consume `CatalogQuery<PerkGroup>` and map to `PerkGroupSummaryDto`/`PerkGroupDetailDto`
+- [X] T106 [P] [US2] Update `PowerController` and `PowerMapper` to consume `CatalogQuery<Power>` and map to `PowerSummaryDto`/`PowerDetailDto`
+- [X] T107 [P] [US2] Update `PowerListController` and `PowerListMapper` to consume `CatalogQuery<PowerList>` and map to `PowerListSummaryDto`/`PowerListDetailDto`, preserving the `cosm` query parameter behavior
+- [X] T108 [P] [US2] Update `PublicationController` and `PublicationMapper` to consume `CatalogQuery<Publication>` and map to `PublicationSummaryDto`/`PublicationDetailDto`
+- [X] T109 [P] [US2] Update `RaceController` and `RaceMapper` to consume `CatalogQuery<Race>` and map to `RaceSummaryDto`/`RaceDetailDto`
+- [X] T110 [P] [US2] Update `ShardController` and `ShardMapper` to consume `CatalogQuery<Shard>` and map to `ShardSummaryDto`/`ShardDetailDto`, preserving the `cosm` query parameter behavior
+- [X] T111 [P] [US2] Update `SpellController` and `SpellMapper` to consume `CatalogQuery<Spell>` and map to `SpellSummaryDto`/`SpellDetailDto`
+- [X] T112 [P] [US2] Update `SpellListController` and `SpellListMapper` to consume `CatalogQuery<SpellList>` and map to `SpellListSummaryDto`/`SpellListDetailDto`, preserving the `cosm` query parameter behavior
+- [X] T113 [P] [US2] Update `TagController` and `TagMapper` to consume `CatalogQuery<Tag>` and map to `TagSummaryDto`/`TagDetailDto`
+- [X] T114 [P] [US2] Update `ThreatController` and `ThreatMapper` to consume `CatalogQuery<Threat>` and map to `ThreatSummaryDto`/`ThreatDetailDto`, preserving the `cosm` query parameter behavior
+- [X] T115 [P] [US2] Update `VehicleController` and `VehicleMapper` to consume `CatalogQuery<Vehicle>` and map to `VehicleSummaryDto`/`VehicleDetailDto`, preserving the `cosm` query parameter behavior
 - [ ] T116 [US2] Run `./mvnw clean verify` and the full Phase 3 characterization replay for all 17 areas; confirm zero regression after inbound rewiring, including RBAC/ABAC/UMA outcomes and DRM-censored fields
 
 **Checkpoint**: Every catalog area's controller and DTO mapper now depend only on the driving port and a domain model; no controller references a JPA entity.

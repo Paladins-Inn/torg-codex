@@ -3,7 +3,7 @@ import de.paladinsinn.torg.codex.api.dto.TagDetailDto;
 import de.paladinsinn.torg.codex.api.dto.TagSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.TagMapper;
 import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
-import de.paladinsinn.torg.codex.data.model.Tag;
+import de.paladinsinn.torg.codex.domain.model.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +21,9 @@ public class TagController {
     }
     @GetMapping("/{id}")
     public ResponseEntity<TagDetailDto> getById(@PathVariable UUID id) {
-        return catalogQuery.findById(id).map(mapper::toDetail).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return catalogQuery.findById(id)
+                .map(mapper::toDetail)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

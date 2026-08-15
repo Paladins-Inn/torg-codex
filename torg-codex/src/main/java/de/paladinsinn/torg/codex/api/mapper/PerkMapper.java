@@ -1,7 +1,9 @@
 package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.PerkDetailDto;
 import de.paladinsinn.torg.codex.api.dto.PerkSummaryDto;
-import de.paladinsinn.torg.codex.data.model.Perk;
+import de.paladinsinn.torg.codex.domain.model.Perk;
+import de.paladinsinn.torg.codex.data.markup.Censor;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = TorgMappingSupport.class)
@@ -11,5 +13,7 @@ public interface PerkMapper {
     PerkSummaryDto toSummary(Perk perk);
     @Mapping(target = "cosm", source = "cosm")
     @Mapping(target = "publications", source = "products")
-    PerkDetailDto toDetail(Perk perk);
+    @Mapping(target = "prerequisites", qualifiedByName = "censorText")
+    @Mapping(target = "text", qualifiedByName = "censorText")
+    PerkDetailDto toDetail(Perk perk, @Context Censor censor);
 }

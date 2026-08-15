@@ -1,60 +1,71 @@
 package de.paladinsinn.torg.codex.api.configuration;
 
-import de.paladinsinn.torg.codex.api.security.CensoringCatalogQuery;
-import de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory;
-import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaArticlePersistenceAdapter;
-import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaCatalogPersistenceAdapter;
 import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaCatalogReferenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaArticlePersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaCosmPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaItemPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaMiraclePersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaMiracleListPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaPerkPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaPerkGroupPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaPowerPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaPowerListPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaPublicationPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaRacePersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaShardPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaSpellPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaSpellListPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaTagPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaThreatPersistenceAdapter;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaVehiclePersistenceAdapter;
 import de.paladinsinn.torg.codex.data.mapper.ArticleEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.CosmEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.ItemEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.MiracleEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.MiracleListEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.PerkEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.PerkGroupEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.PowerEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.PowerListEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.PublicationEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.RaceEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.ShardEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.SpellEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.SpellListEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.TagEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.ThreatEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.VehicleEntityMapper;
+import de.paladinsinn.torg.codex.data.repository.ArticleRepository;
+import de.paladinsinn.torg.codex.data.repository.CosmRepository;
+import de.paladinsinn.torg.codex.data.repository.ItemRepository;
+import de.paladinsinn.torg.codex.data.repository.MiracleRepository;
+import de.paladinsinn.torg.codex.data.repository.MiracleListRepository;
+import de.paladinsinn.torg.codex.data.repository.PerkRepository;
+import de.paladinsinn.torg.codex.data.repository.PerkGroupRepository;
+import de.paladinsinn.torg.codex.data.repository.PowerRepository;
+import de.paladinsinn.torg.codex.data.repository.PowerListRepository;
+import de.paladinsinn.torg.codex.data.repository.PublicationRepository;
+import de.paladinsinn.torg.codex.data.repository.RaceRepository;
+import de.paladinsinn.torg.codex.data.repository.ShardRepository;
+import de.paladinsinn.torg.codex.data.repository.SpellRepository;
+import de.paladinsinn.torg.codex.data.repository.SpellListRepository;
+import de.paladinsinn.torg.codex.data.repository.TagRepository;
+import de.paladinsinn.torg.codex.data.repository.ThreatRepository;
+import de.paladinsinn.torg.codex.data.repository.VehicleRepository;
 import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
 import de.paladinsinn.torg.codex.application.service.CatalogQueryService;
 import de.paladinsinn.torg.codex.application.service.CatalogReferenceQueryService;
-import de.paladinsinn.torg.codex.data.model.Article;
-import de.paladinsinn.torg.codex.data.model.Cosm;
-import de.paladinsinn.torg.codex.data.model.Item;
-import de.paladinsinn.torg.codex.data.model.Miracle;
-import de.paladinsinn.torg.codex.data.model.MiracleList;
-import de.paladinsinn.torg.codex.data.model.Perk;
-import de.paladinsinn.torg.codex.data.model.PerkGroup;
-import de.paladinsinn.torg.codex.data.model.Power;
-import de.paladinsinn.torg.codex.data.model.PowerList;
-import de.paladinsinn.torg.codex.data.model.Publication;
-import de.paladinsinn.torg.codex.data.model.Race;
-import de.paladinsinn.torg.codex.data.model.Shard;
-import de.paladinsinn.torg.codex.data.model.Spell;
-import de.paladinsinn.torg.codex.data.model.SpellList;
-import de.paladinsinn.torg.codex.data.model.Tag;
-import de.paladinsinn.torg.codex.data.model.Threat;
-import de.paladinsinn.torg.codex.data.model.TorgEntity;
-import de.paladinsinn.torg.codex.data.model.Vehicle;
-import de.paladinsinn.torg.codex.data.repository.ArticleRepository;
-import de.paladinsinn.torg.codex.data.repository.CosmRepository;
-import de.paladinsinn.torg.codex.data.repository.ItemRepository;
-import de.paladinsinn.torg.codex.data.repository.MiracleListRepository;
-import de.paladinsinn.torg.codex.data.repository.MiracleRepository;
-import de.paladinsinn.torg.codex.data.repository.PerkGroupRepository;
-import de.paladinsinn.torg.codex.data.repository.PerkRepository;
-import de.paladinsinn.torg.codex.data.repository.PowerListRepository;
-import de.paladinsinn.torg.codex.data.repository.PowerRepository;
-import de.paladinsinn.torg.codex.data.repository.PublicationRepository;
-import de.paladinsinn.torg.codex.data.repository.RaceRepository;
-import de.paladinsinn.torg.codex.data.repository.ShardRepository;
-import de.paladinsinn.torg.codex.data.repository.SpellListRepository;
-import de.paladinsinn.torg.codex.data.repository.SpellRepository;
-import de.paladinsinn.torg.codex.data.repository.TagRepository;
-import de.paladinsinn.torg.codex.data.repository.ThreatRepository;
-import de.paladinsinn.torg.codex.data.repository.VehicleRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.function.Function;
 
 /**
  * Composition root that connects framework-specific persistence adapters to use cases.
+ *
+ * <p>Each catalog area's driving-port bean is typed against its framework-independent domain
+ * model and wired to the corresponding outbound {@code Jpa<Area>PersistenceAdapter}, which maps
+ * JPA entities to domain models via MapStruct. Product-gate rendering (censoring) is applied at
+ * the inbound (web) boundary in the controllers/DTO mappers, not here.
  */
 @Configuration
 public class CatalogQueryConfiguration {
@@ -66,89 +77,99 @@ public class CatalogQueryConfiguration {
     }
 
     @Bean
-    CatalogQuery<Cosm> cosmCatalogQuery(CosmRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, null, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Cosm> cosmCatalogQuery(
+            CosmRepository repository, CosmEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaCosmPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Item> itemCatalogQuery(ItemRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, repository::findByCosm, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Item> itemCatalogQuery(
+            ItemRepository repository, ItemEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaItemPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Miracle> miracleCatalogQuery(MiracleRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, null, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Miracle> miracleCatalogQuery(
+            MiracleRepository repository, MiracleEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaMiraclePersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<MiracleList> miracleListCatalogQuery(
-            MiracleListRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, repository::findByCosm, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.MiracleList> miracleListCatalogQuery(
+            MiracleListRepository repository, MiracleListEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaMiracleListPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Perk> perkCatalogQuery(PerkRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, repository::findByCosm, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Perk> perkCatalogQuery(
+            PerkRepository repository, PerkEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaPerkPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<PerkGroup> perkGroupCatalogQuery(
-            PerkGroupRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, null, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.PerkGroup> perkGroupCatalogQuery(
+            PerkGroupRepository repository, PerkGroupEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaPerkGroupPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Power> powerCatalogQuery(PowerRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, null, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Power> powerCatalogQuery(
+            PowerRepository repository, PowerEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaPowerPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<PowerList> powerListCatalogQuery(
-            PowerListRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, repository::findByCosm, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.PowerList> powerListCatalogQuery(
+            PowerListRepository repository, PowerListEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaPowerListPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Publication> publicationCatalogQuery(
-            PublicationRepository repository, CurrentUserCensorFactory censorFactory) {
-        return query(repository, null);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Publication> publicationCatalogQuery(
+            PublicationRepository repository, PublicationEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaPublicationPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Race> raceCatalogQuery(RaceRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, null, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Race> raceCatalogQuery(
+            RaceRepository repository, RaceEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaRacePersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Shard> shardCatalogQuery(ShardRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, repository::findByCosm, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Shard> shardCatalogQuery(
+            ShardRepository repository, ShardEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaShardPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Spell> spellCatalogQuery(SpellRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, null, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Spell> spellCatalogQuery(
+            SpellRepository repository, SpellEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaSpellPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<SpellList> spellListCatalogQuery(
-            SpellListRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, repository::findByCosm, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.SpellList> spellListCatalogQuery(
+            SpellListRepository repository, SpellListEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaSpellListPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Tag> tagCatalogQuery(TagRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, null, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Tag> tagCatalogQuery(
+            TagRepository repository, TagEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaTagPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Threat> threatCatalogQuery(ThreatRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, repository::findByCosm, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Threat> threatCatalogQuery(
+            ThreatRepository repository, ThreatEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaThreatPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<Vehicle> vehicleCatalogQuery(
-            VehicleRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, repository::findByCosm, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Vehicle> vehicleCatalogQuery(
+            VehicleRepository repository, VehicleEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaVehiclePersistenceAdapter(repository, mapper));
     }
 
     @Bean
@@ -156,20 +177,5 @@ public class CatalogQueryConfiguration {
             CosmRepository cosmRepository, PublicationRepository publicationRepository) {
         return new CatalogReferenceQueryService(
                 new JpaCatalogReferenceAdapter(cosmRepository, publicationRepository));
-    }
-
-    private <T> CatalogQuery<T> query(
-            JpaRepository<T, UUID> repository,
-            Function<String, List<T>> cosmFinder) {
-        return new CatalogQueryService<>(new JpaCatalogPersistenceAdapter<>(repository, cosmFinder));
-    }
-
-    private <T extends TorgEntity> CatalogQuery<T> censoredQuery(
-            JpaRepository<T, UUID> repository,
-            Function<String, List<T>> cosmFinder,
-            CurrentUserCensorFactory censorFactory) {
-        return new CensoringCatalogQuery<>(
-                query(repository, cosmFinder),
-                censorFactory);
     }
 }
