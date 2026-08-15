@@ -2,8 +2,10 @@ package de.paladinsinn.torg.codex.api.configuration;
 
 import de.paladinsinn.torg.codex.api.security.CensoringCatalogQuery;
 import de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory;
+import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaArticlePersistenceAdapter;
 import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaCatalogPersistenceAdapter;
 import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaCatalogReferenceAdapter;
+import de.paladinsinn.torg.codex.data.mapper.ArticleEntityMapper;
 import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
 import de.paladinsinn.torg.codex.application.service.CatalogQueryService;
@@ -58,8 +60,9 @@ import java.util.function.Function;
 public class CatalogQueryConfiguration {
 
     @Bean
-    CatalogQuery<Article> articleCatalogQuery(ArticleRepository repository, CurrentUserCensorFactory censorFactory) {
-        return censoredQuery(repository, null, censorFactory);
+    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Article> articleCatalogQuery(
+            ArticleRepository repository, ArticleEntityMapper mapper) {
+        return new CatalogQueryService<>(new JpaArticlePersistenceAdapter(repository, mapper));
     }
 
     @Bean

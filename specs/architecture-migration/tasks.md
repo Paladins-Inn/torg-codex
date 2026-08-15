@@ -171,7 +171,7 @@ Catalog families (17, per data-model.md and contracts/rest-compatibility.md): Ar
 
 ### Phase 4d: Inbound adapter rewiring — composition root, controllers, DTO mappers (per catalog area)
 
-- [ ] T082 [US2] Update the `articleCatalogQuery` bean in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/configuration/CatalogQueryConfiguration.java` to type `CatalogQuery`/`CatalogPersistencePort` against the `Article` domain model and wire `JpaArticlePersistenceAdapter` instead of the raw JPA entity
+- [X] T082 [US2] Update the `articleCatalogQuery` bean in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/configuration/CatalogQueryConfiguration.java` to type `CatalogQuery`/`CatalogPersistencePort` against the `Article` domain model and wire `JpaArticlePersistenceAdapter` instead of the raw JPA entity
 - [ ] T083 [US2] Update the `cosmCatalogQuery` bean in `CatalogQueryConfiguration.java` to type against the `Cosm` domain model and wire `JpaCosmPersistenceAdapter`
 - [ ] T084 [US2] Update the `itemCatalogQuery` bean in `CatalogQueryConfiguration.java` to type against the `Item` domain model and wire `JpaItemPersistenceAdapter`
 - [ ] T085 [US2] Update the `miracleCatalogQuery` bean in `CatalogQueryConfiguration.java` to type against the `Miracle` domain model and wire `JpaMiraclePersistenceAdapter`
@@ -191,7 +191,7 @@ Catalog families (17, per data-model.md and contracts/rest-compatibility.md): Ar
 
 > Note: T082–T098 all edit the same file (`CatalogQueryConfiguration.java`) and its reference-query counterpart, so they MUST be done sequentially, each followed by a build/characterization check for that area, not in parallel.
 
-- [ ] T099 [P] [US2] Update `ArticleController` and `ArticleMapper` in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/{controller,mapper}/` to consume `CatalogQuery<Article>` and map the domain model to the existing `ArticleSummaryDto`/`ArticleDetailDto` via MapStruct, preserving byte-for-byte JSON output
+- [X] T099 [P] [US2] Update `ArticleController` and `ArticleMapper` in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/{controller,mapper}/` to consume `CatalogQuery<Article>` and map the domain model to the existing `ArticleSummaryDto`/`ArticleDetailDto` via MapStruct, preserving byte-for-byte JSON output
 - [ ] T100 [P] [US2] Update `CosmController` and `CosmMapper` to consume `CatalogQuery<Cosm>` and map to `CosmSummaryDto`/`CosmDetailDto`
 - [ ] T101 [P] [US2] Update `ItemController` and `ItemMapper` to consume `CatalogQuery<Item>` and map to `ItemSummaryDto`/`ItemDetailDto`, preserving the `cosm` query parameter behavior
 - [ ] T102 [P] [US2] Update `MiracleController` and `MiracleMapper` to consume `CatalogQuery<Miracle>` and map to `MiracleSummaryDto`/`MiracleDetailDto`

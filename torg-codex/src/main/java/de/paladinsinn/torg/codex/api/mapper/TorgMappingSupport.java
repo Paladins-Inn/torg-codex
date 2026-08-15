@@ -29,8 +29,11 @@ import de.paladinsinn.torg.codex.api.dto.CosmRefDto;
 import de.paladinsinn.torg.codex.api.dto.DifficultyNumberDto;
 import de.paladinsinn.torg.codex.api.dto.PublicationRefDto;
 import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
+import de.paladinsinn.torg.codex.data.markup.Censor;
 import de.paladinsinn.torg.codex.data.model.DifficultyNumber;
 import lombok.RequiredArgsConstructor;
+import org.mapstruct.Context;
+import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -78,5 +81,23 @@ public class TorgMappingSupport {
     public DifficultyNumberDto toDifficultyNumberDto(DifficultyNumber dn) {
         if (dn == null) return null;
         return new DifficultyNumberDto(dn.getLevel(), dn.getText());
+    }
+
+    /** Converts a domain-model difficulty number to its DTO. */
+    public DifficultyNumberDto toDifficultyNumberDto(
+            de.paladinsinn.torg.codex.domain.model.DifficultyNumber dn) {
+        if (dn == null) return null;
+        return new DifficultyNumberDto(dn.getLevel(), dn.getText());
+    }
+
+    /**
+     * Renders a raw (un-censored) text field held by a domain model into its presentation
+     * form using the request's {@link Censor}, exactly mirroring the behavior the JPA entity
+     * text getters previously performed at read time. {@code null} raw values pass through
+     * unchanged (see {@link Censor#apply(String)}).
+     */
+    @Named("censorText")
+    public String censorText(String rawText, @Context Censor censor) {
+        return censor.apply(rawText);
     }
 }
