@@ -22,7 +22,7 @@ include::partial$config.adoc[]
 
 == Context
 
-The {system} application separates persistence models (JPA entities), domain models, and DTOs (ADR-005). This separation of models, combined with strict architecture layering, multiplies the number of classes that need constructors, getters, `equals`/`hashCode`/`toString`, builders, and loggers.
+The {system} application separates persistence models (JPA entities), domain models, and DTOs ({adr-005}). This separation of models, combined with strict architecture layering, multiplies the number of classes that need constructors, getters, `equals`/`hashCode`/`toString`, builders, and loggers.
 
 Hand-writing this boilerplate by hand is repetitive and error-prone:
 
