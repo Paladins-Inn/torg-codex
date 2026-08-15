@@ -6,12 +6,14 @@ import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.domain.model.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 @RestController
 @RequestMapping("/api/tags")
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TagController {
     private final CatalogQuery<Tag> catalogQuery;
     private final TagMapper mapper;
