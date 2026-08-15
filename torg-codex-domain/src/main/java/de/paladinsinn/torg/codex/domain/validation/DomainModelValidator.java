@@ -3,6 +3,7 @@ package de.paladinsinn.torg.codex.domain.validation;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Set;
 
@@ -17,13 +18,10 @@ import java.util.Set;
  * domain models are validated <em>after</em> construction via a dedicated method rather
  * than implicitly during construction.
  */
+@RequiredArgsConstructor
 public final class DomainModelValidator {
 
     private final Validator validator;
-
-    public DomainModelValidator(Validator validator) {
-        this.validator = validator;
-    }
 
     /**
      * Validates a fully-constructed domain model.
