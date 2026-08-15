@@ -8,12 +8,14 @@ import de.paladinsinn.torg.codex.data.markup.Censor;
 import de.paladinsinn.torg.codex.domain.model.Cosm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 @RestController
 @RequestMapping("/api/cosms")
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CosmController {
     private final CatalogQuery<Cosm> catalogQuery;
     private final CosmMapper mapper;
