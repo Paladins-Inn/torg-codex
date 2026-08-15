@@ -1,4 +1,5 @@
 package de.paladinsinn.security;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,9 +59,17 @@ public class DriveThruSecurityConfig {
      *
      * <p>This chain has {@code @Order(2)} so that application modules can override it
      * with a higher-priority chain ({@code @Order(1)}).</p>
+     *
+     * <p>Guarded by {@link ConditionalOnMissingBean} so that, when a consuming
+     * application (such as {@code torg-codex}) already defines its own
+     * {@link SecurityFilterChain}, this default chain backs off entirely instead of
+     * being registered alongside it. Spring Security rejects a context that declares
+     * two chains both matching {@code anyRequest()} at startup, so only one of the two
+     * "any request" chains may ever be present on the classpath at a time.</p>
      */
     @Bean
     @Order(2)
+    @ConditionalOnMissingBean(SecurityFilterChain.class)
     public SecurityFilterChain driveThruSecurityFilterChain(
             final HttpSecurity http,
             final AuthenticationManager authenticationManager) throws Exception {

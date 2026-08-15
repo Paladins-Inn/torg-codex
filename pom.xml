@@ -11,6 +11,8 @@
   <description>torg-codex</description>
 
   <modules>
+    <module>torg-codex-domain</module>
+    <module>torg-codex-application</module>
     <module>torg-codex</module>
     <module>torg-codex-data</module>
   </modules>
@@ -33,10 +35,21 @@
     <datasource-micrometer.version>2.2.1</datasource-micrometer.version>
     <spring-cloud.version>2025.1.1</spring-cloud.version>
     <spring-modulith.version>2.0.6</spring-modulith.version>
+    <archunit.version>1.4.1</archunit.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>de.paladins-inn.torg.codex</groupId>
+        <artifactId>torg-codex-domain</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>de.paladins-inn.torg.codex</groupId>
+        <artifactId>torg-codex-application</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-dependencies</artifactId>
@@ -57,6 +70,12 @@
         <version>${spring-modulith.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.tngtech.archunit</groupId>
+        <artifactId>archunit-junit5</artifactId>
+        <version>${archunit.version}</version>
+        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
