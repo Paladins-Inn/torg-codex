@@ -4,7 +4,7 @@ import de.paladinsinn.torg.codex.api.dto.CosmSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.CosmMapper;
 import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory;
-import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
 import de.paladinsinn.torg.codex.domain.model.Cosm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -1,7 +1,7 @@
 package de.paladinsinn.torg.codex.api.security;
 
-import de.paladinsinn.torg.codex.data.markup.Censor;
-import de.paladinsinn.torg.codex.data.markup.TorgMarkupService;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.TorgMarkupService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

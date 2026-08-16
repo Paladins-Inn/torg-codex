@@ -149,6 +149,11 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.glassfish.expressly</groupId>
+      <artifactId>expressly</artifactId>
+      <version>6.0.0</version>
+    </dependency>
+    <dependency>
       <groupId>gg.jte</groupId>
       <artifactId>jte-spring-boot-starter-4</artifactId>
       <version>3.2.3</version>
@@ -417,6 +422,36 @@
                   <version>${mapstruct.version}</version>
                 </path>
               </annotationProcessorPaths>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>de.elnarion.maven</groupId>
+        <artifactId>plantuml-generator-maven-plugin</artifactId>
+        <version>3.0.1</version>
+
+        <executions>
+          <execution>
+            <id>generate-class-diagram</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>
+                ${project.basedir}/../docs/modules/arc42/images/uml/classes
+              </outputDirectory>
+              <outputFilename>
+                torg-codex.puml
+              </outputFilename>
+
+              <scanPackages>
+                <scanPackage>de.paladinsinn.torg.codex</scanPackage>
+              </scanPackages>
+
+              <hideMethods>true</hideMethods>
+              <useShortClassNames>true</useShortClassNames>
             </configuration>
           </execution>
         </executions>

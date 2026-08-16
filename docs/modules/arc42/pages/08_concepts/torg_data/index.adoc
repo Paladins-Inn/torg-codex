@@ -104,7 +104,11 @@ The pipeline is coordinated by `TorgMarkupService`, a Spring `@Service` in the `
 The `torg-codex-data` module has no Spring Security dependency.
 It accepts a plain `Set<String>` of product IDs and does not know how those IDs were obtained.
 
-The `torg-codex` application module provides `SecuredMarkupService` (`de.paladinsinn.torg.codex.markup`), which reads the current user's Spring Security authorities, maps every `ROLE_<product-id>` authority to the product-id `<product-id>`, and delegates to `TorgMarkupService`.
+The `torg-codex` web module provides `ProductOwnershipResolver` and
+`CurrentUserCensorFactory`, which read the current user's Spring Security authorities,
+map every `ROLE_<product-id>` authority to the product-id `<product-id>`, and delegate
+to `TorgMarkupService`. DriveThruRPG authentication and its security principals live in
+the `torg-codex-application` module; the data module remains unaware of Spring Security.
 
 See xref:08_concepts/torg_data/role-mapping.adoc[] for details.
 

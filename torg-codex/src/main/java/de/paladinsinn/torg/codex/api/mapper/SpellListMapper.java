@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.SpellListDetailDto;
 import de.paladinsinn.torg.codex.api.dto.SpellListSummaryDto;
 import de.paladinsinn.torg.codex.domain.model.SpellList;
-import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

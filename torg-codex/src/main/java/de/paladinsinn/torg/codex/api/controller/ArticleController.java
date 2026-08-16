@@ -4,7 +4,7 @@ import de.paladinsinn.torg.codex.api.dto.ArticleSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.ArticleMapper;
 import de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory;
 import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
-import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
 import de.paladinsinn.torg.codex.domain.model.Article;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

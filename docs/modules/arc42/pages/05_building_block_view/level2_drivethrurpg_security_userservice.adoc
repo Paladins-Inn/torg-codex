@@ -1,0 +1,75 @@
+= Level 2: DriveThruRPG Security & UserService (torg-codex-application)
+include::partial$config.adoc[]
+
+Detailansicht der Bausteine in `de.paladinsinn.security` und
+`de.paladinsinn.drivethru.token`.
+
+== Authentifizierungsfluss
+
+[plantuml, drivethru-auth-flow]
+----
+@startuml drivethru-auth-flow
+skinparam defaultFontSize 11
+
+actor        "HTTP Client"               as client
+participant  "ApiKeyAuthenticationFilter" as filter  <<OncePerRequestFilter>>
+participant  "ProviderManager"            as mgr     <<AuthenticationManager>>
+participant  "DriveThruAuthenticationProvider" as prov <<AuthenticationProvider>>
+participant  "DriveThruRPGService"        as svc     <<@Service, @Cacheable>>
+participant  "DriveThruRPGClient"         as http    <<RestClient Proxy>>
+boundary     "DriveThruRPG API"           as api
+
+client ->> filter : HTTP\n Authorization: ApiKey <key>
+activate filter
+
+filter ->> mgr    : authenticate(\n  unauthenticated(apiKey))
+activate mgr
+
+mgr ->> prov      : authenticate(token)
+activate prov
+
+prov ->> svc      : getToken(apiKey)
+activate svc
+
+svc ->> http      : getToken("Bearer " + apiKey)
+activate http
+http ->> api      : POST /token
+api -->> http     : {access_token, customers_id, expires}
+http -->> svc     :
+deactivate http
+
+svc -->> prov     : DrivethruToken
+deactivate svc
+
+prov -->> mgr     : ApiKeyAuthenticationToken\n  .authenticated(userDetails)
+deactivate prov
+
+mgr -->> filter   :
+deactivate mgr
+
+filter ->> filter : SecurityContextHolder.set(auth)
+filter -->> client : 200 + request continues
+deactivate filter
+
+@enduml
+----
+
+== Klassendiagramm
+
+.Ports
+[plantuml,diagram-classes-ports]
+----
+include::image$uml/classes/torg-codex-application-ports.puml[]
+----
+
+.Security Classes
+[plantuml,diagram-classes-security]
+----
+include::image$uml/classes/torg-codex-application-security.puml[]
+----
+
+.DriveThru Classes
+[plantuml,diagram-classes-drivethru]
+----
+include::image$uml/classes/torg-codex-application-drivethru.puml[]
+----

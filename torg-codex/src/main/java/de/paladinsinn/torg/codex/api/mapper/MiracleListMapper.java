@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.MiracleListDetailDto;
 import de.paladinsinn.torg.codex.api.dto.MiracleListSummaryDto;
 import de.paladinsinn.torg.codex.domain.model.MiracleList;
-import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

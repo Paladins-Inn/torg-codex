@@ -1,0 +1,87 @@
+@startuml
+
+class ApiKeyAuthenticationFilter {
+	{field} {static} +API_KEY_PREFIX : String
+	{field} -authenticationManager : AuthenticationManager
+	{field} {static} -log : Logger
+	{method} #doFilterInternal ( request : HttpServletRequest , response : HttpServletResponse , filterChain : FilterChain ) : void
+}
+
+
+class ApiKeyAuthenticationToken {
+	{field} -credentials : Object
+	{field} -principal : Object
+	{method}  {static} +authenticated ( userDetails : DriveThruUserDetails ) : ApiKeyAuthenticationToken
+	{method} +eraseCredentials () : void
+	{method}  {static} +unauthenticated ( apiKey : String ) : ApiKeyAuthenticationToken
+}
+
+
+class DriveThruAuthenticationProvider {
+	{field} -catalogReferenceQuery : CatalogReferenceQuery
+	{field} -driveThruRPGService : DriveThruRPGService
+	{field} {static} -log : Logger
+	{method} +authenticate ( authentication : Authentication ) : Authentication
+	{method} -resolveOwnedCodexIds ( token : DrivethruToken ) : List
+	{method} +supports ( authClass : Class ) : boolean
+}
+
+
+class DriveThruSecurityConfig {
+	{field} {static} -log : Logger
+	{method} +authenticationManager ( provider : DriveThruAuthenticationProvider ) : AuthenticationManager
+	{method} +driveThruSecurityFilterChain ( http : HttpSecurity , authenticationManager : AuthenticationManager ) : SecurityFilterChain
+}
+
+
+class DriveThruUserDetails {
+	{field} {static} -ROLE_USER : GrantedAuthority
+	{field} -ownedCodexIds : List
+	{field} -token : DrivethruToken
+	{method} +getAuthorities () : Collection
+	{method} +getBearerToken () : String
+	{method} +getCustomerId () : String
+	{method} +getPassword () : String
+	{method} +getUsername () : String
+	{method} +isAccountNonExpired () : boolean
+	{method} +isAccountNonLocked () : boolean
+	{method} +isCredentialsNonExpired () : boolean
+	{method} +isEnabled () : boolean
+	{method} +toString () : String
+}
+
+
+class DriveThruUserService {
+	{field} -driveThruRPGService : DriveThruRPGService
+	{field} {static} -log : Logger
+	{method} +getCurrentUser () : Optional
+	{method} +getOwnedProductIds () : List
+	{method} +getOwnedProducts ( page : int , pageSize : int , archived : int ) : List
+	{method} +requireCurrentUser () : DriveThruUserDetails
+}
+
+
+annotation EnableDrivethruRPGSecurity
+
+class NotLoggedInUserDetails {
+	{field} {static} -AUTHORITIES : List
+	{field} {static} +FREE_PRODUCT_ID : String
+	{field} {static} -OWNED_CODEX_IDS : List
+	{field} {static} +USERNAME : String
+	{method} +getOwnedCodexIds () : List
+	{method} +getPassword () : String
+	{method} +isAccountNonExpired () : boolean
+	{method} +isAccountNonLocked () : boolean
+	{method} +isCredentialsNonExpired () : boolean
+	{method} +isEnabled () : boolean
+	{method} +toString () : String
+}
+
+
+
+
+NotLoggedInUserDetails *--  NotLoggedInUserDetails : INSTANCE
+
+hide methods
+
+@enduml

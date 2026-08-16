@@ -1,0 +1,61 @@
+:adr-title: Application Module Integration Boundaries
+:adr-state: Accepted
+:adr-date: 2026-08-16
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 016
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+The DriveThruRPG client and API-key security packages were located in
+`torg-codex-data`, although they are application integration concerns and are
+consumed by the web application's authentication and outbound HTTP flow. This
+made the reusable data module appear to own security and external-service
+integration in addition to persistence and markup processing.
+
+The application module already owns the driving and driven ports used by these
+integrations. The data module depends on that module for the
+`DriveThruRpgProductPort` adapter, so moving the concrete integration packages
+does not introduce a dependency cycle.
+
+== Decision
+
+Move the packages `de.paladinsinn.drivethru` and `de.paladinsinn.security`,
+including all subpackages and their Spring configuration, from
+`torg-codex-data` to `torg-codex-application`. Preserve their fully qualified
+class names and public APIs.
+
+The `torg-codex-application` module owns the required Spring Web, Spring
+Security, and Spring Cache dependencies. `torg-codex-data` remains responsible
+for JPA persistence, Liquibase, markup processing, and persistence/event
+adapters, and keeps no production dependency on Spring Security for these
+packages.
+
+== Consequences
+
+* `torg-codex-data` remains reusable without the DriveThruRPG authentication
+  implementation.
+* Existing imports and runtime configuration remain source-compatible because
+  fully qualified class names do not change.
+* `torg-codex-application` is no longer limited to framework-free use-case
+  services; framework-dependent integration adapters are explicitly allowed in
+  its outer application boundary.
+* The application module's class diagram includes the moved integration packages,
+  while the data module's diagram covers only data-owned packages.
+
+<<<

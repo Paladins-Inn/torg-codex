@@ -9,11 +9,3 @@ include::partial$whitebox-overall-system.adoc[]
 == Liste der Building Blocks
 
 include::_level2.adoc[]
-
-== Level 2: torg-codex-data
-
-include::level_2_scs.adoc[]
-
-== Level 2: Hexagonal module structure (torg-codex-domain, torg-codex-application, torg-codex-data, torg-codex)
-
-include::level_2_hexagonal.adoc[]

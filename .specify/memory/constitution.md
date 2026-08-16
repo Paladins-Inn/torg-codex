@@ -1,6 +1,71 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 2.0.0 -> 2.1.0 (MINOR: markup ownership redefined; no principle removed)
+
+Modified principles:
+- I. Hexagonal Architecture & Clean Ports
+  - Markup processing is reassigned from `torg-codex-application` to `torg-codex-domain`
+    as a framework-free domain service. `torg-codex-data` still contains persistence only;
+    security integration and DriveThruRPG integration remain in `torg-codex-application`.
+- VI. Deterministic Markdown Pipeline & Template Safety
+  - The markup pipeline is now owned by `torg-codex-domain` (framework-free), with Spring
+    bean wiring provided by `MarkupConfiguration`
+    (`de.paladinsinn.torg.codex.markup.spring`) in `torg-codex-application`.
+
+Added sections: none
+Removed sections: none
+
+Rationale: The markup pipeline is pure, deterministic domain logic (apart from the
+`commonmark` renderer) and carries no framework dependency once Spring stereotypes are
+removed. By explicit user authority (specs/002-markup-to-domain, consolidated into
+specs/003-data-persistence-boundary as Phase A) the pipeline is relocated to
+`torg-codex-domain`, and the `commonmark` dependency moves with it. Spring bean wiring is
+recreated by a framework-binding `@Configuration` in `torg-codex-application`, following the
+same pattern as the `de.paladinsinn.drivethru.*` and `de.paladinsinn.security.*`
+integrations. This supersedes the markup assignment in v2.0.0 Principle I and VI without
+removing or redefining any principle, so a MINOR bump applies. See ADR-017.
+
+Follow-up TODOs: none
+-->
+
+<!--
+Sync Impact Report
+==================
+Version change: 1.2.0 -> 2.0.0 (MAJOR: module ownership is redefined so that
+`torg-codex-data` is persistence-only and application-owned integration concerns
+are moved out of the data boundary)
+
+Modified principles:
+- I. Hexagonal Architecture & Clean Ports
+  - Made module ownership explicit: `torg-codex-data` contains persistence only;
+    markup processing, security integration, and DriveThruRPG integration belong
+    to `torg-codex-application`.
+- V. Multi-Tier Security, DRM Censorship & Data Protection
+  - Clarified that security integration is housed in `torg-codex-application`.
+- VI. Deterministic Markdown Pipeline & Template Safety
+  - Clarified that the markup pipeline is housed in `torg-codex-application`.
+
+Added sections:
+- None.
+
+Removed sections:
+- None.
+
+Rationale: The previous constitution assigned markup processing to
+`torg-codex-data` while assigning security and DriveThruRPG integration to
+`torg-codex-application`. This amendment makes the intended boundary
+unambiguous and materially redefines module ownership, requiring a MAJOR bump.
+
+Follow-up TODOs:
+- TODO(IMPLEMENTATION_ALIGNMENT): Align application and data source packages,
+  module dependencies, tests, and architecture documentation with this
+  persistence-only data boundary. This implementation intent is deferred.
+-->
+
+<!--
+Sync Impact Report
+==================
 Version change: 1.0.1 -> 1.1.0 (MINOR: new mandatory governance rule added; no principle removed/redefined)
 
 Modified principles:
@@ -38,6 +103,29 @@ Follow-up TODOs (deferred, non-governance, tracked as Next Actions below):
   anonymous and a real product-owning auth variant for known gated content.
 -->
 
+<!--
+Sync Impact Report
+==================
+Version change: 1.1.0 -> 1.2.0 (MINOR: application module boundary expanded to
+own external integration and API-key security packages; no existing principle removed)
+
+Modified principles:
+- I. Hexagonal Architecture & Clean Ports
+  - Clarified the four-module ownership model: `torg-codex-application` owns
+    DriveThruRPG and API-key security integration; `torg-codex-data` owns persistence,
+    Liquibase, markup processing, and data adapters.
+
+Added sections:
+- None.
+
+Removed sections:
+- None.
+
+Rationale: The concrete `de.paladinsinn.drivethru` and `de.paladinsinn.security`
+packages were moved from `torg-codex-data` to `torg-codex-application` while preserving
+their fully qualified names and public APIs. ADR-016 records the boundary decision.
+-->
+
 # TORG-CODEX Constitution
 
 ## Core Principles
@@ -54,6 +142,7 @@ Business and domain logic MUST remain at the center of the system, decoupled fro
 - Dependencies MUST always point inward toward the domain/application core.
 - Module boundaries MUST be enforceable through automated architecture tests.
 - Mapping between layers (Domain <-> DTOs, Domain <-> JPA Entities) MUST be done using MapStruct (`componentModel = "spring"`), placed in the adapter package that performs the conversion, never inside domain modules (ADR-015).
+- `torg-codex-data` MUST contain persistence concerns only: JPA entities and repositories, Liquibase migrations, and persistence adapters. It MUST NOT contain markup, security, or DriveThruRPG integration. Markup processing MUST be housed in `torg-codex-domain` (framework-free); security and DriveThruRPG integration MUST be housed in `torg-codex-application`.
 
 ### II. Self-Contained Systems & Asynchronous Integration
 Services operate as autonomous vertical slices (UI, backend logic, persistence) with no shared databases or synchronous inter-service runtime couplings (ADR-003, concepts: scs, asynchronus-data-handling).
@@ -78,14 +167,14 @@ Database schema changes MUST follow the Parallel Change / Expand-and-Contract pa
 Security combines centralized identity, role-based access, fine-grained attribute control, and DRM content censorship (ADR-007, ADR-010, concepts: rbac, abac, data-protection).
 - Identity management uses Keycloak OIDC (JWT); coarse gating is handled via Spring Security RBAC roles (`Player`, `GM`, `Third Party Systems`, `Orga`, `Judge`, `Admin`).
 - Fine-grained object permissions and DRM use ABAC / UMA 2.0 scope-based permissions per resource type.
-- Content rendering MUST be censored based on product ownership authorities (`ROLE_<codex-id>`) present as Spring Security `GrantedAuthority` entries in the current `SecurityContext`. Repository queries, entities, controllers, and mappers MUST NOT bypass censoring.
+- Security integration and content rendering MUST be housed in `torg-codex-application`. Content rendering MUST be censored based on product ownership authorities (`ROLE_<codex-id>`) present as Spring Security `GrantedAuthority` entries in the current `SecurityContext`. Repository queries, entities, controllers, and mappers MUST NOT bypass censoring.
 - There MUST be exactly one authorization mechanism that derives product ownership for censoring/gated-content rendering across the entire application. This mechanism MUST resolve ownership from `ROLE_<codex-id>` `GrantedAuthority` entries in the current `SecurityContext`, independent of the authentication method or principal type (API key, OIDC, or any other) used to establish that context. Deriving ownership from a principal-type-specific lookup (e.g., a single authentication-provider's user-details object) instead of, or in addition to, the shared `ROLE_<codex-id>`-authority mechanism is prohibited. Parallel or duplicate censoring/ownership-resolution implementations (e.g., two unrelated services each deciding product ownership differently) MUST NOT coexist; any newly discovered duplicate MUST be consolidated into the single authorized mechanism as a priority fix, not left as parallel dead or partially-wired code.
 - Automated tests verifying censored/gated content MUST assert on an actual difference in rendered output between at least two distinct ownership states (e.g., anonymous vs. an authenticated owner of the relevant product) for content that is known to contain product-gated markup. Tests that only assert byte-for-byte equality between such variants without ever exercising a case where the two states are expected to differ MUST NOT be treated as proof that role-based censoring functions correctly.
 - Sensitive fields at rest MUST be encrypted application-side using JPA `AttributeConverter` (ADR-010).
 - Data privacy rules MUST be strictly enforced: external IdP identity tuples map to UUIDs, 3-year account retention post-closure, and audit trails preserved for account lifetimes.
 
 ### VI. Deterministic Markdown Pipeline & Template Safety
-Content is authored and stored as Markdown and rendered server-side with strict sanitization and order (ADR-011, concept: jte-with-markdown).
+Content is authored and stored as Markdown and rendered server-side by the `torg-codex-domain` markup pipeline (framework-free), with Spring bean wiring provided by `MarkupConfiguration` (`de.paladinsinn.torg.codex.markup.spring`) in `torg-codex-application`, with strict sanitization and order (ADR-011, ADR-017, concept: jte-with-markdown).
 - Parsing and rendering MUST use `flexmark-java` followed by OWASP Java HTML Sanitizer before caching.
 - Templates (JTE) receive pre-sanitized safe HTML attributes. Raw unsanitized HTML input from users MUST NEVER be rendered unescaped.
 - Markup rendering order MUST be maintained: conditional product blocks -> entity references -> raw HTML -> game tokens -> CommonMark.
@@ -106,9 +195,16 @@ All new features, schema updates, external integrations, and bug fixes MUST incl
 ## Additional Constraints & Architecture Decisions
 
 - **Architectural Decision Records (ADR-001):** All high-level architectural proposals and changes must be documented via an ADR in `docs/modules/arc42/pages/09_architecture_decisions` and accepted before implementation code is merged.
-- **Two-Module Maven Reactor:**
-  - `torg-codex-data`: Reusable data layer (JPA entities, Liquibase migrations, DriveThruRPG client, markup pipeline). Enabled via `@EnableTorgData`.
-  - `torg-codex`: Spring Boot web application (REST controllers, JTE templates, DTO mappers).
+- **Four-Module Maven Reactor:**
+  - `torg-codex-domain`: Framework-independent domain models, events, and the markup
+    processing pipeline.
+  - `torg-codex-application`: Driving/driven ports, use-case services, the Spring bean
+    wiring for the markup pipeline (`MarkupConfiguration`), security integration, and
+    DriveThruRPG integration.
+  - `torg-codex-data`: Persistence only: JPA entities/repositories, Liquibase
+    migrations, and persistence adapters. Enabled via `@EnableTorgData`.
+  - `torg-codex`: Spring Boot web application (REST controllers, JTE templates, DTO
+    mappers, and censoring composition).
 - **Proprietary Fixtures:** Game data CSV files are largely proprietary and git-ignored. Code and tests must run against the public free-tier fixture set.
 
 ## Development Workflow & Quality Gates
@@ -124,7 +220,6 @@ All new features, schema updates, external integrations, and bug fixes MUST incl
 
 - The TORG-CODEX Constitution supersedes all informal practices.
 - Amendments require an approved Architecture Decision Record (ADR) and updates to `docs/modules/arc42`.
-- All PRs, code reviews, and AI-generated plans must verify compliance with this constitution.
+- All PRs, code reviews, and AI-generated plans MUST verify compliance with this constitution.
 
-**Version**: 1.1.0 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-08-16
-
+**Version**: 2.1.0 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-08-16

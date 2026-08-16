@@ -1,0 +1,79 @@
+:adr-title: Markup Pipeline as Framework-Free Domain Service
+:adr-state: Accepted
+:adr-date: 2026-08-16
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 017
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+The Torg markup pipeline (`TorgMarkupService`, `Censor`, `ConditionalBlockProcessor`,
+`EntityReferenceProcessor`, `RawHtmlProcessor`, `GameTokenProcessor`, `GameTokenRegistry`,
+`EntityType`, `MarkdownProcessor`) previously lived in `torg-codex-data` and carried Spring
+stereotype annotations (`@Service`, `@Component`). This made the reusable persistence module
+own text-rendering domain logic and bound that logic to the Spring container.
+
+Constitution v2.0.0 Principle I and Principle VI assigned markup processing to
+`torg-codex-application`. However, the markup pipeline is pure, deterministic domain logic
+with no framework dependency other than the `commonmark` Markdown renderer. By explicit user
+authority (recorded in `specs/002-markup-to-domain/spec.md` and consolidated into
+`specs/003-data-persistence-boundary/spec.md` as Phase A), the pipeline is reassigned to
+`torg-codex-domain` as a framework-free domain service. This supersedes the markup assignment
+in Constitution v2.0.0 Principle I and Principle VI.
+
+== Decision
+
+Relocate the nine markup classes to the package
+`de.paladinsinn.torg.codex.domain.markup` in `torg-codex-domain`, keeping their public APIs
+and behavior unchanged. Strip all Spring stereotype annotations (`@Service`, `@Component`)
+and their imports so the domain classes remain framework-free (enforced by
+`DomainPurityArchitectureTest`).
+
+Provide the Spring bean wiring through a framework-binding adapter,
+`de.paladinsinn.torg.codex.markup.spring.MarkupConfiguration`, an `@Configuration` class in
+`torg-codex-application` that declares `@Bean` methods for the five processors and the
+aggregating `TorgMarkupService`. `GameTokenRegistry` is a static utility and receives no bean
+definition. This follows the same framework-binding pattern already used for the
+`de.paladinsinn.drivethru.*` and `de.paladinsinn.security.*` integrations (see ADR-016): the
+configuration lives in the `torg-codex-application` Maven artifact but outside the checked
+`de.paladinsinn.torg.codex.application.*` sub-tree, so `ApplicationPurityArchitectureTest`
+remains satisfied.
+
+Move the `org.commonmark:commonmark:0.24.0` dependency from `torg-codex-data` to
+`torg-codex-domain` (compile scope), since the Markdown renderer is now consumed exclusively
+by the domain markup classes. Update the 33 consumer import paths from
+`de.paladinsinn.torg.codex.data.markup.*` to `de.paladinsinn.torg.codex.domain.markup.*`
+(import-path changes only, no logic changes). The 6 markup unit tests move to
+`torg-codex-domain` and instantiate the classes directly, without a Spring context.
+
+== Consequences
+
+* `torg-codex-domain` owns the markup pipeline as a pure, framework-free domain service, and
+  the `commonmark:0.24.0` dependency lives exclusively in `torg-codex-domain`.
+* `torg-codex-data` no longer contains any markup class; the data module is a persistence
+  adapter only, which unblocks the `DataPersistenceBoundaryArchitectureTest` enforcement added
+  in feature 003 Phase B.
+* Spring bean wiring for the markup pipeline is provided by `MarkupConfiguration` in
+  `torg-codex-application`; injection-based callers change only their import paths, and the
+  censoring chain (`CurrentUserCensorFactory` -> `ProductOwnershipResolver` -> `Censor`) and
+  REST behavior remain unchanged.
+* This decision supersedes the markup assignment in Constitution v2.0.0 Principle I and
+  Principle VI; the constitution is amended to v2.1.0 to record markup ownership in
+  `torg-codex-domain`.
+
+<<<

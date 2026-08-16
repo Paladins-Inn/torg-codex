@@ -200,7 +200,10 @@ The `commonmark-java` library is required for Markdown processing:
 
 == Usage Example
 
-Web controllers in the `torg-codex` application module use `SecuredMarkupService`, which resolves the current user's product IDs from Spring Security automatically.
+Web controllers in the `torg-codex` web module use `CurrentUserCensorFactory`, which
+resolves the current user's product IDs from Spring Security automatically. The
+DriveThruRPG authentication integration used to establish those authorities lives in
+`torg-codex-application`.
 See xref:08_concepts/torg_data/role-mapping.adoc[] for the full mapping concept.
 
 [source,java]
@@ -209,24 +212,25 @@ See xref:08_concepts/torg_data/role-mapping.adoc[] for the full mapping concept.
 public class CosmController {
 
     private final CosmRepository cosmRepository;
-    private final SecuredMarkupService markupService; // <1>
+    private final CurrentUserCensorFactory censorFactory; // <1>
 
     public CosmController(CosmRepository cosmRepository,
-                          SecuredMarkupService markupService) {
+                          CurrentUserCensorFactory censorFactory) {
         this.cosmRepository = cosmRepository;
-        this.markupService = markupService;
+        this.censorFactory = censorFactory;
     }
 
     @GetMapping("/cosms/{id}")
     public String showCosm(@PathVariable String id, Model model) {
         Cosm cosm = cosmRepository.findById(id).orElseThrow();
-        model.addAttribute("worldLaws", markupService.render(cosm.getWorldLaws())); // <2>
-        model.addAttribute("text",      markupService.render(cosm.getText()));
+        model.addAttribute("worldLaws", censorFactory.create().apply(cosm.getWorldLaws())); // <2>
+        model.addAttribute("text",      censorFactory.create().apply(cosm.getText()));
         return "cosm-detail";
     }
 }
 ----
-<1> `SecuredMarkupService` is in the `torg-codex` module (`de.paladinsinn.torg.codex.markup`).
+<1> `CurrentUserCensorFactory` is in the `torg-codex` module
+(`de.paladinsinn.torg.codex.api.security`).
 <2> No explicit `Set<String>` needed — product IDs are resolved from the authenticated user's `ROLE_*` authorities.
 
 

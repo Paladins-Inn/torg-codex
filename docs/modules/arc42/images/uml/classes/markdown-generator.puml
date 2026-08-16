@@ -1,0 +1,85 @@
+@startuml
+
+class Censor {
+	{field} -ownedProducts : Set
+	{method} +apply ( rawText : String ) : String
+	{method}  {static} +of ( markupService : TorgMarkupService , ownedProducts : Set ) : Censor
+	{method}  {static} +unauthenticated ( markupService : TorgMarkupService ) : Censor
+}
+
+
+class ConditionalBlockProcessor {
+	{field} {static} -IF_BLOCK : Pattern
+	{method} +process ( text : String , ownedProducts : Set ) : String
+}
+
+
+class EntityReferenceProcessor {
+	{field} {static} -ENTITY_REF : Pattern
+	{method} +process ( text : String ) : String
+}
+
+
+enum EntityType {
+	{field} +COSM
+	{field} +GROUP
+	{field} +ITEM
+	{field} +MIRACLE
+	{field} +MIRACLE_LIST
+	{field} +PERK
+	{field} +POWER
+	{field} +POWER_LIST
+	{field} +RACE
+	{field} +SHARD
+	{field} +SPELL
+	{field} +SPELL_LIST
+	{field} +THREAT
+	{field} +VEHICLE
+}
+
+
+class GameTokenProcessor {
+	{field} {static} -GAME_TOKEN : Pattern
+	{method} +process ( text : String ) : String
+}
+
+
+class GameTokenRegistry {
+	{field} {static} -KNOWN_TOKENS : Set
+	{field} {static} -TOKEN_CSS_CLASSES : Map
+	{method}  {static} +cssClassFor ( tokenName : String ) : String
+	{method}  {static} +isKnown ( tokenName : String ) : boolean
+}
+
+
+class MarkdownProcessor {
+	{field} {static} -BULLET_POINT : Pattern
+	{field} -parser : Parser
+	{field} -renderer : HtmlRenderer
+	{method} +process ( text : String ) : String
+}
+
+
+class RawHtmlProcessor {
+	{field} {static} -HTML_BLOCK : Pattern
+	{method} +process ( text : String ) : String
+}
+
+
+class TorgMarkupService {
+	{method} +render ( rawText : String , ownedProducts : Set ) : String
+}
+
+
+
+
+Censor *--  TorgMarkupService : markupService
+TorgMarkupService *--  ConditionalBlockProcessor : conditionalProcessor
+TorgMarkupService *--  EntityReferenceProcessor : entityProcessor
+TorgMarkupService *--  GameTokenProcessor : gameTokenProcessor
+TorgMarkupService *--  MarkdownProcessor : markdownProcessor
+TorgMarkupService *--  RawHtmlProcessor : rawHtmlProcessor
+
+hide methods
+
+@enduml

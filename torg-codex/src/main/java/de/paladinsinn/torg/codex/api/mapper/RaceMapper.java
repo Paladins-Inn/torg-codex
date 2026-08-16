@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.RaceDetailDto;
 import de.paladinsinn.torg.codex.api.dto.RaceSummaryDto;
 import de.paladinsinn.torg.codex.domain.model.Race;
-import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

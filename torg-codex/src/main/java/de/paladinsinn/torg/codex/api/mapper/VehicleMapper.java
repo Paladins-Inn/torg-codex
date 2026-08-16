@@ -4,7 +4,7 @@ import de.paladinsinn.torg.codex.api.dto.VehicleSummaryDto;
 import de.paladinsinn.torg.codex.api.dto.VehicleWeaponDto;
 import de.paladinsinn.torg.codex.domain.model.VehicleWeapon;
 import de.paladinsinn.torg.codex.domain.model.Vehicle;
-import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

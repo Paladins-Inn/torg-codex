@@ -6,10 +6,7 @@ include::partial$config.adoc[]
 | Requirement | Description
 
 |[[REQ-FS,Functional Suitability]] **Functional Suitability**
-|* The software **has to** manage event data.
-This should include at least:
-** Locations
-** Sessions
+|* The software offers a reference for TORG.
 
 |[[REQ-CO,Compatibility]] **Compatibility**
 |* The managed data **has to** integrate into spring-security.
@@ -40,25 +37,13 @@ This includes IT security and data protection.
 @startmindmap
 + **Requirements**
 -- Functional Suitability (FS)
---- Provide Event Management (FS01)
-----_ Locations
------_ Rooms
------_ Tables
------_ Accommodations
-----_ Events
------_ Tracks
------_ Sessions
----_ Self-Service for Users (Organizers, Speakers and Participants) (FS03)
----_ Notification System to users (FS04)
----_ Data Display for Events (FS05)
+---_ Provide a reference for TORG players and GMs (FS01)
 -- Compatibility (CO)
 ---_ Compatible with discord (CO01)
----_ Compatible with 3words (CO02)
----_ Compatible with OpenStreetMap (CO03)
----_ Compatible with VTT systems (CO04)
+---_ Compatible with VTT systems (CO02)
 -- Security (SE)
----_ Data Retention TTL (FS02)
----_ Attribute based access control (ABAC) (US06)
+---_ Data Retention TTL (SE01)
+---_ Attribute based access control (ABAC) (SE02)
 
 ++ Usability (US)
 +++_ Web based (US01)
@@ -71,6 +56,7 @@ This includes IT security and data protection.
 ++ Maintainability (MT)
 +++_ Small Team (MT01)
 +++_ 12-Factor (MT02)
++++_ Hexagonal Architecture (MT03)
 @endmindmap
 ----
 

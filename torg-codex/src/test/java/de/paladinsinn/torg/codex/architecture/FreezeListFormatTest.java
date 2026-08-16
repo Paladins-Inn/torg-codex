@@ -7,9 +7,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Verifies (T123) that every data row in {@code specs/architecture-migration/freeze-list.md}
@@ -31,7 +31,7 @@ class FreezeListFormatTest {
     @Test
     void everyFreezeListRowHasAllEightRequiredFields() {
         List<String> rows = readDataRows();
-        assertTrue(!rows.isEmpty(), "freeze-list.md should contain at least one data row (or the "
+        assertFalse(rows.isEmpty(), "freeze-list.md should contain at least one data row (or the "
                 + "explicit example accepted-deviation row); if it is now truly empty, update this "
                 + "test alongside closing the last freeze-list entry per T126/T127");
 
@@ -81,7 +81,7 @@ class FreezeListFormatTest {
 
     private static List<String> splitColumns(String line) {
         String trimmed = line.substring(1, line.length() - 1);
-        return List.of(trimmed.split("\\|", -1)).stream()
+        return Stream.of(trimmed.split("\\|", -1))
                 .map(String::trim)
                 .map(value -> value.replace("`", ""))
                 .toList();

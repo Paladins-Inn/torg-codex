@@ -5,7 +5,7 @@ include::partial$config.adoc[]
 *** xref:02_architecture_constraints.adoc[]
 include::03_system_scope_and_context/_nav.adoc[]
 ** Systems
-*** xref:04_solution_strategy.adoc[]
+include::04_solution_strategy/_nav.adoc[]
 include::05_building_block_view/_nav.adoc[]
 ** xref:06_runtime_view.adoc[]
 ** xref:07_deployment_view.adoc[]

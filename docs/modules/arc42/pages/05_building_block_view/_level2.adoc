@@ -17,17 +17,18 @@ include::partial$config.adoc[]
 | [[bb-torg-codex-application,torg-codex-application]] **torg-codex-application**
 | Anwendungsschicht mit treibenden Ports (`CatalogQuery`, `CatalogReferenceQuery`) und
   getriebenen Ports (`CatalogPersistencePort`) sowie deren framework-unabhängigen
-  Use-Case-Implementierungen (`CatalogQueryService`). Keine `@Transactional`-Annotation und
-  kein Spring-/JPA-Import — durchgesetzt durch `ApplicationPurityArchitectureTest` und
-  `TransactionBoundaryArchitectureTest`.
-| Java 25
+  Use-Case-Implementierungen (`CatalogQueryService`). Enthält außerdem die
+  DriveThruRPG-Integration und die API-Key-Sicherheitskomponenten als äußere
+  Framework-Adapter. Keine `@Transactional`-Annotation — durchgesetzt durch
+  `ApplicationPurityArchitectureTest` und `TransactionBoundaryArchitectureTest`.
+| Java 25, Spring Boot 4, Spring Security 6
 
 | [[bb-torg-codex-data,torg-codex-data]] **torg-codex-data**
 | Ausgehende (getriebene) Adapter-Schicht. Stellt JPA-Persistenz-Adapter
-  (`Jpa<Area>PersistenceAdapter` mit MapStruct-Entity-Domain-Mappern), den DriveThruRPG-
-  HTTP-Client-Adapter und den Spring-`ApplicationEventPublisher`-Brücken-Adapter für
-  Domain Events bereit, alle unterhalb von `data.adapter.out..`. Zusätzlich: Entitäten,
-  Repositories, Markup-Verarbeitung und DriveThruRPG-Authentifizierung.
+  (`Jpa<Area>PersistenceAdapter` mit MapStruct-Entity-Domain-Mappern) und den
+  Spring-`ApplicationEventPublisher`-Brücken-Adapter für Domain Events bereit, alle
+  unterhalb von `data.adapter.out..`. Zusätzlich: Entitäten, Repositories und
+  Markup-Verarbeitung.
 | Java 25, Spring Boot 4, JPA, MapStruct, Liquibase, PostgreSQL
 
 | [[bb-torg-codex,torg-codex]] **torg-codex**
@@ -39,7 +40,7 @@ include::partial$config.adoc[]
 | Java 25, Spring Boot 4, JTE, MapStruct
 
 
-3+h| Level 2: Bausteine von torg-codex-data
+3+h| Level 2: Weitere Integrations- und Datenbausteine
 
 | [[bb-dt-client,DriveThruRPG Client]] **DriveThruRPG Client**
 | HTTP-Client gegen die DriveThruRPG-REST-API. Implementiert als deklaratives Spring-6-

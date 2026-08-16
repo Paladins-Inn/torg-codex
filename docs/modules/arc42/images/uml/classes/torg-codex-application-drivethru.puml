@@ -1,0 +1,154 @@
+@startuml
+
+class DriveThruMessage {
+	{field} +message : Object
+	{field} +status : String
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +getData () : Optional
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class DriveThruMultiMessage {
+	{field} +message : List
+	{field} +status : String
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +getData () : List
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class DriveThruProperties {
+	{field} +baseUrl : String
+	{field} +connectTimeout : Duration
+	{field} +readTimeout : Duration
+}
+
+
+interface DriveThruRPGClient {
+	{method}  {abstract} +getOwnedProducts ( bearerToken : String , customerId : String , page : int , pageSize : int , archived : int ) : DriveThruMultiMessage
+	{method}  {abstract} +getProduct ( productId : String ) : DriveThruMessage
+	{method}  {abstract} +getPublisher ( publisherId : String ) : DriveThruMessage
+	{method}  {abstract} +getToken ( authorization : String ) : DriveThruMessage
+}
+
+
+class DriveThruRPGClientConfig {
+	{field} {static} -log : Logger
+	{method} -createRequestFactory ( connectTimeout : Duration , readTimeout : Duration ) : SimpleClientHttpRequestFactory
+	{method} +driveThruRPGClient ( properties : DriveThruProperties ) : DriveThruRPGClient
+}
+
+
+class DriveThruRPGConfiguration {
+}
+
+
+class DriveThruRPGService {
+	{field} {static} -DATE_FORMATTER : DateTimeFormatter
+	{field} {static} -DEFAULT_PAGE_SIZE : int
+	{field} {static} -log : Logger
+	{method} +getIdsOfOwnedProducts ( token : DrivethruToken ) : List
+	{method} +getOwnedProducts ( token : DrivethruToken , page : int , pageSize : int , archived : int ) : List
+	{method} +getOwnedProducts ( apiKey : String , page : int , pageSize : int , archived : int ) : List
+	{method} +getProduct ( productId : String ) : Optional
+	{method} +getPublisher ( publisherId : String ) : Optional
+	{method} +getToken ( apiKey : String ) : DrivethruToken
+	{method} -parse ( raw : String ) : LocalDateTime
+}
+
+
+class DriveThruResource {
+}
+
+
+class DriveThruRpgProductAdapter {
+	{method} +findProduct ( productId : String ) : Optional
+	{method} -toDomain ( product : Product ) : CatalogProduct
+}
+
+
+class DrivethruToken {
+	{field} +accessToken : String
+	{field} +customerId : String
+	{field} +expireTime : LocalDateTime
+	{field} +expires : Long
+	{field} +localTime : LocalDateTime
+	{field} +serverTime : LocalDateTime
+	{method} +getBearerToken () : String
+	{method} +toString () : String
+}
+
+
+annotation EnableDrivethruRPG
+
+class NoDriveThruRPGAPIKeyDefinedException {
+}
+
+
+class NoValidTokenException {
+}
+
+
+class OwnedProduct {
+	{field} +archived : String
+	{field} +coverURL : String
+	{field} +datePurchased : OffsetDateTime
+	{field} +id : int
+	{field} +name : String
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class Product {
+	{field} +coverURL : String
+	{field} +productsId : int
+	{field} +productsName : String
+	{field} +publisherId : int
+	{field} +publisherName : String
+	{field} +thumbnail : String
+	{field} +thumbnail100 : String
+	{field} +thumbnail40 : String
+	{field} +thumbnail80 : String
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class Publisher {
+	{field} +publisherId : int
+	{field} +publisherName : String
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class SpringDomainEventPublisherAdapter {
+	{field} -applicationEventPublisher : ApplicationEventPublisher
+	{method} +publish ( event : DomainEvent ) : void
+}
+
+
+
+
+DriveThruRPGService *--  DriveThruRPGClient : client
+DriveThruRpgProductAdapter *--  DriveThruRPGService : service
+DrivethruToken --|>  DriveThruResource
+OwnedProduct --|>  DriveThruResource
+Product --|>  DriveThruResource
+Publisher --|>  DriveThruResource
+
+hide methods
+
+@enduml

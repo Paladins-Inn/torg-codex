@@ -26,28 +26,22 @@ class CatalogQueryServiceTest {
     private record TestEntry(UUID id, String cosm) {
     }
 
-    private static final class InMemoryCatalogPersistencePort
-            implements CatalogPersistencePort<TestEntry> {
-
-        private final TestEntry entry;
-
-        private InMemoryCatalogPersistencePort(TestEntry entry) {
-            this.entry = entry;
-        }
+    private record InMemoryCatalogPersistencePort(TestEntry entry)
+                implements CatalogPersistencePort<TestEntry> {
 
         @Override
-        public List<TestEntry> findAll() {
-            return List.of(entry);
-        }
+            public List<TestEntry> findAll() {
+                return List.of(entry);
+            }
 
-        @Override
-        public Optional<TestEntry> findById(UUID id) {
-            return entry.id().equals(id) ? Optional.of(entry) : Optional.empty();
-        }
+            @Override
+            public Optional<TestEntry> findById(UUID id) {
+                return entry.id().equals(id) ? Optional.of(entry) : Optional.empty();
+            }
 
-        @Override
-        public List<TestEntry> findByCosm(String cosm) {
-            return entry.cosm().equals(cosm) ? List.of(entry) : List.of();
+            @Override
+            public List<TestEntry> findByCosm(String cosm) {
+                return entry.cosm().equals(cosm) ? List.of(entry) : List.of();
+            }
         }
-    }
 }

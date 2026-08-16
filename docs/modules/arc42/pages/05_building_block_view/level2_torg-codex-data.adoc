@@ -1,0 +1,84 @@
+= Level 2: Bausteine von torg-codex-data
+include::partial$config.adoc[]
+
+`torg-codex-data` ist die Datenschicht des {system}-Systems.
+Sie kapselt die Persistenz, die Daten- und Event-Adapter sowie die
+Markup-Verarbeitung. Die DriveThruRPG- und API-Key-Integration gehört gemäß
+ADR-016 zum `torg-codex-application`-Modul.
+
+== Übersichtsdiagramm
+
+[plantuml, torg-codex-data-level2]
+----
+@startuml torg-codex-data-level2
+skinparam componentStyle rectangle
+skinparam defaultFontSize 12
+
+database  "PostgreSQL"        <<external>> as db
+
+rectangle "torg-codex\n(Frontend)" <<torg-codex>> as frontend
+
+rectangle "torg-codex-data" <<Spring Boot, JPA>> {
+
+  component "Markup-Generator\nde.paladinsinn.torg.codex.data.markup" as markup {
+    [TorgMarkupService]             <<@Service>>         as markupsvc
+    [Censor]                        <<@Component>>       as censor
+    [ConditionalBlockProcessor]     as condblock
+    [EntityReferenceProcessor]      as entityref
+    [GameTokenProcessor]            as gametok
+    [MarkdownProcessor]             as mdproc
+  }
+
+  component "Datenmodell & Repositories\nde.paladinsinn.torg.codex.data.model\nde.paladinsinn.torg.codex.data.repository" as model {
+    [TorgEntity]                    <<@MappedSuperclass>> as entity
+    [Entities]                      <<@Entity>>           as entities
+    [Repositories]                  <<JpaRepository<E,UUID>>> as repos
+  }
+
+  ' --- interne Abhängigkeiten ---
+  markupsvc -down-> censor
+  censor    -down-> condblock
+  censor    -down-> entityref
+  censor    -down-> gametok
+  censor    -down-> mdproc
+
+  entities -up-|> entity
+  repos    .down.> entities     : manages
+
+  entity   -right-> censor      : uses for render()
+}
+
+' --- externe Abhängigkeiten ---
+frontend -down-> model      : reads entities & repos
+repos    -down-> db         : JPA / Liquibase
+
+@enduml
+----
+
+== Bausteine im Detail
+
+=== Datenmodell & Repositories
+
+Persistenz aller Torg-Eternity-Spielobjekte via JPA/Hibernate; Schema-Migration via Liquibase.
+
+[cols="<.<3h,<.<9a",frame="topbot",grid="rows"]
+|===
+| Klasse / Interface | Verantwortung
+
+| `TorgEntity`
+| Gemeinsame Basisklasse (`@MappedSuperclass`) mit `UUID id`, `name`, `clearanceLevel` und
+  dem injizierenden `Censor`-Mechanismus (`withCensor()` / `render()`).
+
+| Entitätsklassen
+| `Threat`, `Item`, `Perk`, `Spell`, `Power`, `Miracle`, `SpellList`, `PowerList`, `MiracleList`,
+  `Cosm`, `Shard`, `Vehicle`, `Race`, `Tag`, `Article`, `PerkGroup` – allesamt `@Entity`-Klassen
+  mit UUID-Primärschlüssel.
+
+| Repository-Interfaces
+| `JpaRepository<Entität, UUID>` für jede Entitätsklasse; typisierte Finder-Methoden
+  (`findByCosm`, `findByClearanceLevel`, `findByProduct` u.ä.).
+
+| Liquibase-Changesets
+| Changeset 1: Schema-Erstellung (`torg-data-entity.yaml`). +
+  Changeset 2: Testdaten-Import via CSV (`torg-data-load.yaml`).
+|===

@@ -34,7 +34,14 @@ https://spring.io/projects/spring-boot[spring-boot] will be used as main framewo
 | Hexagonal Architecture, {hexagonal}
 | The application shall follow a hexagonal (ports-and-adapters) architecture to strictly separate domain logic from infrastructure concerns.
 All inbound and outbound interactions must go through well-defined ports and adapters, ensuring the core domain has no direct dependencies on frameworks or external services.
-This is implemented as four Maven reactor modules — `torg-codex-domain` (framework-independent domain models and events), `torg-codex-application` (driving/driven ports and use-case services), `torg-codex-data` (outbound/driven adapters: persistence, DriveThruRPG HTTP, domain-event bridge), and `torg-codex` (inbound/driving adapters: REST controllers and the composition root) — with a strict one-directional dependency chain from `torg-codex`/`torg-codex-data` towards `torg-codex-application` towards `torg-codex-domain`, continuously enforced by an ArchUnit test suite as part of the standard build. See xref:04_solution_strategy.adoc[] and xref:05_building_block_view/index.adoc[].
+This is implemented as four Maven reactor modules — `torg-codex-domain` (framework-independent
+domain models and events), `torg-codex-application` (driving/driven ports, use-case services,
+DriveThruRPG integration, and API-key security), `torg-codex-data` (persistence and
+domain-event outbound adapters plus the markup pipeline), and `torg-codex` (REST inbound
+adapters, censoring, and the composition root) — with a strict one-directional dependency
+chain from `torg-codex`/`torg-codex-data` towards `torg-codex-application` towards
+`torg-codex-domain`, continuously enforced by an ArchUnit test suite as part of the standard
+build. See xref:04_solution_strategy/index.adoc[] and xref:05_building_block_view/index.adoc[].
 |===
 
 

@@ -65,7 +65,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * <h2>Authority → product-id mapping</h2>
  * At login time {@link DriveThruAuthenticationProvider}
  * resolves the owned DriveThruRPG product IDs to their {@code codexId} strings and places
- * them in {@link DriveThruUserDetails#getOwnedCodexIds()}.
+ * them in {@link DriveThruUserDetails#ownedCodexIds()}.
  * {@code DriveThruUserDetails.getAuthorities()} then emits one
  * {@code ROLE_<codexId>} authority per owned publication.
  * {@link de.paladinsinn.torg.codex.api.security.ProductOwnershipResolver} strips the
@@ -94,7 +94,7 @@ public class TorgCodexSecurityConfig {
     @Order(1)
     public SecurityFilterChain torgCodexSecurityFilterChain(
             final HttpSecurity http,
-            final AuthenticationManager authenticationManager) throws Exception {
+            final AuthenticationManager authenticationManager) {
 
         final ApiKeyAuthenticationFilter apiKeyFilter =
                 new ApiKeyAuthenticationFilter(authenticationManager);

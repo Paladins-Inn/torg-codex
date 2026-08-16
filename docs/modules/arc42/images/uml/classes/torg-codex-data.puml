@@ -1,0 +1,931 @@
+@startuml
+
+class Article {
+	{field} +text : String
+	{method} +getRawText () : String
+}
+
+
+interface ArticleEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Article ) : Article
+	{method}  {abstract} +toEntity ( model : Article ) : Article
+}
+
+
+class ArticleEntityMapperImpl {
+	{method} +toDomain ( entity : Article ) : Article
+	{method} +toEntity ( model : Article ) : Article
+}
+
+
+interface ArticleRepository {
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+}
+
+
+enum ClearanceLevel {
+	{field} +ALPHA
+	{field} +BETA
+	{field} +DELTA
+	{field} +GAMMA
+	{field} +OMEGA
+}
+
+
+class ClearanceLevelConverter {
+	{method} +convertToDatabaseColumn ( attribute : ClearanceLevel ) : String
+	{method} +convertToEntityAttribute ( dbData : String ) : ClearanceLevel
+}
+
+
+class Cosm {
+	{field} +axioms : Map
+	{field} +products : Set
+	{field} +text : String
+	{field} +worldLaws : String
+	{method} +getRawText () : String
+	{method} +getRawWorldLaws () : String
+}
+
+
+interface CosmEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Cosm ) : Cosm
+	{method}  {abstract} +toEntity ( model : Cosm ) : Cosm
+}
+
+
+class CosmEntityMapperImpl {
+	{method} +toDomain ( entity : Cosm ) : Cosm
+	{method} +toEntity ( model : Cosm ) : Cosm
+}
+
+
+interface CosmRepository {
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class DatabaseChangeLog {
+	{field} +comments : String
+	{field} +contexts : String
+	{field} +dateExecuted : LocalDateTime
+	{field} +deploymentId : String
+	{field} +description : String
+	{field} +execType : String
+	{field} +labels : String
+	{field} +liquibase : String
+	{field} +md5sum : String
+	{field} +orderExecuted : Integer
+	{field} +tag : String
+	{method} +getAuthor () : String
+	{method} +getFilename () : String
+	{method} +getId () : String
+	{method} +toString () : String
+}
+
+
+class DatabaseChangeLogId {
+	{field} +author : String
+	{field} +filename : String
+	{field} +id : String
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class DatabaseChangeLogLock {
+	{field} +id : Integer
+	{field} +lockGranted : LocalDateTime
+	{field} +locked : boolean
+	{field} +lockedBy : String
+	{method} +toString () : String
+}
+
+
+interface DatabaseChangeLogLockRepository {
+}
+
+
+interface DatabaseChangeLogRepository {
+	{method}  {abstract} +findByChangeLogIdAuthorOrderByOrderExecuted ( author : String ) : List
+	{method}  {abstract} +findByChangesetId ( changesetId : String ) : List
+	{method}  {abstract} +findByExecType ( execType : String ) : List
+}
+
+
+class DifficultyNumber {
+	{field} +level : String
+	{field} +text : String
+}
+
+
+annotation EnableTorgData
+
+class Item {
+	{field} +additionalFeatures : String
+	{field} +ammo : String
+	{field} +axiomMagic : String
+	{field} +axiomTech : String
+	{field} +bonus : String
+	{field} +cosm : String
+	{field} +features : String
+	{field} +price : String
+	{field} +products : Set
+	{field} +range : String
+	{field} +text : String
+	{field} +type : String
+	{method} +getRawAdditionalFeatures () : String
+	{method} +getRawText () : String
+}
+
+
+interface ItemEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Item ) : Item
+	{method}  {abstract} +toEntity ( model : Item ) : Item
+}
+
+
+class ItemEntityMapperImpl {
+	{method} +toDomain ( entity : Item ) : Item
+	{method} +toEntity ( model : Item ) : Item
+}
+
+
+interface ItemRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findByType ( type : String ) : List
+	{method}  {abstract} +findByTypeAndCosm ( type : String , cosm : String ) : List
+	{method}  {abstract} +findByTypeAndProduct ( type : String , product : String ) : List
+}
+
+
+class JpaArticlePersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaCatalogReferenceAdapter {
+	{method} +findCosmByName ( name : String ) : Optional
+	{method} +findPublicationByCodexId ( codexId : String ) : Optional
+	{method} +findPublicationsByProductId ( productId : int ) : List
+	{method} -toPublicationReference ( publication : Publication ) : CatalogPublicationReference
+	{method} -toReference ( cosm : Cosm ) : CatalogReference
+	{method} -toReference ( publication : Publication ) : CatalogReference
+}
+
+
+class JpaCosmPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaItemPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaMiracleListPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaMiraclePersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaPerkGroupPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaPerkPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaPowerListPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaPowerPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaPublicationPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaRacePersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaShardPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaSpellListPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaSpellPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaTagPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaThreatPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaVehiclePersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class Miracle {
+	{field} +axiom : String
+	{field} +castingTime : String
+	{field} +duration : String
+	{field} +products : Set
+	{field} +range : String
+	{field} +requiredSkills : Map
+	{field} +text : String
+	{method} +getRawText () : String
+}
+
+
+interface MiracleEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Miracle ) : Miracle
+	{method}  {abstract} +toEntity ( model : Miracle ) : Miracle
+}
+
+
+class MiracleEntityMapperImpl {
+	{method} +toDomain ( entity : Miracle ) : Miracle
+	{method} +toEntity ( model : Miracle ) : Miracle
+}
+
+
+class MiracleList {
+	{field} +cosm : String
+	{field} +disableIf : String
+	{field} +miracles : List
+	{field} +notes : String
+	{field} +products : Set
+	{field} +text : String
+	{field} +unlockingPerk : String
+	{method} +getRawNotes () : String
+	{method} +getRawText () : String
+}
+
+
+interface MiracleListEntityMapper {
+	{method}  {abstract} +toDomain ( entity : MiracleList ) : MiracleList
+	{method}  {abstract} +toEntity ( model : MiracleList ) : MiracleList
+}
+
+
+class MiracleListEntityMapperImpl {
+	{method} +toDomain ( entity : MiracleList ) : MiracleList
+	{method} +toEntity ( model : MiracleList ) : MiracleList
+}
+
+
+interface MiracleListRepository {
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByDisableIfIsNullOrDisableIfNot ( disableIfProduct : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findByUnlockingPerk ( perkId : String ) : List
+}
+
+
+interface MiracleRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class Perk {
+	{field} +contradiction : boolean
+	{field} +cosm : String
+	{field} +group : String
+	{field} +prerequisites : String
+	{field} +products : Set
+	{field} +text : String
+	{method} +getRawPrerequisites () : String
+	{method} +getRawText () : String
+}
+
+
+interface PerkEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Perk ) : Perk
+	{method}  {abstract} +toEntity ( model : Perk ) : Perk
+}
+
+
+class PerkEntityMapperImpl {
+	{method} +toDomain ( entity : Perk ) : Perk
+	{method} +toEntity ( model : Perk ) : Perk
+}
+
+
+class PerkGroup {
+	{field} +infos : String
+	{field} +products : Set
+	{field} +text : String
+	{method} +getRawInfos () : String
+	{method} +getRawText () : String
+}
+
+
+interface PerkGroupEntityMapper {
+	{method}  {abstract} +toDomain ( entity : PerkGroup ) : PerkGroup
+	{method}  {abstract} +toEntity ( model : PerkGroup ) : PerkGroup
+}
+
+
+class PerkGroupEntityMapperImpl {
+	{method} +toDomain ( entity : PerkGroup ) : PerkGroup
+	{method} +toEntity ( model : PerkGroup ) : PerkGroup
+}
+
+
+interface PerkGroupRepository {
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+}
+
+
+interface PerkRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByContradiction ( contradiction : boolean ) : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByCosmAndProduct ( cosm : String , product : String ) : List
+	{method}  {abstract} +findByGroup ( group : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class Power {
+	{field} +axiom : String
+	{field} +castingTime : String
+	{field} +duration : String
+	{field} +enhancements : String
+	{field} +limitations : String
+	{field} +products : Set
+	{field} +range : String
+	{field} +requiredSkills : Map
+	{field} +text : String
+	{method} +getRawEnhancements () : String
+	{method} +getRawLimitations () : String
+	{method} +getRawText () : String
+}
+
+
+interface PowerEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Power ) : Power
+	{method}  {abstract} +toEntity ( model : Power ) : Power
+}
+
+
+class PowerEntityMapperImpl {
+	{method} +toDomain ( entity : Power ) : Power
+	{method} +toEntity ( model : Power ) : Power
+}
+
+
+class PowerList {
+	{field} +cosm : String
+	{field} +disableIf : String
+	{field} +notes : String
+	{field} +powers : List
+	{field} +products : Set
+	{field} +text : String
+	{field} +unlockingPerk : String
+	{method} +getRawNotes () : String
+	{method} +getRawText () : String
+}
+
+
+interface PowerListEntityMapper {
+	{method}  {abstract} +toDomain ( entity : PowerList ) : PowerList
+	{method}  {abstract} +toEntity ( model : PowerList ) : PowerList
+}
+
+
+class PowerListEntityMapperImpl {
+	{method} +toDomain ( entity : PowerList ) : PowerList
+	{method} +toEntity ( model : PowerList ) : PowerList
+}
+
+
+interface PowerListRepository {
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByDisableIfIsNullOrDisableIfNot ( disableIfProduct : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findByUnlockingPerk ( perkId : String ) : List
+}
+
+
+interface PowerRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class Publication {
+	{field} {static} -DRIVETHRURPG_COVER_BASE : String
+	{field} +codexId : String
+	{field} +id : UUID
+	{field} +name : String
+	{field} +primaryProductId : int
+	{field} +productIds : Set
+	{field} +thirdParty : String
+	{method} +getCoverURL () : String
+}
+
+
+interface PublicationEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Publication ) : Publication
+	{method}  {abstract} +toEntity ( model : Publication ) : Publication
+}
+
+
+class PublicationEntityMapperImpl {
+	{method} +toDomain ( entity : Publication ) : Publication
+	{method} +toEntity ( model : Publication ) : Publication
+}
+
+
+interface PublicationRepository {
+	{method}  {abstract} +findByCodexId ( codexId : String ) : Optional
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByPrimaryProductId ( primaryProductId : int ) : Optional
+	{method}  {abstract} +findByProductId ( productId : int ) : List
+	{method}  {abstract} +findByThirdParty ( thirdParty : String ) : List
+	{method}  {abstract} +findByThirdPartyIsNull () : List
+}
+
+
+class Race {
+	{field} +abilities : String
+	{field} +attributeLimits : Map
+	{field} +major : boolean
+	{field} +perkText : String
+	{field} +products : Set
+	{field} +text : String
+	{method} +getRawAbilities () : String
+	{method} +getRawPerkText () : String
+	{method} +getRawText () : String
+}
+
+
+interface RaceEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Race ) : Race
+	{method}  {abstract} +toEntity ( model : Race ) : Race
+}
+
+
+class RaceEntityMapperImpl {
+	{method} +toDomain ( entity : Race ) : Race
+	{method} +toEntity ( model : Race ) : Race
+}
+
+
+interface RaceRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByMajor ( major : boolean ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class Shard {
+	{field} +cosm : String
+	{field} +possibilities : String
+	{field} +powers : String
+	{field} +products : Set
+	{field} +purpose : String
+	{field} +restrictions : String
+	{field} +tappingDifficulty : String
+	{field} +text : String
+	{method} +getRawPowers () : String
+	{method} +getRawPurpose () : String
+	{method} +getRawRestrictions () : String
+	{method} +getRawText () : String
+}
+
+
+interface ShardEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Shard ) : Shard
+	{method}  {abstract} +toEntity ( model : Shard ) : Shard
+}
+
+
+class ShardEntityMapperImpl {
+	{method} +toDomain ( entity : Shard ) : Shard
+	{method} +toEntity ( model : Shard ) : Shard
+}
+
+
+interface ShardRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class Spell {
+	{field} +axiom : String
+	{field} +castingTime : String
+	{field} +duration : String
+	{field} +products : Set
+	{field} +range : String
+	{field} +requiredSkills : Map
+	{field} +text : String
+	{method} +getRawText () : String
+}
+
+
+interface SpellEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Spell ) : Spell
+	{method}  {abstract} +toEntity ( model : Spell ) : Spell
+}
+
+
+class SpellEntityMapperImpl {
+	{method} +toDomain ( entity : Spell ) : Spell
+	{method} +toEntity ( model : Spell ) : Spell
+}
+
+
+class SpellList {
+	{field} +cosm : String
+	{field} +disableIf : String
+	{field} +notes : String
+	{field} +products : Set
+	{field} +spells : List
+	{field} +text : String
+	{field} +unlockingPerk : String
+	{method} +getRawNotes () : String
+	{method} +getRawText () : String
+}
+
+
+interface SpellListEntityMapper {
+	{method}  {abstract} +toDomain ( entity : SpellList ) : SpellList
+	{method}  {abstract} +toEntity ( model : SpellList ) : SpellList
+}
+
+
+class SpellListEntityMapperImpl {
+	{method} +toDomain ( entity : SpellList ) : SpellList
+	{method} +toEntity ( model : SpellList ) : SpellList
+}
+
+
+interface SpellListRepository {
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByDisableIfIsNullOrDisableIfNot ( disableIfProduct : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findByUnlockingPerk ( perkId : String ) : List
+}
+
+
+interface SpellRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class Tag {
+	{field} +parent : UUID
+}
+
+
+interface TagEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Tag ) : Tag
+	{method}  {abstract} +toEntity ( model : Tag ) : Tag
+}
+
+
+class TagEntityMapperImpl {
+	{method} +toDomain ( entity : Tag ) : Tag
+	{method} +toEntity ( model : Tag ) : Tag
+}
+
+
+interface TagRepository {
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByParent ( parentId : UUID ) : List
+	{method}  {abstract} +findByParentIsNull () : List
+}
+
+
+class Threat {
+	{field} +charisma : String
+	{field} +cosm : String
+	{field} +dexterity : String
+	{field} +equipment : List
+	{field} +mind : String
+	{field} +moveFly : String
+	{field} +moveSwim : String
+	{field} +moveWalk : String
+	{field} +perks : List
+	{field} +possibilities : String
+	{field} +products : Set
+	{field} +quote : String
+	{field} +shock : String
+	{field} +skills : Map
+	{field} +specialAbilities : Map
+	{field} +spirit : String
+	{field} +strength : String
+	{field} +subName : String
+	{field} +text : String
+	{field} +tough : String
+	{field} +unique : boolean
+	{field} +wounds : String
+	{method} +getRawQuote () : String
+	{method} +getRawSpecialAbilities () : Map
+	{method} +getRawText () : String
+}
+
+
+interface ThreatEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Threat ) : Threat
+	{method}  {abstract} +toEntity ( model : Threat ) : Threat
+}
+
+
+class ThreatEntityMapperImpl {
+	{method} +toDomain ( entity : Threat ) : Threat
+	{method} +toEntity ( model : Threat ) : Threat
+}
+
+
+interface ThreatRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByCosmAndProduct ( cosm : String , product : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findByUnique ( unique : boolean ) : List
+}
+
+
+class TorgCodexDataApplication {
+	{method}  {static} +main ( args : String[] ) : void
+}
+
+
+class TorgDataConfiguration {
+}
+
+
+abstract class TorgEntity {
+	{field} +censor : Censor
+	{field} +id : UUID
+	{field} +name : String
+	{method} #render ( rawText : String ) : String
+	{method} +withCensor ( censor : Censor ) : TorgEntity
+}
+
+
+interface ValueObjectMapper {
+	{method} +toDomain ( value : ClearanceLevel ) : ClearanceLevel
+	{method}  {abstract} +toDomain ( value : DifficultyNumber ) : DifficultyNumber
+	{method}  {abstract} +toDomain ( value : VehicleWeapon ) : VehicleWeapon
+	{method} +toEntity ( value : ClearanceLevel ) : ClearanceLevel
+	{method}  {abstract} +toEntity ( value : DifficultyNumber ) : DifficultyNumber
+	{method}  {abstract} +toEntity ( value : VehicleWeapon ) : VehicleWeapon
+}
+
+
+class ValueObjectMapperImpl {
+	{method} +toDomain ( value : DifficultyNumber ) : DifficultyNumber
+	{method} +toDomain ( value : VehicleWeapon ) : VehicleWeapon
+	{method} +toEntity ( value : DifficultyNumber ) : DifficultyNumber
+	{method} +toEntity ( value : VehicleWeapon ) : VehicleWeapon
+}
+
+
+class Vehicle {
+	{field} +axiomTech : String
+	{field} +cosm : String
+	{field} +maneuverRating : String
+	{field} +passengers : String
+	{field} +price : String
+	{field} +products : Set
+	{field} +size : String
+	{field} +speed : String
+	{field} +speedMod : String
+	{field} +speedValue : String
+	{field} +text : String
+	{field} +tough : String
+	{field} +type : String
+	{field} +unique : boolean
+	{field} +wounds : String
+	{method} +getRawText () : String
+}
+
+
+interface VehicleEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Vehicle ) : Vehicle
+	{method}  {abstract} +toEntity ( model : Vehicle ) : Vehicle
+}
+
+
+class VehicleEntityMapperImpl {
+	{method} +toDomain ( entity : Vehicle ) : Vehicle
+	{method} +toEntity ( model : Vehicle ) : Vehicle
+	{method} #vehicleWeaponListToVehicleWeaponList ( list : List ) : List
+	{method} #vehicleWeaponListToVehicleWeaponList1 ( list : List ) : List
+}
+
+
+interface VehicleRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findBySize ( size : String ) : List
+	{method}  {abstract} +findByType ( type : String ) : List
+	{method}  {abstract} +findByUnique ( unique : boolean ) : List
+}
+
+
+class VehicleWeapon {
+	{field} +ammo : String
+	{field} +amount : String
+	{field} +weaponId : UUID
+}
+
+
+
+
+Article --|>  TorgEntity
+ArticleEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+ArticleEntityMapperImpl ..|>  ArticleEntityMapper
+Cosm --|>  TorgEntity
+CosmEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+CosmEntityMapperImpl ..|>  CosmEntityMapper
+DatabaseChangeLog -->  DatabaseChangeLogId : changeLogId
+Item --|>  TorgEntity
+ItemEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+ItemEntityMapperImpl ..|>  ItemEntityMapper
+JpaArticlePersistenceAdapter *--  ArticleEntityMapper : mapper
+JpaArticlePersistenceAdapter *--  ArticleRepository : repository
+JpaCatalogReferenceAdapter *--  CosmRepository : cosmRepository
+JpaCatalogReferenceAdapter *--  PublicationRepository : publicationRepository
+JpaCosmPersistenceAdapter *--  CosmEntityMapper : mapper
+JpaCosmPersistenceAdapter *--  CosmRepository : repository
+JpaItemPersistenceAdapter *--  ItemEntityMapper : mapper
+JpaItemPersistenceAdapter *--  ItemRepository : repository
+JpaMiracleListPersistenceAdapter *--  MiracleListEntityMapper : mapper
+JpaMiracleListPersistenceAdapter *--  MiracleListRepository : repository
+JpaMiraclePersistenceAdapter *--  MiracleEntityMapper : mapper
+JpaMiraclePersistenceAdapter *--  MiracleRepository : repository
+JpaPerkGroupPersistenceAdapter *--  PerkGroupEntityMapper : mapper
+JpaPerkGroupPersistenceAdapter *--  PerkGroupRepository : repository
+JpaPerkPersistenceAdapter *--  PerkEntityMapper : mapper
+JpaPerkPersistenceAdapter *--  PerkRepository : repository
+JpaPowerListPersistenceAdapter *--  PowerListEntityMapper : mapper
+JpaPowerListPersistenceAdapter *--  PowerListRepository : repository
+JpaPowerPersistenceAdapter *--  PowerEntityMapper : mapper
+JpaPowerPersistenceAdapter *--  PowerRepository : repository
+JpaPublicationPersistenceAdapter *--  PublicationEntityMapper : mapper
+JpaPublicationPersistenceAdapter *--  PublicationRepository : repository
+JpaRacePersistenceAdapter *--  RaceEntityMapper : mapper
+JpaRacePersistenceAdapter *--  RaceRepository : repository
+JpaShardPersistenceAdapter *--  ShardEntityMapper : mapper
+JpaShardPersistenceAdapter *--  ShardRepository : repository
+JpaSpellListPersistenceAdapter *--  SpellListEntityMapper : mapper
+JpaSpellListPersistenceAdapter *--  SpellListRepository : repository
+JpaSpellPersistenceAdapter *--  SpellEntityMapper : mapper
+JpaSpellPersistenceAdapter *--  SpellRepository : repository
+JpaTagPersistenceAdapter *--  TagEntityMapper : mapper
+JpaTagPersistenceAdapter *--  TagRepository : repository
+JpaThreatPersistenceAdapter *--  ThreatEntityMapper : mapper
+JpaThreatPersistenceAdapter *--  ThreatRepository : repository
+JpaVehiclePersistenceAdapter *--  VehicleEntityMapper : mapper
+JpaVehiclePersistenceAdapter *--  VehicleRepository : repository
+Miracle -->  DifficultyNumber : dn
+Miracle --|>  TorgEntity
+MiracleEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+MiracleEntityMapperImpl ..|>  MiracleEntityMapper
+MiracleList --|>  TorgEntity
+MiracleListEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+MiracleListEntityMapperImpl ..|>  MiracleListEntityMapper
+Perk --|>  TorgEntity
+PerkEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+PerkEntityMapperImpl ..|>  PerkEntityMapper
+PerkGroup --|>  TorgEntity
+PerkGroupEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+PerkGroupEntityMapperImpl ..|>  PerkGroupEntityMapper
+Power -->  DifficultyNumber : dn
+Power --|>  TorgEntity
+PowerEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+PowerEntityMapperImpl ..|>  PowerEntityMapper
+PowerList --|>  TorgEntity
+PowerListEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+PowerListEntityMapperImpl ..|>  PowerListEntityMapper
+PublicationEntityMapperImpl ..|>  PublicationEntityMapper
+Race --|>  TorgEntity
+RaceEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+RaceEntityMapperImpl ..|>  RaceEntityMapper
+Shard --|>  TorgEntity
+ShardEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+ShardEntityMapperImpl ..|>  ShardEntityMapper
+Spell -->  DifficultyNumber : dn
+Spell --|>  TorgEntity
+SpellEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+SpellEntityMapperImpl ..|>  SpellEntityMapper
+SpellList --|>  TorgEntity
+SpellListEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+SpellListEntityMapperImpl ..|>  SpellListEntityMapper
+Tag --|>  TorgEntity
+TagEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+TagEntityMapperImpl ..|>  TagEntityMapper
+Threat --|>  TorgEntity
+ThreatEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+ThreatEntityMapperImpl ..|>  ThreatEntityMapper
+TorgCodexDataApplication --  EnableTorgData
+TorgEntity -->  ClearanceLevel :  @Column("clearance_level")\nclearanceLevel
+ValueObjectMapperImpl ..|>  ValueObjectMapper
+Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry
+Vehicle --|>  TorgEntity
+VehicleEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+VehicleEntityMapperImpl ..|>  VehicleEntityMapper
+
+hide methods
+
+@enduml

@@ -1,0 +1,78 @@
+= Markup-Generator
+include::partial$config.adoc[]
+
+Verarbeitet das proprietäre Torg-Markup in Freitextfeldern der Entitäten und gibt HTML zurück.
+
+[cols="<.<3h,<.<9a",frame="topbot",grid="rows"]
+|===
+| Klasse | Verantwortung
+
+| `TorgMarkupService`
+| Einstiegspunkt; verkettet alle Prozessoren in der richtigen Reihenfolge und gibt
+finales HTML zurück.
+
+| `Censor`
+| Filtert `<IF:product>`-Blöcke abhängig von den freigeschalteten Produkten des Nutzers;
+wird in `TorgEntity.render()` verwendet.
+
+| `ConditionalBlockProcessor`
+| Auflösung von `<IF:product>…</IF>`-Blöcken.
+
+| `EntityReferenceProcessor`
+| Auflösung von `<perk:slug>`, `<item:slug>` u.ä. zu verlinkbaren HTML-Snippets.
+
+| `GameTokenProcessor`
+| Ersetzt spielspezifische Token (z. B. Würfelsymbole) durch HTML-Darstellungen.
+
+| `MarkdownProcessor`
+| CommonMark-basiertes Markdown-Rendering als letzter Schritt in der Pipeline.
+|===
+
+
+.Verarbeitungspipeline
+[plantuml, markup-pipeline]
+----
+@startuml markup-pipeline
+skinparam defaultFontSize 11
+
+|TorgEntity|
+start
+:render(rawText);
+note right: aufgerufen von getText(),\ngetWorldLaws() etc.
+
+|Censor|
+:apply(rawText);
+:ConditionalBlockProcessor\n→ <IF:product>…</IF> auflösen;
+note right
+  Produkte aus DriveThruUserDetails
+  des aktuellen Nutzers prüfen.
+  Nicht freigeschaltete Blöcke
+  werden entfernt.
+end note
+
+:EntityReferenceProcessor\n→ <perk:slug> etc. ersetzen;
+note right
+  Slug wird in entsprechenden
+  Repository-Link aufgelöst.
+end note
+
+:GameTokenProcessor\n→ Spieltoken ersetzen;
+note right
+  z.B. Würfelsymbole → HTML-Icons
+end note
+
+:MarkdownProcessor\n→ CommonMark → HTML;
+
+|TorgEntity|
+:HTML zurückgeben;
+stop
+
+@enduml
+----
+
+
+.Klassendiagramm Markdowngenerator
+[plantuml, markup-classes]
+----
+include::image$uml/classes/markdown-generator.puml[]
+----

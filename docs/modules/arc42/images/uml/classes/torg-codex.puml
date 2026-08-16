@@ -1,0 +1,3247 @@
+@startuml
+
+class Article {
+	{field} +text : String
+	{method} +getRawText () : String
+}
+
+
+class Article {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -text : String
+	{method}  {static} +builder () : ArticleBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class ArticleBuilder {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -text : String
+	{method} +build () : Article
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : ArticleBuilder
+	{method} +id ( id : UUID ) : ArticleBuilder
+	{method} +name ( name : String ) : ArticleBuilder
+	{method} +text ( text : String ) : ArticleBuilder
+	{method} +toString () : String
+}
+
+
+class ArticleController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list () : List
+}
+
+
+class ArticleDetailDto {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -text : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +text () : String
+	{method} +toString () : String
+}
+
+
+interface ArticleEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Article ) : Article
+	{method}  {abstract} +toEntity ( model : Article ) : Article
+}
+
+
+class ArticleEntityMapperImpl {
+	{method} +toDomain ( entity : Article ) : Article
+	{method} +toEntity ( model : Article ) : Article
+}
+
+
+interface ArticleMapper {
+	{method}  {abstract} +toDetail ( article : Article , censor : Censor ) : ArticleDetailDto
+	{method}  {abstract} +toSummary ( article : Article ) : ArticleSummaryDto
+}
+
+
+class ArticleMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( article : Article , censor : Censor ) : ArticleDetailDto
+	{method} +toSummary ( article : Article ) : ArticleSummaryDto
+}
+
+
+interface ArticleRepository {
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+}
+
+
+class ArticleSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+interface CatalogPersistencePort {
+	{method}  {abstract} +findAll () : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findById ( id : UUID ) : Optional
+}
+
+
+class CatalogProduct {
+	{field} -coverUrl : String
+	{field} -id : int
+	{field} -name : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class CatalogPublicationReference {
+	{field} -codexId : String
+	{field} -id : UUID
+	{field} -name : String
+	{method} +codexId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +toString () : String
+}
+
+
+interface CatalogQuery {
+	{method}  {abstract} +findAll () : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findById ( id : UUID ) : Optional
+}
+
+
+class CatalogQueryConfiguration {
+	{method} ~articleCatalogQuery ( repository : ArticleRepository , mapper : ArticleEntityMapper ) : CatalogQuery
+	{method} ~catalogReferenceQuery ( cosmRepository : CosmRepository , publicationRepository : PublicationRepository ) : CatalogReferenceQuery
+	{method} ~cosmCatalogQuery ( repository : CosmRepository , mapper : CosmEntityMapper ) : CatalogQuery
+	{method} ~itemCatalogQuery ( repository : ItemRepository , mapper : ItemEntityMapper ) : CatalogQuery
+	{method} ~miracleCatalogQuery ( repository : MiracleRepository , mapper : MiracleEntityMapper ) : CatalogQuery
+	{method} ~miracleListCatalogQuery ( repository : MiracleListRepository , mapper : MiracleListEntityMapper ) : CatalogQuery
+	{method} ~perkCatalogQuery ( repository : PerkRepository , mapper : PerkEntityMapper ) : CatalogQuery
+	{method} ~perkGroupCatalogQuery ( repository : PerkGroupRepository , mapper : PerkGroupEntityMapper ) : CatalogQuery
+	{method} ~powerCatalogQuery ( repository : PowerRepository , mapper : PowerEntityMapper ) : CatalogQuery
+	{method} ~powerListCatalogQuery ( repository : PowerListRepository , mapper : PowerListEntityMapper ) : CatalogQuery
+	{method} ~publicationCatalogQuery ( repository : PublicationRepository , mapper : PublicationEntityMapper ) : CatalogQuery
+	{method} ~raceCatalogQuery ( repository : RaceRepository , mapper : RaceEntityMapper ) : CatalogQuery
+	{method} ~shardCatalogQuery ( repository : ShardRepository , mapper : ShardEntityMapper ) : CatalogQuery
+	{method} ~spellCatalogQuery ( repository : SpellRepository , mapper : SpellEntityMapper ) : CatalogQuery
+	{method} ~spellListCatalogQuery ( repository : SpellListRepository , mapper : SpellListEntityMapper ) : CatalogQuery
+	{method} ~tagCatalogQuery ( repository : TagRepository , mapper : TagEntityMapper ) : CatalogQuery
+	{method} ~threatCatalogQuery ( repository : ThreatRepository , mapper : ThreatEntityMapper ) : CatalogQuery
+	{method} ~vehicleCatalogQuery ( repository : VehicleRepository , mapper : VehicleEntityMapper ) : CatalogQuery
+}
+
+
+class CatalogQueryService {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class CatalogReference {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +toString () : String
+}
+
+
+interface CatalogReferencePersistencePort {
+	{method}  {abstract} +findCosmByName ( name : String ) : Optional
+	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
+	{method}  {abstract} +findPublicationsByProductId ( productId : int ) : List
+}
+
+
+interface CatalogReferenceQuery {
+	{method}  {abstract} +findCosmByName ( name : String ) : Optional
+	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
+	{method}  {abstract} +findPublicationsByProductId ( productId : int ) : List
+}
+
+
+class CatalogReferenceQueryService {
+	{method} +findCosmByName ( name : String ) : Optional
+	{method} +findPublicationByCodexId ( codexId : String ) : Optional
+	{method} +findPublicationsByProductId ( productId : int ) : List
+}
+
+
+class Censor {
+	{field} -ownedProducts : Set
+	{method} +apply ( rawText : String ) : String
+	{method}  {static} +of ( markupService : TorgMarkupService , ownedProducts : Set ) : Censor
+	{method}  {static} +unauthenticated ( markupService : TorgMarkupService ) : Censor
+}
+
+
+enum ClearanceLevel {
+	{field} +ALPHA
+	{field} +BETA
+	{field} +DELTA
+	{field} +GAMMA
+	{field} +OMEGA
+}
+
+
+enum ClearanceLevel {
+	{field} +ALPHA
+	{field} +BETA
+	{field} +DELTA
+	{field} +GAMMA
+	{field} +OMEGA
+}
+
+
+class ClearanceLevelConverter {
+	{method} +convertToDatabaseColumn ( attribute : ClearanceLevel ) : String
+	{method} +convertToEntityAttribute ( dbData : String ) : ClearanceLevel
+}
+
+
+class ConditionalBlockProcessor {
+	{field} {static} -IF_BLOCK : Pattern
+	{method} +process ( text : String , ownedProducts : Set ) : String
+}
+
+
+class Cosm {
+	{field} -axioms : Map
+	{field} -id : UUID
+	{field} -name : String
+	{field} -products : Set
+	{field} -text : String
+	{field} -worldLaws : String
+	{method}  {static} +builder () : CosmBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class Cosm {
+	{field} +axioms : Map
+	{field} +products : Set
+	{field} +text : String
+	{field} +worldLaws : String
+	{method} +getRawText () : String
+	{method} +getRawWorldLaws () : String
+}
+
+
+class CosmBuilder {
+	{field} -axioms : Map
+	{field} -id : UUID
+	{field} -name : String
+	{field} -products : Set
+	{field} -text : String
+	{field} -worldLaws : String
+	{method} +axioms ( axioms : Map ) : CosmBuilder
+	{method} +build () : Cosm
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : CosmBuilder
+	{method} +id ( id : UUID ) : CosmBuilder
+	{method} +name ( name : String ) : CosmBuilder
+	{method} +products ( products : Set ) : CosmBuilder
+	{method} +text ( text : String ) : CosmBuilder
+	{method} +toString () : String
+	{method} +worldLaws ( worldLaws : String ) : CosmBuilder
+}
+
+
+class CosmController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list () : List
+}
+
+
+class CosmDetailDto {
+	{field} -axioms : Map
+	{field} -id : UUID
+	{field} -name : String
+	{field} -text : String
+	{field} -worldLaws : String
+	{method} +axioms () : Map
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +text () : String
+	{method} +toString () : String
+	{method} +worldLaws () : String
+}
+
+
+interface CosmEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Cosm ) : Cosm
+	{method}  {abstract} +toEntity ( model : Cosm ) : Cosm
+}
+
+
+class CosmEntityMapperImpl {
+	{method} +toDomain ( entity : Cosm ) : Cosm
+	{method} +toEntity ( model : Cosm ) : Cosm
+}
+
+
+interface CosmMapper {
+	{method}  {abstract} +toDetail ( cosm : Cosm , censor : Censor ) : CosmDetailDto
+	{method}  {abstract} +toSummary ( cosm : Cosm ) : CosmSummaryDto
+}
+
+
+class CosmMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( cosm : Cosm , censor : Censor ) : CosmDetailDto
+	{method} +toSummary ( cosm : Cosm ) : CosmSummaryDto
+}
+
+
+class CosmRefDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +toString () : String
+}
+
+
+class CosmReference {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+interface CosmRepository {
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class CosmSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class CurrentUserCensorFactory {
+	{method} +create () : Censor
+}
+
+
+class DifficultyNumber {
+	{field} -level : String
+	{field} -text : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class DifficultyNumber {
+	{field} +level : String
+	{field} +text : String
+}
+
+
+class DifficultyNumberDto {
+	{field} -level : String
+	{field} -text : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +level () : String
+	{method} +text () : String
+	{method} +toString () : String
+}
+
+
+class DomainEvent {
+	{field} -metadata : Map
+	{field} -payload : Object
+	{field} -type : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +metadata () : Map
+	{method} +payload () : Object
+	{method} +toString () : String
+	{method} +type () : String
+}
+
+
+interface DomainEventPublisher {
+	{method}  {abstract} +publish ( event : DomainEvent ) : void
+	{method} +publishAll ( events : Iterable ) : void
+}
+
+
+class DomainModelValidator {
+	{field} -validator : Validator
+	{method} +validate ( model : Object ) : Object
+}
+
+
+interface DriveThruRpgProductPort {
+	{method}  {abstract} +findProduct ( productId : String ) : Optional
+}
+
+
+annotation EnableTorgData
+
+class EntityDetailDto {
+	{field} -details : Map
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +details () : Map
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class EntityReferenceProcessor {
+	{field} {static} -ENTITY_REF : Pattern
+	{method} +process ( text : String ) : String
+}
+
+
+class EntitySummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+enum EntityType {
+	{field} +COSM
+	{field} +GROUP
+	{field} +ITEM
+	{field} +MIRACLE
+	{field} +MIRACLE_LIST
+	{field} +PERK
+	{field} +POWER
+	{field} +POWER_LIST
+	{field} +RACE
+	{field} +SHARD
+	{field} +SPELL
+	{field} +SPELL_LIST
+	{field} +THREAT
+	{field} +VEHICLE
+}
+
+
+class GameTokenProcessor {
+	{field} {static} -GAME_TOKEN : Pattern
+	{method} +process ( text : String ) : String
+}
+
+
+class GameTokenRegistry {
+	{field} {static} -KNOWN_TOKENS : Set
+	{field} {static} -TOKEN_CSS_CLASSES : Map
+	{method}  {static} +cssClassFor ( tokenName : String ) : String
+	{method}  {static} +isKnown ( tokenName : String ) : boolean
+}
+
+
+class Item {
+	{field} +additionalFeatures : String
+	{field} +ammo : String
+	{field} +axiomMagic : String
+	{field} +axiomTech : String
+	{field} +bonus : String
+	{field} +cosm : String
+	{field} +features : String
+	{field} +price : String
+	{field} +products : Set
+	{field} +range : String
+	{field} +text : String
+	{field} +type : String
+	{method} +getRawAdditionalFeatures () : String
+	{method} +getRawText () : String
+}
+
+
+class Item {
+	{field} -additionalFeatures : String
+	{field} -ammo : String
+	{field} -axiomMagic : String
+	{field} -axiomTech : String
+	{field} -bonus : String
+	{field} -cosm : String
+	{field} -features : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -price : String
+	{field} -products : Set
+	{field} -range : String
+	{field} -text : String
+	{field} -type : String
+	{method}  {static} +builder () : ItemBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class ItemBuilder {
+	{field} -additionalFeatures : String
+	{field} -ammo : String
+	{field} -axiomMagic : String
+	{field} -axiomTech : String
+	{field} -bonus : String
+	{field} -cosm : String
+	{field} -features : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -price : String
+	{field} -products : Set
+	{field} -range : String
+	{field} -text : String
+	{field} -type : String
+	{method} +additionalFeatures ( additionalFeatures : String ) : ItemBuilder
+	{method} +ammo ( ammo : String ) : ItemBuilder
+	{method} +axiomMagic ( axiomMagic : String ) : ItemBuilder
+	{method} +axiomTech ( axiomTech : String ) : ItemBuilder
+	{method} +bonus ( bonus : String ) : ItemBuilder
+	{method} +build () : Item
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : ItemBuilder
+	{method} +cosm ( cosm : String ) : ItemBuilder
+	{method} +features ( features : String ) : ItemBuilder
+	{method} +id ( id : UUID ) : ItemBuilder
+	{method} +name ( name : String ) : ItemBuilder
+	{method} +price ( price : String ) : ItemBuilder
+	{method} +products ( products : Set ) : ItemBuilder
+	{method} +range ( range : String ) : ItemBuilder
+	{method} +text ( text : String ) : ItemBuilder
+	{method} +toString () : String
+	{method} +type ( type : String ) : ItemBuilder
+}
+
+
+class ItemController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list ( cosm : String ) : List
+}
+
+
+class ItemDetailDto {
+	{field} -additionalFeatures : String
+	{field} -ammo : String
+	{field} -axiomMagic : String
+	{field} -axiomTech : String
+	{field} -bonus : String
+	{field} -features : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -price : String
+	{field} -range : String
+	{field} -text : String
+	{field} -type : String
+	{method} +additionalFeatures () : String
+	{method} +ammo () : String
+	{method} +axiomMagic () : String
+	{method} +axiomTech () : String
+	{method} +bonus () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +features () : String
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +price () : String
+	{method} +publications () : List
+	{method} +range () : String
+	{method} +text () : String
+	{method} +toString () : String
+	{method} +type () : String
+}
+
+
+interface ItemEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Item ) : Item
+	{method}  {abstract} +toEntity ( model : Item ) : Item
+}
+
+
+class ItemEntityMapperImpl {
+	{method} +toDomain ( entity : Item ) : Item
+	{method} +toEntity ( model : Item ) : Item
+}
+
+
+interface ItemMapper {
+	{method}  {abstract} +toDetail ( item : Item , censor : Censor ) : ItemDetailDto
+	{method}  {abstract} +toSummary ( item : Item ) : ItemSummaryDto
+}
+
+
+class ItemMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( item : Item , censor : Censor ) : ItemDetailDto
+	{method} +toSummary ( item : Item ) : ItemSummaryDto
+}
+
+
+interface ItemRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findByType ( type : String ) : List
+	{method}  {abstract} +findByTypeAndCosm ( type : String , cosm : String ) : List
+	{method}  {abstract} +findByTypeAndProduct ( type : String , product : String ) : List
+}
+
+
+class ItemSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class JpaArticlePersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaCatalogReferenceAdapter {
+	{method} +findCosmByName ( name : String ) : Optional
+	{method} +findPublicationByCodexId ( codexId : String ) : Optional
+	{method} +findPublicationsByProductId ( productId : int ) : List
+	{method} -toPublicationReference ( publication : Publication ) : CatalogPublicationReference
+	{method} -toReference ( cosm : Cosm ) : CatalogReference
+	{method} -toReference ( publication : Publication ) : CatalogReference
+}
+
+
+class JpaCosmPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaItemPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaMiracleListPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaMiraclePersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaPerkGroupPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaPerkPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaPowerListPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaPowerPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaPublicationPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaRacePersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaShardPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaSpellListPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaSpellPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaTagPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaThreatPersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class JpaVehiclePersistenceAdapter {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class LoginController {
+	{field} -authenticationManager : AuthenticationManager
+	{method} +login () : String
+	{method} +performLogin ( apiKey : String , request : HttpServletRequest , model : Model ) : String
+}
+
+
+class MarkdownProcessor {
+	{field} {static} -BULLET_POINT : Pattern
+	{field} -parser : Parser
+	{field} -renderer : HtmlRenderer
+	{method} +process ( text : String ) : String
+}
+
+
+class MarkupConfiguration {
+	{method} +conditionalBlockProcessor () : ConditionalBlockProcessor
+	{method} +entityReferenceProcessor () : EntityReferenceProcessor
+	{method} +gameTokenProcessor () : GameTokenProcessor
+	{method} +markdownProcessor () : MarkdownProcessor
+	{method} +rawHtmlProcessor () : RawHtmlProcessor
+	{method} +torgMarkupService ( conditionalBlockProcessor : ConditionalBlockProcessor , entityReferenceProcessor : EntityReferenceProcessor , rawHtmlProcessor : RawHtmlProcessor , gameTokenProcessor : GameTokenProcessor , markdownProcessor : MarkdownProcessor ) : TorgMarkupService
+}
+
+
+class Miracle {
+	{field} +axiom : String
+	{field} +castingTime : String
+	{field} +duration : String
+	{field} +products : Set
+	{field} +range : String
+	{field} +requiredSkills : Map
+	{field} +text : String
+	{method} +getRawText () : String
+}
+
+
+class Miracle {
+	{field} -axiom : String
+	{field} -castingTime : String
+	{field} -duration : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -products : Set
+	{field} -range : String
+	{field} -requiredSkills : Map
+	{field} -text : String
+	{method}  {static} +builder () : MiracleBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class MiracleBuilder {
+	{field} -axiom : String
+	{field} -castingTime : String
+	{field} -duration : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -products : Set
+	{field} -range : String
+	{field} -requiredSkills : Map
+	{field} -text : String
+	{method} +axiom ( axiom : String ) : MiracleBuilder
+	{method} +build () : Miracle
+	{method} +castingTime ( castingTime : String ) : MiracleBuilder
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : MiracleBuilder
+	{method} +dn ( dn : DifficultyNumber ) : MiracleBuilder
+	{method} +duration ( duration : String ) : MiracleBuilder
+	{method} +id ( id : UUID ) : MiracleBuilder
+	{method} +name ( name : String ) : MiracleBuilder
+	{method} +products ( products : Set ) : MiracleBuilder
+	{method} +range ( range : String ) : MiracleBuilder
+	{method} +requiredSkills ( requiredSkills : Map ) : MiracleBuilder
+	{method} +text ( text : String ) : MiracleBuilder
+	{method} +toString () : String
+}
+
+
+class MiracleController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list () : List
+}
+
+
+class MiracleDetailDto {
+	{field} -axiom : String
+	{field} -castingTime : String
+	{field} -duration : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -range : String
+	{field} -requiredSkills : Map
+	{field} -text : String
+	{method} +axiom () : String
+	{method} +castingTime () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +dn () : DifficultyNumberDto
+	{method} +duration () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +range () : String
+	{method} +requiredSkills () : Map
+	{method} +text () : String
+	{method} +toString () : String
+}
+
+
+interface MiracleEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Miracle ) : Miracle
+	{method}  {abstract} +toEntity ( model : Miracle ) : Miracle
+}
+
+
+class MiracleEntityMapperImpl {
+	{method} +toDomain ( entity : Miracle ) : Miracle
+	{method} +toEntity ( model : Miracle ) : Miracle
+}
+
+
+class MiracleList {
+	{field} +cosm : String
+	{field} +disableIf : String
+	{field} +miracles : List
+	{field} +notes : String
+	{field} +products : Set
+	{field} +text : String
+	{field} +unlockingPerk : String
+	{method} +getRawNotes () : String
+	{method} +getRawText () : String
+}
+
+
+class MiracleList {
+	{field} -cosm : String
+	{field} -disableIf : String
+	{field} -id : UUID
+	{field} -miracles : List
+	{field} -name : String
+	{field} -notes : String
+	{field} -products : Set
+	{field} -text : String
+	{field} -unlockingPerk : String
+	{method}  {static} +builder () : MiracleListBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class MiracleListBuilder {
+	{field} -cosm : String
+	{field} -disableIf : String
+	{field} -id : UUID
+	{field} -miracles : List
+	{field} -name : String
+	{field} -notes : String
+	{field} -products : Set
+	{field} -text : String
+	{field} -unlockingPerk : String
+	{method} +build () : MiracleList
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : MiracleListBuilder
+	{method} +cosm ( cosm : String ) : MiracleListBuilder
+	{method} +disableIf ( disableIf : String ) : MiracleListBuilder
+	{method} +id ( id : UUID ) : MiracleListBuilder
+	{method} +miracles ( miracles : List ) : MiracleListBuilder
+	{method} +name ( name : String ) : MiracleListBuilder
+	{method} +notes ( notes : String ) : MiracleListBuilder
+	{method} +products ( products : Set ) : MiracleListBuilder
+	{method} +text ( text : String ) : MiracleListBuilder
+	{method} +toString () : String
+	{method} +unlockingPerk ( unlockingPerk : String ) : MiracleListBuilder
+}
+
+
+class MiracleListController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list ( cosm : String ) : List
+}
+
+
+class MiracleListDetailDto {
+	{field} -disableIf : String
+	{field} -id : UUID
+	{field} -miracles : List
+	{field} -name : String
+	{field} -notes : String
+	{field} -text : String
+	{field} -unlockingPerk : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +disableIf () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +miracles () : List
+	{method} +name () : String
+	{method} +notes () : String
+	{method} +publications () : List
+	{method} +text () : String
+	{method} +toString () : String
+	{method} +unlockingPerk () : String
+}
+
+
+interface MiracleListEntityMapper {
+	{method}  {abstract} +toDomain ( entity : MiracleList ) : MiracleList
+	{method}  {abstract} +toEntity ( model : MiracleList ) : MiracleList
+}
+
+
+class MiracleListEntityMapperImpl {
+	{method} +toDomain ( entity : MiracleList ) : MiracleList
+	{method} +toEntity ( model : MiracleList ) : MiracleList
+}
+
+
+interface MiracleListMapper {
+	{method}  {abstract} +toDetail ( miracleList : MiracleList , censor : Censor ) : MiracleListDetailDto
+	{method}  {abstract} +toSummary ( miracleList : MiracleList ) : MiracleListSummaryDto
+}
+
+
+class MiracleListMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( miracleList : MiracleList , censor : Censor ) : MiracleListDetailDto
+	{method} +toSummary ( miracleList : MiracleList ) : MiracleListSummaryDto
+}
+
+
+interface MiracleListRepository {
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByDisableIfIsNullOrDisableIfNot ( disableIfProduct : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findByUnlockingPerk ( perkId : String ) : List
+}
+
+
+class MiracleListSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+interface MiracleMapper {
+	{method}  {abstract} +toDetail ( miracle : Miracle , censor : Censor ) : MiracleDetailDto
+	{method}  {abstract} +toSummary ( miracle : Miracle ) : MiracleSummaryDto
+}
+
+
+class MiracleMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( miracle : Miracle , censor : Censor ) : MiracleDetailDto
+	{method} +toSummary ( miracle : Miracle ) : MiracleSummaryDto
+}
+
+
+interface MiracleRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class MiracleSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class Perk {
+	{field} +contradiction : boolean
+	{field} +cosm : String
+	{field} +group : String
+	{field} +prerequisites : String
+	{field} +products : Set
+	{field} +text : String
+	{method} +getRawPrerequisites () : String
+	{method} +getRawText () : String
+}
+
+
+class Perk {
+	{field} -contradiction : boolean
+	{field} -cosm : String
+	{field} -group : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -prerequisites : String
+	{field} -products : Set
+	{field} -text : String
+	{method}  {static} +builder () : PerkBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class PerkBuilder {
+	{field} -contradiction : boolean
+	{field} -cosm : String
+	{field} -group : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -prerequisites : String
+	{field} -products : Set
+	{field} -text : String
+	{method} +build () : Perk
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : PerkBuilder
+	{method} +contradiction ( contradiction : boolean ) : PerkBuilder
+	{method} +cosm ( cosm : String ) : PerkBuilder
+	{method} +group ( group : String ) : PerkBuilder
+	{method} +id ( id : UUID ) : PerkBuilder
+	{method} +name ( name : String ) : PerkBuilder
+	{method} +prerequisites ( prerequisites : String ) : PerkBuilder
+	{method} +products ( products : Set ) : PerkBuilder
+	{method} +text ( text : String ) : PerkBuilder
+	{method} +toString () : String
+}
+
+
+class PerkController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list ( cosm : String ) : List
+}
+
+
+class PerkDetailDto {
+	{field} -contradiction : boolean
+	{field} -group : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -prerequisites : String
+	{field} -text : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +contradiction () : boolean
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +group () : String
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +prerequisites () : String
+	{method} +publications () : List
+	{method} +text () : String
+	{method} +toString () : String
+}
+
+
+interface PerkEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Perk ) : Perk
+	{method}  {abstract} +toEntity ( model : Perk ) : Perk
+}
+
+
+class PerkEntityMapperImpl {
+	{method} +toDomain ( entity : Perk ) : Perk
+	{method} +toEntity ( model : Perk ) : Perk
+}
+
+
+class PerkGroup {
+	{field} +infos : String
+	{field} +products : Set
+	{field} +text : String
+	{method} +getRawInfos () : String
+	{method} +getRawText () : String
+}
+
+
+class PerkGroup {
+	{field} -id : UUID
+	{field} -infos : String
+	{field} -name : String
+	{field} -products : Set
+	{field} -text : String
+	{method}  {static} +builder () : PerkGroupBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class PerkGroupBuilder {
+	{field} -id : UUID
+	{field} -infos : String
+	{field} -name : String
+	{field} -products : Set
+	{field} -text : String
+	{method} +build () : PerkGroup
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : PerkGroupBuilder
+	{method} +id ( id : UUID ) : PerkGroupBuilder
+	{method} +infos ( infos : String ) : PerkGroupBuilder
+	{method} +name ( name : String ) : PerkGroupBuilder
+	{method} +products ( products : Set ) : PerkGroupBuilder
+	{method} +text ( text : String ) : PerkGroupBuilder
+	{method} +toString () : String
+}
+
+
+class PerkGroupController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list () : List
+}
+
+
+class PerkGroupDetailDto {
+	{field} -id : UUID
+	{field} -infos : String
+	{field} -name : String
+	{field} -text : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +infos () : String
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +text () : String
+	{method} +toString () : String
+}
+
+
+interface PerkGroupEntityMapper {
+	{method}  {abstract} +toDomain ( entity : PerkGroup ) : PerkGroup
+	{method}  {abstract} +toEntity ( model : PerkGroup ) : PerkGroup
+}
+
+
+class PerkGroupEntityMapperImpl {
+	{method} +toDomain ( entity : PerkGroup ) : PerkGroup
+	{method} +toEntity ( model : PerkGroup ) : PerkGroup
+}
+
+
+interface PerkGroupMapper {
+	{method}  {abstract} +toDetail ( perkGroup : PerkGroup , censor : Censor ) : PerkGroupDetailDto
+	{method}  {abstract} +toSummary ( perkGroup : PerkGroup ) : PerkGroupSummaryDto
+}
+
+
+class PerkGroupMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( perkGroup : PerkGroup , censor : Censor ) : PerkGroupDetailDto
+	{method} +toSummary ( perkGroup : PerkGroup ) : PerkGroupSummaryDto
+}
+
+
+interface PerkGroupRepository {
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+}
+
+
+class PerkGroupSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+interface PerkMapper {
+	{method}  {abstract} +toDetail ( perk : Perk , censor : Censor ) : PerkDetailDto
+	{method}  {abstract} +toSummary ( perk : Perk ) : PerkSummaryDto
+}
+
+
+class PerkMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( perk : Perk , censor : Censor ) : PerkDetailDto
+	{method} +toSummary ( perk : Perk ) : PerkSummaryDto
+}
+
+
+interface PerkRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByContradiction ( contradiction : boolean ) : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByCosmAndProduct ( cosm : String , product : String ) : List
+	{method}  {abstract} +findByGroup ( group : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class PerkSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class Power {
+	{field} -axiom : String
+	{field} -castingTime : String
+	{field} -duration : String
+	{field} -enhancements : String
+	{field} -id : UUID
+	{field} -limitations : String
+	{field} -name : String
+	{field} -products : Set
+	{field} -range : String
+	{field} -requiredSkills : Map
+	{field} -text : String
+	{method}  {static} +builder () : PowerBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class Power {
+	{field} +axiom : String
+	{field} +castingTime : String
+	{field} +duration : String
+	{field} +enhancements : String
+	{field} +limitations : String
+	{field} +products : Set
+	{field} +range : String
+	{field} +requiredSkills : Map
+	{field} +text : String
+	{method} +getRawEnhancements () : String
+	{method} +getRawLimitations () : String
+	{method} +getRawText () : String
+}
+
+
+class PowerBuilder {
+	{field} -axiom : String
+	{field} -castingTime : String
+	{field} -duration : String
+	{field} -enhancements : String
+	{field} -id : UUID
+	{field} -limitations : String
+	{field} -name : String
+	{field} -products : Set
+	{field} -range : String
+	{field} -requiredSkills : Map
+	{field} -text : String
+	{method} +axiom ( axiom : String ) : PowerBuilder
+	{method} +build () : Power
+	{method} +castingTime ( castingTime : String ) : PowerBuilder
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : PowerBuilder
+	{method} +dn ( dn : DifficultyNumber ) : PowerBuilder
+	{method} +duration ( duration : String ) : PowerBuilder
+	{method} +enhancements ( enhancements : String ) : PowerBuilder
+	{method} +id ( id : UUID ) : PowerBuilder
+	{method} +limitations ( limitations : String ) : PowerBuilder
+	{method} +name ( name : String ) : PowerBuilder
+	{method} +products ( products : Set ) : PowerBuilder
+	{method} +range ( range : String ) : PowerBuilder
+	{method} +requiredSkills ( requiredSkills : Map ) : PowerBuilder
+	{method} +text ( text : String ) : PowerBuilder
+	{method} +toString () : String
+}
+
+
+class PowerController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list () : List
+}
+
+
+class PowerDetailDto {
+	{field} -axiom : String
+	{field} -castingTime : String
+	{field} -duration : String
+	{field} -enhancements : String
+	{field} -id : UUID
+	{field} -limitations : String
+	{field} -name : String
+	{field} -range : String
+	{field} -requiredSkills : Map
+	{field} -text : String
+	{method} +axiom () : String
+	{method} +castingTime () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +dn () : DifficultyNumberDto
+	{method} +duration () : String
+	{method} +enhancements () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +limitations () : String
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +range () : String
+	{method} +requiredSkills () : Map
+	{method} +text () : String
+	{method} +toString () : String
+}
+
+
+interface PowerEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Power ) : Power
+	{method}  {abstract} +toEntity ( model : Power ) : Power
+}
+
+
+class PowerEntityMapperImpl {
+	{method} +toDomain ( entity : Power ) : Power
+	{method} +toEntity ( model : Power ) : Power
+}
+
+
+class PowerList {
+	{field} +cosm : String
+	{field} +disableIf : String
+	{field} +notes : String
+	{field} +powers : List
+	{field} +products : Set
+	{field} +text : String
+	{field} +unlockingPerk : String
+	{method} +getRawNotes () : String
+	{method} +getRawText () : String
+}
+
+
+class PowerList {
+	{field} -cosm : String
+	{field} -disableIf : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -notes : String
+	{field} -powers : List
+	{field} -products : Set
+	{field} -text : String
+	{field} -unlockingPerk : String
+	{method}  {static} +builder () : PowerListBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class PowerListBuilder {
+	{field} -cosm : String
+	{field} -disableIf : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -notes : String
+	{field} -powers : List
+	{field} -products : Set
+	{field} -text : String
+	{field} -unlockingPerk : String
+	{method} +build () : PowerList
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : PowerListBuilder
+	{method} +cosm ( cosm : String ) : PowerListBuilder
+	{method} +disableIf ( disableIf : String ) : PowerListBuilder
+	{method} +id ( id : UUID ) : PowerListBuilder
+	{method} +name ( name : String ) : PowerListBuilder
+	{method} +notes ( notes : String ) : PowerListBuilder
+	{method} +powers ( powers : List ) : PowerListBuilder
+	{method} +products ( products : Set ) : PowerListBuilder
+	{method} +text ( text : String ) : PowerListBuilder
+	{method} +toString () : String
+	{method} +unlockingPerk ( unlockingPerk : String ) : PowerListBuilder
+}
+
+
+class PowerListController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list ( cosm : String ) : List
+}
+
+
+class PowerListDetailDto {
+	{field} -disableIf : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -notes : String
+	{field} -powers : List
+	{field} -text : String
+	{field} -unlockingPerk : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +disableIf () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +notes () : String
+	{method} +powers () : List
+	{method} +publications () : List
+	{method} +text () : String
+	{method} +toString () : String
+	{method} +unlockingPerk () : String
+}
+
+
+interface PowerListEntityMapper {
+	{method}  {abstract} +toDomain ( entity : PowerList ) : PowerList
+	{method}  {abstract} +toEntity ( model : PowerList ) : PowerList
+}
+
+
+class PowerListEntityMapperImpl {
+	{method} +toDomain ( entity : PowerList ) : PowerList
+	{method} +toEntity ( model : PowerList ) : PowerList
+}
+
+
+interface PowerListMapper {
+	{method}  {abstract} +toDetail ( powerList : PowerList , censor : Censor ) : PowerListDetailDto
+	{method}  {abstract} +toSummary ( powerList : PowerList ) : PowerListSummaryDto
+}
+
+
+class PowerListMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( powerList : PowerList , censor : Censor ) : PowerListDetailDto
+	{method} +toSummary ( powerList : PowerList ) : PowerListSummaryDto
+}
+
+
+interface PowerListRepository {
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByDisableIfIsNullOrDisableIfNot ( disableIfProduct : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findByUnlockingPerk ( perkId : String ) : List
+}
+
+
+class PowerListSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+interface PowerMapper {
+	{method}  {abstract} +toDetail ( power : Power , censor : Censor ) : PowerDetailDto
+	{method}  {abstract} +toSummary ( power : Power ) : PowerSummaryDto
+}
+
+
+class PowerMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( power : Power , censor : Censor ) : PowerDetailDto
+	{method} +toSummary ( power : Power ) : PowerSummaryDto
+}
+
+
+interface PowerRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class PowerSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class ProductOwnershipResolver {
+	{field} {static} -ROLE_PREFIX : String
+	{method} +resolve () : Set
+}
+
+
+class Publication {
+	{field} {static} -DRIVETHRURPG_COVER_BASE : String
+	{field} +codexId : String
+	{field} +id : UUID
+	{field} +name : String
+	{field} +primaryProductId : int
+	{field} +productIds : Set
+	{field} +thirdParty : String
+	{method} +getCoverURL () : String
+}
+
+
+class Publication {
+	{field} {static} -DRIVETHRURPG_COVER_BASE : String
+	{field} -codexId : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -primaryProductId : int
+	{field} -productIds : Set
+	{field} -thirdParty : String
+	{method}  {static} +builder () : PublicationBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +getCoverURL () : String
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class PublicationBuilder {
+	{field} -codexId : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -primaryProductId : int
+	{field} -productIds : Set
+	{field} -thirdParty : String
+	{method} +build () : Publication
+	{method} +codexId ( codexId : String ) : PublicationBuilder
+	{method} +id ( id : UUID ) : PublicationBuilder
+	{method} +name ( name : String ) : PublicationBuilder
+	{method} +primaryProductId ( primaryProductId : int ) : PublicationBuilder
+	{method} +productIds ( productIds : Set ) : PublicationBuilder
+	{method} +thirdParty ( thirdParty : String ) : PublicationBuilder
+	{method} +toString () : String
+}
+
+
+class PublicationController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list () : List
+}
+
+
+class PublicationDetailDto {
+	{field} -codexId : String
+	{field} -coverURL : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -primaryProductId : int
+	{field} -productIds : Set
+	{field} -thirdParty : String
+	{method} +codexId () : String
+	{method} +coverURL () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +primaryProductId () : int
+	{method} +productIds () : Set
+	{method} +thirdParty () : String
+	{method} +toString () : String
+}
+
+
+interface PublicationEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Publication ) : Publication
+	{method}  {abstract} +toEntity ( model : Publication ) : Publication
+}
+
+
+class PublicationEntityMapperImpl {
+	{method} +toDomain ( entity : Publication ) : Publication
+	{method} +toEntity ( model : Publication ) : Publication
+}
+
+
+interface PublicationMapper {
+	{method}  {abstract} +toDetail ( publication : Publication ) : PublicationDetailDto
+	{method}  {abstract} +toSummary ( publication : Publication ) : PublicationSummaryDto
+}
+
+
+class PublicationMapperImpl {
+	{method} +toDetail ( publication : Publication ) : PublicationDetailDto
+	{method} +toSummary ( publication : Publication ) : PublicationSummaryDto
+}
+
+
+class PublicationRefDto {
+	{field} -id : UUID
+	{field} -title : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +title () : String
+	{method} +toString () : String
+}
+
+
+class PublicationReference {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+interface PublicationRepository {
+	{method}  {abstract} +findByCodexId ( codexId : String ) : Optional
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByPrimaryProductId ( primaryProductId : int ) : Optional
+	{method}  {abstract} +findByProductId ( productId : int ) : List
+	{method}  {abstract} +findByThirdParty ( thirdParty : String ) : List
+	{method}  {abstract} +findByThirdPartyIsNull () : List
+}
+
+
+class PublicationSummaryDto {
+	{field} -codexId : String
+	{field} -id : UUID
+	{field} -name : String
+	{method} +codexId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +toString () : String
+}
+
+
+class Race {
+	{field} +abilities : String
+	{field} +attributeLimits : Map
+	{field} +major : boolean
+	{field} +perkText : String
+	{field} +products : Set
+	{field} +text : String
+	{method} +getRawAbilities () : String
+	{method} +getRawPerkText () : String
+	{method} +getRawText () : String
+}
+
+
+class Race {
+	{field} -abilities : String
+	{field} -attributeLimits : Map
+	{field} -id : UUID
+	{field} -major : boolean
+	{field} -name : String
+	{field} -perkText : String
+	{field} -products : Set
+	{field} -text : String
+	{method}  {static} +builder () : RaceBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class RaceBuilder {
+	{field} -abilities : String
+	{field} -attributeLimits : Map
+	{field} -id : UUID
+	{field} -major : boolean
+	{field} -name : String
+	{field} -perkText : String
+	{field} -products : Set
+	{field} -text : String
+	{method} +abilities ( abilities : String ) : RaceBuilder
+	{method} +attributeLimits ( attributeLimits : Map ) : RaceBuilder
+	{method} +build () : Race
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : RaceBuilder
+	{method} +id ( id : UUID ) : RaceBuilder
+	{method} +major ( major : boolean ) : RaceBuilder
+	{method} +name ( name : String ) : RaceBuilder
+	{method} +perkText ( perkText : String ) : RaceBuilder
+	{method} +products ( products : Set ) : RaceBuilder
+	{method} +text ( text : String ) : RaceBuilder
+	{method} +toString () : String
+}
+
+
+class RaceController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list () : List
+}
+
+
+class RaceDetailDto {
+	{field} -abilities : String
+	{field} -attributeLimits : Map
+	{field} -id : UUID
+	{field} -major : boolean
+	{field} -name : String
+	{field} -perkText : String
+	{field} -text : String
+	{method} +abilities () : String
+	{method} +attributeLimits () : Map
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +major () : boolean
+	{method} +name () : String
+	{method} +perkText () : String
+	{method} +publications () : List
+	{method} +text () : String
+	{method} +toString () : String
+}
+
+
+interface RaceEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Race ) : Race
+	{method}  {abstract} +toEntity ( model : Race ) : Race
+}
+
+
+class RaceEntityMapperImpl {
+	{method} +toDomain ( entity : Race ) : Race
+	{method} +toEntity ( model : Race ) : Race
+}
+
+
+interface RaceMapper {
+	{method}  {abstract} +toDetail ( race : Race , censor : Censor ) : RaceDetailDto
+	{method}  {abstract} +toSummary ( race : Race ) : RaceSummaryDto
+}
+
+
+class RaceMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( race : Race , censor : Censor ) : RaceDetailDto
+	{method} +toSummary ( race : Race ) : RaceSummaryDto
+}
+
+
+interface RaceRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByMajor ( major : boolean ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class RaceSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class RawHtmlProcessor {
+	{field} {static} -HTML_BLOCK : Pattern
+	{method} +process ( text : String ) : String
+}
+
+
+class Shard {
+	{field} -cosm : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -possibilities : String
+	{field} -powers : String
+	{field} -products : Set
+	{field} -purpose : String
+	{field} -restrictions : String
+	{field} -tappingDifficulty : String
+	{field} -text : String
+	{method}  {static} +builder () : ShardBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class Shard {
+	{field} +cosm : String
+	{field} +possibilities : String
+	{field} +powers : String
+	{field} +products : Set
+	{field} +purpose : String
+	{field} +restrictions : String
+	{field} +tappingDifficulty : String
+	{field} +text : String
+	{method} +getRawPowers () : String
+	{method} +getRawPurpose () : String
+	{method} +getRawRestrictions () : String
+	{method} +getRawText () : String
+}
+
+
+class ShardBuilder {
+	{field} -cosm : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -possibilities : String
+	{field} -powers : String
+	{field} -products : Set
+	{field} -purpose : String
+	{field} -restrictions : String
+	{field} -tappingDifficulty : String
+	{field} -text : String
+	{method} +build () : Shard
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : ShardBuilder
+	{method} +cosm ( cosm : String ) : ShardBuilder
+	{method} +id ( id : UUID ) : ShardBuilder
+	{method} +name ( name : String ) : ShardBuilder
+	{method} +possibilities ( possibilities : String ) : ShardBuilder
+	{method} +powers ( powers : String ) : ShardBuilder
+	{method} +products ( products : Set ) : ShardBuilder
+	{method} +purpose ( purpose : String ) : ShardBuilder
+	{method} +restrictions ( restrictions : String ) : ShardBuilder
+	{method} +tappingDifficulty ( tappingDifficulty : String ) : ShardBuilder
+	{method} +text ( text : String ) : ShardBuilder
+	{method} +toString () : String
+}
+
+
+class ShardController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list ( cosm : String ) : List
+}
+
+
+class ShardDetailDto {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -possibilities : String
+	{field} -powers : String
+	{field} -purpose : String
+	{field} -restrictions : String
+	{field} -tappingDifficulty : String
+	{field} -text : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +possibilities () : String
+	{method} +powers () : String
+	{method} +publications () : List
+	{method} +purpose () : String
+	{method} +restrictions () : String
+	{method} +tappingDifficulty () : String
+	{method} +text () : String
+	{method} +toString () : String
+}
+
+
+interface ShardEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Shard ) : Shard
+	{method}  {abstract} +toEntity ( model : Shard ) : Shard
+}
+
+
+class ShardEntityMapperImpl {
+	{method} +toDomain ( entity : Shard ) : Shard
+	{method} +toEntity ( model : Shard ) : Shard
+}
+
+
+interface ShardMapper {
+	{method}  {abstract} +toDetail ( shard : Shard , censor : Censor ) : ShardDetailDto
+	{method}  {abstract} +toSummary ( shard : Shard ) : ShardSummaryDto
+}
+
+
+class ShardMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( shard : Shard , censor : Censor ) : ShardDetailDto
+	{method} +toSummary ( shard : Shard ) : ShardSummaryDto
+}
+
+
+interface ShardRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class ShardSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class Spell {
+	{field} -axiom : String
+	{field} -castingTime : String
+	{field} -duration : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -products : Set
+	{field} -range : String
+	{field} -requiredSkills : Map
+	{field} -text : String
+	{method}  {static} +builder () : SpellBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class Spell {
+	{field} +axiom : String
+	{field} +castingTime : String
+	{field} +duration : String
+	{field} +products : Set
+	{field} +range : String
+	{field} +requiredSkills : Map
+	{field} +text : String
+	{method} +getRawText () : String
+}
+
+
+class SpellBuilder {
+	{field} -axiom : String
+	{field} -castingTime : String
+	{field} -duration : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -products : Set
+	{field} -range : String
+	{field} -requiredSkills : Map
+	{field} -text : String
+	{method} +axiom ( axiom : String ) : SpellBuilder
+	{method} +build () : Spell
+	{method} +castingTime ( castingTime : String ) : SpellBuilder
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : SpellBuilder
+	{method} +dn ( dn : DifficultyNumber ) : SpellBuilder
+	{method} +duration ( duration : String ) : SpellBuilder
+	{method} +id ( id : UUID ) : SpellBuilder
+	{method} +name ( name : String ) : SpellBuilder
+	{method} +products ( products : Set ) : SpellBuilder
+	{method} +range ( range : String ) : SpellBuilder
+	{method} +requiredSkills ( requiredSkills : Map ) : SpellBuilder
+	{method} +text ( text : String ) : SpellBuilder
+	{method} +toString () : String
+}
+
+
+class SpellController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list () : List
+}
+
+
+class SpellDetailDto {
+	{field} -axiom : String
+	{field} -castingTime : String
+	{field} -duration : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -range : String
+	{field} -requiredSkills : Map
+	{field} -text : String
+	{method} +axiom () : String
+	{method} +castingTime () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +dn () : DifficultyNumberDto
+	{method} +duration () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +range () : String
+	{method} +requiredSkills () : Map
+	{method} +text () : String
+	{method} +toString () : String
+}
+
+
+interface SpellEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Spell ) : Spell
+	{method}  {abstract} +toEntity ( model : Spell ) : Spell
+}
+
+
+class SpellEntityMapperImpl {
+	{method} +toDomain ( entity : Spell ) : Spell
+	{method} +toEntity ( model : Spell ) : Spell
+}
+
+
+class SpellList {
+	{field} +cosm : String
+	{field} +disableIf : String
+	{field} +notes : String
+	{field} +products : Set
+	{field} +spells : List
+	{field} +text : String
+	{field} +unlockingPerk : String
+	{method} +getRawNotes () : String
+	{method} +getRawText () : String
+}
+
+
+class SpellList {
+	{field} -cosm : String
+	{field} -disableIf : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -notes : String
+	{field} -products : Set
+	{field} -spells : List
+	{field} -text : String
+	{field} -unlockingPerk : String
+	{method}  {static} +builder () : SpellListBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class SpellListBuilder {
+	{field} -cosm : String
+	{field} -disableIf : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -notes : String
+	{field} -products : Set
+	{field} -spells : List
+	{field} -text : String
+	{field} -unlockingPerk : String
+	{method} +build () : SpellList
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : SpellListBuilder
+	{method} +cosm ( cosm : String ) : SpellListBuilder
+	{method} +disableIf ( disableIf : String ) : SpellListBuilder
+	{method} +id ( id : UUID ) : SpellListBuilder
+	{method} +name ( name : String ) : SpellListBuilder
+	{method} +notes ( notes : String ) : SpellListBuilder
+	{method} +products ( products : Set ) : SpellListBuilder
+	{method} +spells ( spells : List ) : SpellListBuilder
+	{method} +text ( text : String ) : SpellListBuilder
+	{method} +toString () : String
+	{method} +unlockingPerk ( unlockingPerk : String ) : SpellListBuilder
+}
+
+
+class SpellListController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list ( cosm : String ) : List
+}
+
+
+class SpellListDetailDto {
+	{field} -disableIf : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -notes : String
+	{field} -spells : List
+	{field} -text : String
+	{field} -unlockingPerk : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +disableIf () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +notes () : String
+	{method} +publications () : List
+	{method} +spells () : List
+	{method} +text () : String
+	{method} +toString () : String
+	{method} +unlockingPerk () : String
+}
+
+
+interface SpellListEntityMapper {
+	{method}  {abstract} +toDomain ( entity : SpellList ) : SpellList
+	{method}  {abstract} +toEntity ( model : SpellList ) : SpellList
+}
+
+
+class SpellListEntityMapperImpl {
+	{method} +toDomain ( entity : SpellList ) : SpellList
+	{method} +toEntity ( model : SpellList ) : SpellList
+}
+
+
+interface SpellListMapper {
+	{method}  {abstract} +toDetail ( spellList : SpellList , censor : Censor ) : SpellListDetailDto
+	{method}  {abstract} +toSummary ( spellList : SpellList ) : SpellListSummaryDto
+}
+
+
+class SpellListMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( spellList : SpellList , censor : Censor ) : SpellListDetailDto
+	{method} +toSummary ( spellList : SpellList ) : SpellListSummaryDto
+}
+
+
+interface SpellListRepository {
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByDisableIfIsNullOrDisableIfNot ( disableIfProduct : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findByUnlockingPerk ( perkId : String ) : List
+}
+
+
+class SpellListSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+interface SpellMapper {
+	{method}  {abstract} +toDetail ( spell : Spell , censor : Censor ) : SpellDetailDto
+	{method}  {abstract} +toSummary ( spell : Spell ) : SpellSummaryDto
+}
+
+
+class SpellMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( spell : Spell , censor : Censor ) : SpellDetailDto
+	{method} +toSummary ( spell : Spell ) : SpellSummaryDto
+}
+
+
+interface SpellRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class SpellSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class Tag {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -parent : UUID
+	{method}  {static} +builder () : TagBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class Tag {
+	{field} +parent : UUID
+}
+
+
+class TagBuilder {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -parent : UUID
+	{method} +build () : Tag
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : TagBuilder
+	{method} +id ( id : UUID ) : TagBuilder
+	{method} +name ( name : String ) : TagBuilder
+	{method} +parent ( parent : UUID ) : TagBuilder
+	{method} +toString () : String
+}
+
+
+class TagController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list () : List
+}
+
+
+class TagDetailDto {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -parentId : UUID
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +parentId () : UUID
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+interface TagEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Tag ) : Tag
+	{method}  {abstract} +toEntity ( model : Tag ) : Tag
+}
+
+
+class TagEntityMapperImpl {
+	{method} +toDomain ( entity : Tag ) : Tag
+	{method} +toEntity ( model : Tag ) : Tag
+}
+
+
+interface TagMapper {
+	{method}  {abstract} +toDetail ( tag : Tag ) : TagDetailDto
+	{method}  {abstract} +toSummary ( tag : Tag ) : TagSummaryDto
+}
+
+
+class TagMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} +toDetail ( tag : Tag ) : TagDetailDto
+	{method} +toSummary ( tag : Tag ) : TagSummaryDto
+}
+
+
+interface TagRepository {
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByParent ( parentId : UUID ) : List
+	{method}  {abstract} +findByParentIsNull () : List
+}
+
+
+class TagSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class Threat {
+	{field} +charisma : String
+	{field} +cosm : String
+	{field} +dexterity : String
+	{field} +equipment : List
+	{field} +mind : String
+	{field} +moveFly : String
+	{field} +moveSwim : String
+	{field} +moveWalk : String
+	{field} +perks : List
+	{field} +possibilities : String
+	{field} +products : Set
+	{field} +quote : String
+	{field} +shock : String
+	{field} +skills : Map
+	{field} +specialAbilities : Map
+	{field} +spirit : String
+	{field} +strength : String
+	{field} +subName : String
+	{field} +text : String
+	{field} +tough : String
+	{field} +unique : boolean
+	{field} +wounds : String
+	{method} +getRawQuote () : String
+	{method} +getRawSpecialAbilities () : Map
+	{method} +getRawText () : String
+}
+
+
+class Threat {
+	{field} -charisma : String
+	{field} -cosm : String
+	{field} -dexterity : String
+	{field} -equipment : List
+	{field} -id : UUID
+	{field} -mind : String
+	{field} -moveFly : String
+	{field} -moveSwim : String
+	{field} -moveWalk : String
+	{field} -name : String
+	{field} -perks : List
+	{field} -possibilities : String
+	{field} -products : Set
+	{field} -quote : String
+	{field} -shock : String
+	{field} -skills : Map
+	{field} -specialAbilities : Map
+	{field} -spirit : String
+	{field} -strength : String
+	{field} -subName : String
+	{field} -text : String
+	{field} -tough : String
+	{field} -unique : boolean
+	{field} -wounds : String
+	{method}  {static} +builder () : ThreatBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class ThreatBuilder {
+	{field} -charisma : String
+	{field} -cosm : String
+	{field} -dexterity : String
+	{field} -equipment : List
+	{field} -id : UUID
+	{field} -mind : String
+	{field} -moveFly : String
+	{field} -moveSwim : String
+	{field} -moveWalk : String
+	{field} -name : String
+	{field} -perks : List
+	{field} -possibilities : String
+	{field} -products : Set
+	{field} -quote : String
+	{field} -shock : String
+	{field} -skills : Map
+	{field} -specialAbilities : Map
+	{field} -spirit : String
+	{field} -strength : String
+	{field} -subName : String
+	{field} -text : String
+	{field} -tough : String
+	{field} -unique : boolean
+	{field} -wounds : String
+	{method} +build () : Threat
+	{method} +charisma ( charisma : String ) : ThreatBuilder
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : ThreatBuilder
+	{method} +cosm ( cosm : String ) : ThreatBuilder
+	{method} +dexterity ( dexterity : String ) : ThreatBuilder
+	{method} +equipment ( equipment : List ) : ThreatBuilder
+	{method} +id ( id : UUID ) : ThreatBuilder
+	{method} +mind ( mind : String ) : ThreatBuilder
+	{method} +moveFly ( moveFly : String ) : ThreatBuilder
+	{method} +moveSwim ( moveSwim : String ) : ThreatBuilder
+	{method} +moveWalk ( moveWalk : String ) : ThreatBuilder
+	{method} +name ( name : String ) : ThreatBuilder
+	{method} +perks ( perks : List ) : ThreatBuilder
+	{method} +possibilities ( possibilities : String ) : ThreatBuilder
+	{method} +products ( products : Set ) : ThreatBuilder
+	{method} +quote ( quote : String ) : ThreatBuilder
+	{method} +shock ( shock : String ) : ThreatBuilder
+	{method} +skills ( skills : Map ) : ThreatBuilder
+	{method} +specialAbilities ( specialAbilities : Map ) : ThreatBuilder
+	{method} +spirit ( spirit : String ) : ThreatBuilder
+	{method} +strength ( strength : String ) : ThreatBuilder
+	{method} +subName ( subName : String ) : ThreatBuilder
+	{method} +text ( text : String ) : ThreatBuilder
+	{method} +toString () : String
+	{method} +tough ( tough : String ) : ThreatBuilder
+	{method} +unique ( unique : boolean ) : ThreatBuilder
+	{method} +wounds ( wounds : String ) : ThreatBuilder
+}
+
+
+class ThreatController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list ( cosm : String ) : List
+}
+
+
+class ThreatDetailDto {
+	{field} -charisma : String
+	{field} -dexterity : String
+	{field} -equipment : List
+	{field} -id : UUID
+	{field} -mind : String
+	{field} -moveFly : String
+	{field} -moveSwim : String
+	{field} -moveWalk : String
+	{field} -name : String
+	{field} -perks : List
+	{field} -possibilities : String
+	{field} -quote : String
+	{field} -shock : String
+	{field} -skills : Map
+	{field} -specialAbilities : Map
+	{field} -spirit : String
+	{field} -strength : String
+	{field} -subName : String
+	{field} -text : String
+	{field} -tough : String
+	{field} -unique : boolean
+	{field} -wounds : String
+	{method} +charisma () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +dexterity () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +equipment () : List
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +mind () : String
+	{method} +moveFly () : String
+	{method} +moveSwim () : String
+	{method} +moveWalk () : String
+	{method} +name () : String
+	{method} +perks () : List
+	{method} +possibilities () : String
+	{method} +publications () : List
+	{method} +quote () : String
+	{method} +shock () : String
+	{method} +skills () : Map
+	{method} +specialAbilities () : Map
+	{method} +spirit () : String
+	{method} +strength () : String
+	{method} +subName () : String
+	{method} +text () : String
+	{method} +toString () : String
+	{method} +tough () : String
+	{method} +unique () : boolean
+	{method} +wounds () : String
+}
+
+
+interface ThreatEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Threat ) : Threat
+	{method}  {abstract} +toEntity ( model : Threat ) : Threat
+}
+
+
+class ThreatEntityMapperImpl {
+	{method} +toDomain ( entity : Threat ) : Threat
+	{method} +toEntity ( model : Threat ) : Threat
+}
+
+
+interface ThreatMapper {
+	{method}  {abstract} +toDetail ( threat : Threat , censor : Censor ) : ThreatDetailDto
+	{method}  {abstract} +toSummary ( threat : Threat ) : ThreatSummaryDto
+}
+
+
+class ThreatMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( threat : Threat , censor : Censor ) : ThreatDetailDto
+	{method} +toSummary ( threat : Threat ) : ThreatSummaryDto
+}
+
+
+interface ThreatRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByCosmAndProduct ( cosm : String , product : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findByUnique ( unique : boolean ) : List
+}
+
+
+class ThreatSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class TorgCodexApplication {
+	{method}  {static} +main ( args : String[] ) : void
+}
+
+
+class TorgCodexDataApplication {
+	{method}  {static} +main ( args : String[] ) : void
+}
+
+
+class TorgCodexSecurityConfig {
+	{field} {static} -log : Logger
+	{method} +torgCodexSecurityFilterChain ( http : HttpSecurity , authenticationManager : AuthenticationManager ) : SecurityFilterChain
+}
+
+
+class TorgDataConfiguration {
+}
+
+
+abstract class TorgEntity {
+	{field} +id : UUID
+	{field} +name : String
+	{method} #render ( rawText : String ) : String
+	{method} +withCensor ( censor : Censor ) : TorgEntity
+}
+
+
+class TorgMappingSupport {
+	{method} +censorMap ( rawMap : Map , censor : Censor ) : Map
+	{method} +censorText ( rawText : String , censor : Censor ) : String
+	{method} +toCosmRef ( cosmName : String ) : CosmRefDto
+	{method} +toDifficultyNumberDto ( dn : DifficultyNumber ) : DifficultyNumberDto
+	{method} +toDifficultyNumberDto ( dn : DifficultyNumber ) : DifficultyNumberDto
+	{method} +toPublicationRefs ( products : Set ) : List
+}
+
+
+class TorgMarkupService {
+	{method} +render ( rawText : String , ownedProducts : Set ) : String
+}
+
+
+interface ValueObjectMapper {
+	{method} +toDomain ( value : ClearanceLevel ) : ClearanceLevel
+	{method}  {abstract} +toDomain ( value : DifficultyNumber ) : DifficultyNumber
+	{method}  {abstract} +toDomain ( value : VehicleWeapon ) : VehicleWeapon
+	{method} +toEntity ( value : ClearanceLevel ) : ClearanceLevel
+	{method}  {abstract} +toEntity ( value : DifficultyNumber ) : DifficultyNumber
+	{method}  {abstract} +toEntity ( value : VehicleWeapon ) : VehicleWeapon
+}
+
+
+class ValueObjectMapperImpl {
+	{method} +toDomain ( value : DifficultyNumber ) : DifficultyNumber
+	{method} +toDomain ( value : VehicleWeapon ) : VehicleWeapon
+	{method} +toEntity ( value : DifficultyNumber ) : DifficultyNumber
+	{method} +toEntity ( value : VehicleWeapon ) : VehicleWeapon
+}
+
+
+class Vehicle {
+	{field} +axiomTech : String
+	{field} +cosm : String
+	{field} +maneuverRating : String
+	{field} +passengers : String
+	{field} +price : String
+	{field} +products : Set
+	{field} +size : String
+	{field} +speed : String
+	{field} +speedMod : String
+	{field} +speedValue : String
+	{field} +text : String
+	{field} +tough : String
+	{field} +type : String
+	{field} +unique : boolean
+	{field} +wounds : String
+	{method} +getRawText () : String
+}
+
+
+class Vehicle {
+	{field} -axiomTech : String
+	{field} -cosm : String
+	{field} -id : UUID
+	{field} -maneuverRating : String
+	{field} -name : String
+	{field} -passengers : String
+	{field} -price : String
+	{field} -products : Set
+	{field} -size : String
+	{field} -speed : String
+	{field} -speedMod : String
+	{field} -speedValue : String
+	{field} -text : String
+	{field} -tough : String
+	{field} -type : String
+	{field} -unique : boolean
+	{field} -wounds : String
+	{method}  {static} +builder () : VehicleBuilder
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class VehicleBuilder {
+	{field} -axiomTech : String
+	{field} -cosm : String
+	{field} -id : UUID
+	{field} -maneuverRating : String
+	{field} -name : String
+	{field} -passengers : String
+	{field} -price : String
+	{field} -products : Set
+	{field} -size : String
+	{field} -speed : String
+	{field} -speedMod : String
+	{field} -speedValue : String
+	{field} -text : String
+	{field} -tough : String
+	{field} -type : String
+	{field} -unique : boolean
+	{field} -wounds : String
+	{method} +axiomTech ( axiomTech : String ) : VehicleBuilder
+	{method} +build () : Vehicle
+	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : VehicleBuilder
+	{method} +cosm ( cosm : String ) : VehicleBuilder
+	{method} +id ( id : UUID ) : VehicleBuilder
+	{method} +maneuverRating ( maneuverRating : String ) : VehicleBuilder
+	{method} +name ( name : String ) : VehicleBuilder
+	{method} +passengers ( passengers : String ) : VehicleBuilder
+	{method} +price ( price : String ) : VehicleBuilder
+	{method} +products ( products : Set ) : VehicleBuilder
+	{method} +size ( size : String ) : VehicleBuilder
+	{method} +speed ( speed : String ) : VehicleBuilder
+	{method} +speedMod ( speedMod : String ) : VehicleBuilder
+	{method} +speedValue ( speedValue : String ) : VehicleBuilder
+	{method} +text ( text : String ) : VehicleBuilder
+	{method} +toString () : String
+	{method} +tough ( tough : String ) : VehicleBuilder
+	{method} +type ( type : String ) : VehicleBuilder
+	{method} +unique ( unique : boolean ) : VehicleBuilder
+	{method} +weaponry ( weaponry : List ) : VehicleBuilder
+	{method} +wounds ( wounds : String ) : VehicleBuilder
+}
+
+
+class VehicleController {
+	{method} +getById ( id : UUID ) : ResponseEntity
+	{method} +list ( cosm : String ) : List
+}
+
+
+class VehicleDetailDto {
+	{field} -axiomTech : String
+	{field} -id : UUID
+	{field} -maneuverRating : String
+	{field} -name : String
+	{field} -passengers : String
+	{field} -price : String
+	{field} -size : String
+	{field} -speed : String
+	{field} -speedMod : String
+	{field} -speedValue : String
+	{field} -text : String
+	{field} -tough : String
+	{field} -type : String
+	{field} -unique : boolean
+	{field} -wounds : String
+	{method} +axiomTech () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +maneuverRating () : String
+	{method} +name () : String
+	{method} +passengers () : String
+	{method} +price () : String
+	{method} +publications () : List
+	{method} +size () : String
+	{method} +speed () : String
+	{method} +speedMod () : String
+	{method} +speedValue () : String
+	{method} +text () : String
+	{method} +toString () : String
+	{method} +tough () : String
+	{method} +type () : String
+	{method} +unique () : boolean
+	{method} +weaponry () : List
+	{method} +wounds () : String
+}
+
+
+interface VehicleEntityMapper {
+	{method}  {abstract} +toDomain ( entity : Vehicle ) : Vehicle
+	{method}  {abstract} +toEntity ( model : Vehicle ) : Vehicle
+}
+
+
+class VehicleEntityMapperImpl {
+	{method} +toDomain ( entity : Vehicle ) : Vehicle
+	{method} +toEntity ( model : Vehicle ) : Vehicle
+	{method} #vehicleWeaponListToVehicleWeaponList ( list : List ) : List
+	{method} #vehicleWeaponListToVehicleWeaponList1 ( list : List ) : List
+}
+
+
+interface VehicleMapper {
+	{method}  {abstract} +toDetail ( vehicle : Vehicle , censor : Censor ) : VehicleDetailDto
+	{method}  {abstract} +toDto ( vehicleWeapon : VehicleWeapon ) : VehicleWeaponDto
+	{method}  {abstract} +toSummary ( vehicle : Vehicle ) : VehicleSummaryDto
+}
+
+
+class VehicleMapperImpl {
+	{method} #clearanceLevelToClearanceLevel ( clearanceLevel : ClearanceLevel ) : ClearanceLevel
+	{method} #clearanceLevelToClearanceLevel1 ( clearanceLevel : ClearanceLevel , censor : Censor ) : ClearanceLevel
+	{method} +toDetail ( vehicle : Vehicle , censor : Censor ) : VehicleDetailDto
+	{method} +toDto ( vehicleWeapon : VehicleWeapon ) : VehicleWeaponDto
+	{method} +toSummary ( vehicle : Vehicle ) : VehicleSummaryDto
+	{method} #vehicleWeaponListToVehicleWeaponDtoList ( list : List , censor : Censor ) : List
+}
+
+
+interface VehicleRepository {
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
+	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
+	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findBySize ( size : String ) : List
+	{method}  {abstract} +findByType ( type : String ) : List
+	{method}  {abstract} +findByUnique ( unique : boolean ) : List
+}
+
+
+class VehicleSummaryDto {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : CosmRefDto
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class VehicleWeapon {
+	{field} -ammo : String
+	{field} -amount : String
+	{field} -weaponId : UUID
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class VehicleWeapon {
+	{field} +ammo : String
+	{field} +amount : String
+	{field} +weaponId : UUID
+}
+
+
+class VehicleWeaponDto {
+	{field} -ammo : String
+	{field} -amount : String
+	{field} -weaponId : UUID
+	{method} +ammo () : String
+	{method} +amount () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+	{method} +weaponId () : UUID
+}
+
+
+
+
+Article *--  ClearanceLevel : clearanceLevel
+Article --|>  TorgEntity
+ArticleBuilder -->  ClearanceLevel : clearanceLevel
+ArticleController *--  ArticleMapper : mapper
+ArticleController *--  CatalogQuery : catalogQuery
+ArticleController *--  CurrentUserCensorFactory : censorFactory
+ArticleDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+ArticleDetailDto *--  ClearanceLevel : clearanceLevel
+ArticleEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+ArticleEntityMapperImpl ..|>  ArticleEntityMapper
+ArticleMapperImpl -->  TorgMappingSupport : torgMappingSupport
+ArticleMapperImpl ..|>  ArticleMapper
+ArticleSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+ArticleSummaryDto *--  ClearanceLevel : clearanceLevel
+CatalogQueryService *--  CatalogPersistencePort : persistence
+CatalogQueryService ..|>  CatalogQuery
+CatalogReferenceQueryService *--  CatalogReferencePersistencePort : persistence
+CatalogReferenceQueryService ..|>  CatalogReferenceQuery
+Censor *--  TorgMarkupService : markupService
+Cosm *--  ClearanceLevel : clearanceLevel
+Cosm --|>  TorgEntity
+CosmBuilder -->  ClearanceLevel : clearanceLevel
+CosmController *--  CatalogQuery : catalogQuery
+CosmController *--  CosmMapper : mapper
+CosmController *--  CurrentUserCensorFactory : censorFactory
+CosmDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+CosmDetailDto *--  ClearanceLevel : clearanceLevel
+CosmDetailDto *--  CosmRefDto : cosm
+CosmEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+CosmEntityMapperImpl ..|>  CosmEntityMapper
+CosmMapperImpl -->  TorgMappingSupport : torgMappingSupport
+CosmMapperImpl ..|>  CosmMapper
+CosmSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+CosmSummaryDto *--  ClearanceLevel : clearanceLevel
+CosmSummaryDto *--  CosmRefDto : cosm
+CurrentUserCensorFactory *--  ProductOwnershipResolver : ownershipResolver
+CurrentUserCensorFactory *--  TorgMarkupService : markupService
+EntityDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+EntityDetailDto *--  ClearanceLevel : clearanceLevel
+EntityDetailDto *--  CosmRefDto : cosm
+EntitySummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+EntitySummaryDto *--  ClearanceLevel : clearanceLevel
+EntitySummaryDto *--  CosmRefDto : cosm
+Item *--  ClearanceLevel : clearanceLevel
+Item --|>  TorgEntity
+ItemBuilder -->  ClearanceLevel : clearanceLevel
+ItemController *--  CatalogQuery : catalogQuery
+ItemController *--  CurrentUserCensorFactory : censorFactory
+ItemController *--  ItemMapper : mapper
+ItemDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+ItemDetailDto *--  ClearanceLevel : clearanceLevel
+ItemDetailDto *--  CosmRefDto : cosm
+ItemEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+ItemEntityMapperImpl ..|>  ItemEntityMapper
+ItemMapperImpl -->  TorgMappingSupport : torgMappingSupport
+ItemMapperImpl ..|>  ItemMapper
+ItemSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+ItemSummaryDto *--  ClearanceLevel : clearanceLevel
+ItemSummaryDto *--  CosmRefDto : cosm
+JpaArticlePersistenceAdapter *--  ArticleEntityMapper : mapper
+JpaArticlePersistenceAdapter *--  ArticleRepository : repository
+JpaArticlePersistenceAdapter ..|>  CatalogPersistencePort
+JpaCatalogReferenceAdapter *--  CosmRepository : cosmRepository
+JpaCatalogReferenceAdapter *--  PublicationRepository : publicationRepository
+JpaCatalogReferenceAdapter ..|>  CatalogReferencePersistencePort
+JpaCosmPersistenceAdapter *--  CosmEntityMapper : mapper
+JpaCosmPersistenceAdapter *--  CosmRepository : repository
+JpaCosmPersistenceAdapter ..|>  CatalogPersistencePort
+JpaItemPersistenceAdapter *--  ItemEntityMapper : mapper
+JpaItemPersistenceAdapter *--  ItemRepository : repository
+JpaItemPersistenceAdapter ..|>  CatalogPersistencePort
+JpaMiracleListPersistenceAdapter *--  MiracleListEntityMapper : mapper
+JpaMiracleListPersistenceAdapter *--  MiracleListRepository : repository
+JpaMiracleListPersistenceAdapter ..|>  CatalogPersistencePort
+JpaMiraclePersistenceAdapter *--  MiracleEntityMapper : mapper
+JpaMiraclePersistenceAdapter *--  MiracleRepository : repository
+JpaMiraclePersistenceAdapter ..|>  CatalogPersistencePort
+JpaPerkGroupPersistenceAdapter *--  PerkGroupEntityMapper : mapper
+JpaPerkGroupPersistenceAdapter *--  PerkGroupRepository : repository
+JpaPerkGroupPersistenceAdapter ..|>  CatalogPersistencePort
+JpaPerkPersistenceAdapter *--  PerkEntityMapper : mapper
+JpaPerkPersistenceAdapter *--  PerkRepository : repository
+JpaPerkPersistenceAdapter ..|>  CatalogPersistencePort
+JpaPowerListPersistenceAdapter *--  PowerListEntityMapper : mapper
+JpaPowerListPersistenceAdapter *--  PowerListRepository : repository
+JpaPowerListPersistenceAdapter ..|>  CatalogPersistencePort
+JpaPowerPersistenceAdapter *--  PowerEntityMapper : mapper
+JpaPowerPersistenceAdapter *--  PowerRepository : repository
+JpaPowerPersistenceAdapter ..|>  CatalogPersistencePort
+JpaPublicationPersistenceAdapter *--  PublicationEntityMapper : mapper
+JpaPublicationPersistenceAdapter *--  PublicationRepository : repository
+JpaPublicationPersistenceAdapter ..|>  CatalogPersistencePort
+JpaRacePersistenceAdapter *--  RaceEntityMapper : mapper
+JpaRacePersistenceAdapter *--  RaceRepository : repository
+JpaRacePersistenceAdapter ..|>  CatalogPersistencePort
+JpaShardPersistenceAdapter *--  ShardEntityMapper : mapper
+JpaShardPersistenceAdapter *--  ShardRepository : repository
+JpaShardPersistenceAdapter ..|>  CatalogPersistencePort
+JpaSpellListPersistenceAdapter *--  SpellListEntityMapper : mapper
+JpaSpellListPersistenceAdapter *--  SpellListRepository : repository
+JpaSpellListPersistenceAdapter ..|>  CatalogPersistencePort
+JpaSpellPersistenceAdapter *--  SpellEntityMapper : mapper
+JpaSpellPersistenceAdapter *--  SpellRepository : repository
+JpaSpellPersistenceAdapter ..|>  CatalogPersistencePort
+JpaTagPersistenceAdapter *--  TagEntityMapper : mapper
+JpaTagPersistenceAdapter *--  TagRepository : repository
+JpaTagPersistenceAdapter ..|>  CatalogPersistencePort
+JpaThreatPersistenceAdapter *--  ThreatEntityMapper : mapper
+JpaThreatPersistenceAdapter *--  ThreatRepository : repository
+JpaThreatPersistenceAdapter ..|>  CatalogPersistencePort
+JpaVehiclePersistenceAdapter *--  VehicleEntityMapper : mapper
+JpaVehiclePersistenceAdapter *--  VehicleRepository : repository
+JpaVehiclePersistenceAdapter ..|>  CatalogPersistencePort
+Miracle *--  ClearanceLevel : clearanceLevel
+Miracle *--  DifficultyNumber : dn
+Miracle -->  DifficultyNumber : dn
+Miracle --|>  TorgEntity
+MiracleBuilder -->  ClearanceLevel : clearanceLevel
+MiracleBuilder -->  DifficultyNumber : dn
+MiracleController *--  CatalogQuery : catalogQuery
+MiracleController *--  CurrentUserCensorFactory : censorFactory
+MiracleController *--  MiracleMapper : mapper
+MiracleDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+MiracleDetailDto *--  ClearanceLevel : clearanceLevel
+MiracleDetailDto *--  DifficultyNumberDto : dn
+MiracleEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+MiracleEntityMapperImpl ..|>  MiracleEntityMapper
+MiracleList *--  ClearanceLevel : clearanceLevel
+MiracleList --|>  TorgEntity
+MiracleListBuilder -->  ClearanceLevel : clearanceLevel
+MiracleListController *--  CatalogQuery : catalogQuery
+MiracleListController *--  CurrentUserCensorFactory : censorFactory
+MiracleListController *--  MiracleListMapper : mapper
+MiracleListDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+MiracleListDetailDto *--  ClearanceLevel : clearanceLevel
+MiracleListDetailDto *--  CosmRefDto : cosm
+MiracleListEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+MiracleListEntityMapperImpl ..|>  MiracleListEntityMapper
+MiracleListMapperImpl -->  TorgMappingSupport : torgMappingSupport
+MiracleListMapperImpl ..|>  MiracleListMapper
+MiracleListSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+MiracleListSummaryDto *--  ClearanceLevel : clearanceLevel
+MiracleListSummaryDto *--  CosmRefDto : cosm
+MiracleMapperImpl -->  TorgMappingSupport : torgMappingSupport
+MiracleMapperImpl ..|>  MiracleMapper
+MiracleSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+MiracleSummaryDto *--  ClearanceLevel : clearanceLevel
+Perk *--  ClearanceLevel : clearanceLevel
+Perk --|>  TorgEntity
+PerkBuilder -->  ClearanceLevel : clearanceLevel
+PerkController *--  CatalogQuery : catalogQuery
+PerkController *--  CurrentUserCensorFactory : censorFactory
+PerkController *--  PerkMapper : mapper
+PerkDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+PerkDetailDto *--  ClearanceLevel : clearanceLevel
+PerkDetailDto *--  CosmRefDto : cosm
+PerkEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+PerkEntityMapperImpl ..|>  PerkEntityMapper
+PerkGroup *--  ClearanceLevel : clearanceLevel
+PerkGroup --|>  TorgEntity
+PerkGroupBuilder -->  ClearanceLevel : clearanceLevel
+PerkGroupController *--  CatalogQuery : catalogQuery
+PerkGroupController *--  CurrentUserCensorFactory : censorFactory
+PerkGroupController *--  PerkGroupMapper : mapper
+PerkGroupDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+PerkGroupDetailDto *--  ClearanceLevel : clearanceLevel
+PerkGroupEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+PerkGroupEntityMapperImpl ..|>  PerkGroupEntityMapper
+PerkGroupMapperImpl -->  TorgMappingSupport : torgMappingSupport
+PerkGroupMapperImpl ..|>  PerkGroupMapper
+PerkGroupSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+PerkGroupSummaryDto *--  ClearanceLevel : clearanceLevel
+PerkMapperImpl -->  TorgMappingSupport : torgMappingSupport
+PerkMapperImpl ..|>  PerkMapper
+PerkSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+PerkSummaryDto *--  ClearanceLevel : clearanceLevel
+PerkSummaryDto *--  CosmRefDto : cosm
+Power *--  ClearanceLevel : clearanceLevel
+Power *--  DifficultyNumber : dn
+Power -->  DifficultyNumber : dn
+Power --|>  TorgEntity
+PowerBuilder -->  ClearanceLevel : clearanceLevel
+PowerBuilder -->  DifficultyNumber : dn
+PowerController *--  CatalogQuery : catalogQuery
+PowerController *--  CurrentUserCensorFactory : censorFactory
+PowerController *--  PowerMapper : mapper
+PowerDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+PowerDetailDto *--  ClearanceLevel : clearanceLevel
+PowerDetailDto *--  DifficultyNumberDto : dn
+PowerEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+PowerEntityMapperImpl ..|>  PowerEntityMapper
+PowerList *--  ClearanceLevel : clearanceLevel
+PowerList --|>  TorgEntity
+PowerListBuilder -->  ClearanceLevel : clearanceLevel
+PowerListController *--  CatalogQuery : catalogQuery
+PowerListController *--  CurrentUserCensorFactory : censorFactory
+PowerListController *--  PowerListMapper : mapper
+PowerListDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+PowerListDetailDto *--  ClearanceLevel : clearanceLevel
+PowerListDetailDto *--  CosmRefDto : cosm
+PowerListEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+PowerListEntityMapperImpl ..|>  PowerListEntityMapper
+PowerListMapperImpl -->  TorgMappingSupport : torgMappingSupport
+PowerListMapperImpl ..|>  PowerListMapper
+PowerListSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+PowerListSummaryDto *--  ClearanceLevel : clearanceLevel
+PowerListSummaryDto *--  CosmRefDto : cosm
+PowerMapperImpl -->  TorgMappingSupport : torgMappingSupport
+PowerMapperImpl ..|>  PowerMapper
+PowerSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+PowerSummaryDto *--  ClearanceLevel : clearanceLevel
+PublicationController *--  CatalogQuery : catalogQuery
+PublicationController *--  PublicationMapper : mapper
+PublicationEntityMapperImpl ..|>  PublicationEntityMapper
+PublicationMapperImpl ..|>  PublicationMapper
+Race *--  ClearanceLevel : clearanceLevel
+Race --|>  TorgEntity
+RaceBuilder -->  ClearanceLevel : clearanceLevel
+RaceController *--  CatalogQuery : catalogQuery
+RaceController *--  CurrentUserCensorFactory : censorFactory
+RaceController *--  RaceMapper : mapper
+RaceDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+RaceDetailDto *--  ClearanceLevel : clearanceLevel
+RaceEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+RaceEntityMapperImpl ..|>  RaceEntityMapper
+RaceMapperImpl -->  TorgMappingSupport : torgMappingSupport
+RaceMapperImpl ..|>  RaceMapper
+RaceSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+RaceSummaryDto *--  ClearanceLevel : clearanceLevel
+Shard *--  ClearanceLevel : clearanceLevel
+Shard --|>  TorgEntity
+ShardBuilder -->  ClearanceLevel : clearanceLevel
+ShardController *--  CatalogQuery : catalogQuery
+ShardController *--  CurrentUserCensorFactory : censorFactory
+ShardController *--  ShardMapper : mapper
+ShardDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+ShardDetailDto *--  ClearanceLevel : clearanceLevel
+ShardDetailDto *--  CosmRefDto : cosm
+ShardEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+ShardEntityMapperImpl ..|>  ShardEntityMapper
+ShardMapperImpl -->  TorgMappingSupport : torgMappingSupport
+ShardMapperImpl ..|>  ShardMapper
+ShardSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+ShardSummaryDto *--  ClearanceLevel : clearanceLevel
+ShardSummaryDto *--  CosmRefDto : cosm
+Spell *--  ClearanceLevel : clearanceLevel
+Spell *--  DifficultyNumber : dn
+Spell -->  DifficultyNumber : dn
+Spell --|>  TorgEntity
+SpellBuilder -->  ClearanceLevel : clearanceLevel
+SpellBuilder -->  DifficultyNumber : dn
+SpellController *--  CatalogQuery : catalogQuery
+SpellController *--  CurrentUserCensorFactory : censorFactory
+SpellController *--  SpellMapper : mapper
+SpellDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+SpellDetailDto *--  ClearanceLevel : clearanceLevel
+SpellDetailDto *--  DifficultyNumberDto : dn
+SpellEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+SpellEntityMapperImpl ..|>  SpellEntityMapper
+SpellList *--  ClearanceLevel : clearanceLevel
+SpellList --|>  TorgEntity
+SpellListBuilder -->  ClearanceLevel : clearanceLevel
+SpellListController *--  CatalogQuery : catalogQuery
+SpellListController *--  CurrentUserCensorFactory : censorFactory
+SpellListController *--  SpellListMapper : mapper
+SpellListDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+SpellListDetailDto *--  ClearanceLevel : clearanceLevel
+SpellListDetailDto *--  CosmRefDto : cosm
+SpellListEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+SpellListEntityMapperImpl ..|>  SpellListEntityMapper
+SpellListMapperImpl -->  TorgMappingSupport : torgMappingSupport
+SpellListMapperImpl ..|>  SpellListMapper
+SpellListSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+SpellListSummaryDto *--  ClearanceLevel : clearanceLevel
+SpellListSummaryDto *--  CosmRefDto : cosm
+SpellMapperImpl -->  TorgMappingSupport : torgMappingSupport
+SpellMapperImpl ..|>  SpellMapper
+SpellSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+SpellSummaryDto *--  ClearanceLevel : clearanceLevel
+Tag *--  ClearanceLevel : clearanceLevel
+Tag --|>  TorgEntity
+TagBuilder -->  ClearanceLevel : clearanceLevel
+TagController *--  CatalogQuery : catalogQuery
+TagController *--  TagMapper : mapper
+TagDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+TagDetailDto *--  ClearanceLevel : clearanceLevel
+TagEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+TagEntityMapperImpl ..|>  TagEntityMapper
+TagMapperImpl ..|>  TagMapper
+TagSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+TagSummaryDto *--  ClearanceLevel : clearanceLevel
+Threat *--  ClearanceLevel : clearanceLevel
+Threat --|>  TorgEntity
+ThreatBuilder -->  ClearanceLevel : clearanceLevel
+ThreatController *--  CatalogQuery : catalogQuery
+ThreatController *--  CurrentUserCensorFactory : censorFactory
+ThreatController *--  ThreatMapper : mapper
+ThreatDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+ThreatDetailDto *--  ClearanceLevel : clearanceLevel
+ThreatDetailDto *--  CosmRefDto : cosm
+ThreatEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+ThreatEntityMapperImpl ..|>  ThreatEntityMapper
+ThreatMapperImpl -->  TorgMappingSupport : torgMappingSupport
+ThreatMapperImpl ..|>  ThreatMapper
+ThreatSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+ThreatSummaryDto *--  ClearanceLevel : clearanceLevel
+ThreatSummaryDto *--  CosmRefDto : cosm
+TorgCodexApplication --  EnableTorgData
+TorgCodexDataApplication --  EnableTorgData
+TorgEntity -->  Censor :  @Transient\ncensor
+TorgEntity -->  ClearanceLevel :  @Column("clearance_level")\nclearanceLevel
+TorgMappingSupport *--  CatalogReferenceQuery : catalogReferenceQuery
+TorgMarkupService *--  ConditionalBlockProcessor : conditionalProcessor
+TorgMarkupService *--  EntityReferenceProcessor : entityProcessor
+TorgMarkupService *--  GameTokenProcessor : gameTokenProcessor
+TorgMarkupService *--  MarkdownProcessor : markdownProcessor
+TorgMarkupService *--  RawHtmlProcessor : rawHtmlProcessor
+ValueObjectMapperImpl ..|>  ValueObjectMapper
+Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry
+Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry
+Vehicle *--  ClearanceLevel : clearanceLevel
+Vehicle --|>  TorgEntity
+VehicleBuilder "1" o-- "0..*"  VehicleWeapon : weaponry
+VehicleBuilder -->  ClearanceLevel : clearanceLevel
+VehicleController *--  CatalogQuery : catalogQuery
+VehicleController *--  CurrentUserCensorFactory : censorFactory
+VehicleController *--  VehicleMapper : mapper
+VehicleDetailDto "1" o-- "0..*"  PublicationRefDto : publications
+VehicleDetailDto "1" o-- "0..*"  VehicleWeaponDto : weaponry
+VehicleDetailDto *--  ClearanceLevel : clearanceLevel
+VehicleDetailDto *--  CosmRefDto : cosm
+VehicleEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
+VehicleEntityMapperImpl ..|>  VehicleEntityMapper
+VehicleMapperImpl -->  TorgMappingSupport : torgMappingSupport
+VehicleMapperImpl ..|>  VehicleMapper
+VehicleSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
+VehicleSummaryDto *--  ClearanceLevel : clearanceLevel
+VehicleSummaryDto *--  CosmRefDto : cosm
+
+hide methods
+
+@enduml

@@ -29,7 +29,7 @@ import de.paladinsinn.torg.codex.api.dto.CosmRefDto;
 import de.paladinsinn.torg.codex.api.dto.DifficultyNumberDto;
 import de.paladinsinn.torg.codex.api.dto.PublicationRefDto;
 import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
-import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
 import de.paladinsinn.torg.codex.data.model.DifficultyNumber;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Context;
@@ -87,7 +87,7 @@ public class TorgMappingSupport {
     public DifficultyNumberDto toDifficultyNumberDto(
             de.paladinsinn.torg.codex.domain.model.DifficultyNumber dn) {
         if (dn == null) return null;
-        return new DifficultyNumberDto(dn.getLevel(), dn.getText());
+        return new DifficultyNumberDto(dn.level(), dn.text());
     }
 
     /**
@@ -114,7 +114,7 @@ public class TorgMappingSupport {
                 .collect(java.util.stream.Collectors.toMap(
                         java.util.Map.Entry::getKey,
                         e -> censor.apply(e.getValue()),
-                        (a, b) -> b,
+                        (_, b) -> b,
                         java.util.LinkedHashMap::new));
     }
 }

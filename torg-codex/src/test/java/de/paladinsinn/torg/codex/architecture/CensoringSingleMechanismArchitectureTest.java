@@ -1,5 +1,6 @@
 package de.paladinsinn.torg.codex.architecture;
 
+import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Enforces constitution Principle V's single-mechanism rule (feature
  * {@code 001-unify-censoring-authorization}): product-ownership derivation for content
- * censoring MUST be confined to a single production component and its narrowly-scoped
+ * censoring MUST be confined to a single production component and its narrowly scoped
  * collaborator, both living in {@code de.paladinsinn.torg.codex.api.security}.
  *
  * <p>Concretely:
@@ -21,7 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *       {@code GrantedAuthority} to derive the owned product-id set; no controller, mapper,
  *       repository, or entity may re-implement that decision. Authority <em>producers</em> such
  *       as {@code DriveThruUserDetails} / {@code NotLoggedInUserDetails} live in the
- *       {@code torg-codex-data} module ({@code de.paladinsinn.security}) and are unaffected.</li>
+ *       {@code torg-codex-application} module ({@code de.paladinsinn.security}) and are
+ *       unaffected.</li>
  *   <li>Only {@code CurrentUserCensorFactory} (in {@code api.security}) may depend on the
  *       {@code ProductOwnershipResolver}; controllers reach censoring exclusively through the
  *       factory, and exactly the 15 gated controllers depend on it (FR-002/FR-003/SC-002).</li>
@@ -79,7 +81,7 @@ class CensoringSingleMechanismArchitectureTest {
         boolean anyControllerTouchesResolver = ArchitectureTestSupport.IMPORTED_CLASSES.stream()
                 .filter(clazz -> clazz.getPackageName().equals(CONTROLLER_PACKAGE))
                 .flatMap(clazz -> clazz.getDirectDependenciesFromSelf().stream())
-                .map(dependency -> dependency.getTargetClass())
+                .map(Dependency::getTargetClass)
                 .map(JavaClass::getSimpleName)
                 .anyMatch(name -> name.equals("ProductOwnershipResolver"));
 

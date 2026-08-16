@@ -1,7 +1,7 @@
 package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.ArticleDetailDto;
 import de.paladinsinn.torg.codex.api.dto.ArticleSummaryDto;
-import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
 import de.paladinsinn.torg.codex.domain.model.Article;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;

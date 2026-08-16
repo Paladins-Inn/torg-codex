@@ -47,6 +47,14 @@
       <artifactId>jakarta.validation-api</artifactId>
     </dependency>
 
+    <!-- Markup pipeline (relocated from torg-codex-data per ADR-017): the domain markup
+         classes use commonmark for Markdown-to-HTML rendering. Production (compile) scope. -->
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark</artifactId>
+      <version>0.24.0</version>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -55,6 +63,19 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- The domain artifact stays provider-free; its validation bootstrap tests need
+         the provider explicitly on the test classpath. -->
+    <dependency>
+      <groupId>org.hibernate.validator</groupId>
+      <artifactId>hibernate-validator</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.expressly</groupId>
+      <artifactId>expressly</artifactId>
+      <version>6.0.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -78,6 +99,60 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>de.elnarion.maven</groupId>
+        <artifactId>plantuml-generator-maven-plugin</artifactId>
+        <version>3.0.1</version>
+
+        <executions>
+          <execution>
+            <id>generate-class-diagram-markdown</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>
+                ${project.basedir}/../docs/modules/arc42/images/uml/classes
+              </outputDirectory>
+              <outputFilename>
+                markdown-generator.puml
+              </outputFilename>
+
+              <scanPackages>
+                <scanPackage>de.paladinsinn.torg.codex.domain.markup</scanPackage>
+              </scanPackages>
+
+              <hideMethods>true</hideMethods>
+              <useShortClassNames>true</useShortClassNames>
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate-class-diagram-domain</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>
+                ${project.basedir}/../docs/modules/arc42/images/uml/classes
+              </outputDirectory>
+              <outputFilename>
+                torg-codex-domain.puml
+              </outputFilename>
+
+              <scanPackages>
+                <scanPackage>de.paladinsinn.torg.codex.domain.event</scanPackage>
+                <scanPackage>de.paladinsinn.torg.codex.domain.model</scanPackage>
+                <scanPackage>de.paladinsinn.torg.codex.domain.validation</scanPackage>
+              </scanPackages>
+
+              <hideMethods>true</hideMethods>
+              <useShortClassNames>true</useShortClassNames>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

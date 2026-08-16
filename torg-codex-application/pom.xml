@@ -12,7 +12,7 @@
 
   <artifactId>torg-codex-application</artifactId>
   <name>torg-codex-application</name>
-  <description>torg-codex hexagonal application module: driving/driven ports and framework-free use-case services. MUST depend only on torg-codex-domain (plus Lombok/JUnit).</description>
+  <description>torg-codex application module: use-case ports/services plus DriveThruRPG integration and application security.</description>
 
   <properties>
     <java.version>25</java.version>
@@ -43,11 +43,46 @@
     </dependency>
 
     <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate.validator</groupId>
+      <artifactId>hibernate-validator</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.expressly</groupId>
+      <artifactId>expressly</artifactId>
+      <version>6.0.0</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
     </dependency>
 
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency><dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -70,10 +105,94 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>${java.version}</release>
+          <parameters>true</parameters>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>de.elnarion.maven</groupId>
+        <artifactId>plantuml-generator-maven-plugin</artifactId>
+        <version>3.0.1</version>
+
+        <executions>
+          <execution>
+            <id>generate-class-diagram-application</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>
+                ${project.basedir}/../docs/modules/arc42/images/uml/classes
+              </outputDirectory>
+              <outputFilename>
+                torg-codex-application-ports.puml
+              </outputFilename>
+
+              <scanPackages>
+                <scanPackage>de.paladinsinn.torg.codex.application</scanPackage>
+              </scanPackages>
+
+              <hideMethods>true</hideMethods>
+              <useShortClassNames>true</useShortClassNames>
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate-class-diagram-security</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>
+                ${project.basedir}/../docs/modules/arc42/images/uml/classes
+              </outputDirectory>
+              <outputFilename>
+                torg-codex-application-security.puml
+              </outputFilename>
+
+              <scanPackages>
+                <scanPackage>de.paladinsinn.security</scanPackage>
+              </scanPackages>
+
+              <hideMethods>true</hideMethods>
+              <useShortClassNames>true</useShortClassNames>
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate-class-diagram-drivethru</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>
+                ${project.basedir}/../docs/modules/arc42/images/uml/classes
+              </outputDirectory>
+              <outputFilename>
+                torg-codex-application-drivethru.puml
+              </outputFilename>
+
+              <scanPackages>
+                <scanPackage>de.paladinsinn.drivethru</scanPackage>
+              </scanPackages>
+
+              <hideMethods>true</hideMethods>
+              <useShortClassNames>true</useShortClassNames>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

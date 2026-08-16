@@ -6,7 +6,7 @@
 - Build the complete reactor (including integration tests): `./mvnw clean verify`
 - Run the unit-test phase: `./mvnw test`
 - Run one data-module unit test: `./mvnw -pl torg-codex-data -Dtest=TorgMarkupServiceTest test`
-- Run one application-module unit test (building its data-module dependency): `./mvnw -pl torg-codex -am -Dtest=SecuredMarkupServiceTest -Dsurefire.failIfNoSpecifiedTests=false test`
+- Run one application-module unit test (building its data-module dependency): `./mvnw -pl torg-codex -am -Dtest=ProductOwnershipResolverTest -Dsurefire.failIfNoSpecifiedTests=false test`
 - Run the Testcontainers-backed Liquibase integration test: `./mvnw -pl torg-codex-data -Dit.test=LiquibaseImportIT verify` (requires a running Docker daemon).
 - There is no repository lint command. Maven compilation includes Lombok, MapStruct, JTE generation, and Hibernate enhancement.
 
@@ -26,6 +26,7 @@
 - **ADR-013 (WireMock HTTP Testing):** Testing of external HTTP services (e.g. DriveThruRPG API) must use WireMock with both annotation-based (`@AutoConfigureWireMock`, `@WireMockTest`) and file-based (`src/test/resources/mappings` and `src/test/resources/__files`) configurations.
 - **ADR-014 (Lombok for Boilerplate Reduction):** Use Lombok across all layers: constructor annotations (`@NoArgsConstructor`, `@AllArgsConstructor`, `@RequiredArgsConstructor`) instead of hand-written constructors; `@Slf4j` instead of manual logger fields; `@EqualsAndHashCode`/`@ToString` for value semantics (JPA entities restrict `@EqualsAndHashCode` to the identity field only); `@Getter`/`@Setter` instead of hand-written accessors; `@Builder` for objects with several optional fields.
 - **ADR-015 (MapStruct for Layer Conversion):** Use MapStruct for all Domain <-> JPA entity and Domain <-> DTO conversions. Mappers are Spring components (`componentModel = "spring"`), placed in the adapter package that uses them (never inside domain modules), and share common rules via `TorgMappingSupport`.
+- **ADR-016 (Application Integration Boundaries):** `de.paladinsinn.drivethru` and `de.paladinsinn.security`, including all subpackages, belong to `torg-codex-application`. Preserve their fully qualified names and public APIs. `torg-codex-data` owns persistence, Liquibase, markup processing, and data adapters, not the DriveThruRPG client or API-key security implementation.
 
 ## Cross-Cutting Concepts (arc42 08_concepts)
 
@@ -41,14 +42,15 @@
 
 ## Project Structure & Conventions
 
-- **Two-Module Reactor:**
-  - `torg-codex-data`: Reusable data layer containing JPA entities/repositories, Liquibase migrations, DriveThruRPG client, and Torg markup pipeline. Enabled via `@EnableTorgData` (do not rely on application component scanning).
-  - `torg-codex`: Spring Boot application exposing REST controllers and JTE pages, mapping entities to DTOs.
-- **Security & Censor Aspect:** Requests may authenticate with `Authorization: ApiKey <key>` or OIDC tokens. `ROLE_<codex-id>` authorities control product ownership and content visibility. Repository queries inject user-specific `Censor` instances via `CensorInjectionAspect`. Do not bypass censoring.
-- **Markup Pipeline:** Rendering order must be strictly preserved: conditional product blocks -> entity references -> raw HTML -> game tokens -> CommonMark (`TorgMarkupService` / `SecuredMarkupService`).
+- **Four-Module Reactor:**
+  - `torg-codex-domain`: Framework-independent domain models and events.
+  - `torg-codex-application`: Driving/driven ports and use-case services plus the `de.paladinsinn.drivethru` client and `de.paladinsinn.security` API-key integration.
+  - `torg-codex-data`: JPA entities/repositories, Liquibase migrations, persistence/event adapters, and the Torg markup pipeline. Enabled via `@EnableTorgData`.
+  - `torg-codex`: Spring Boot application exposing REST controllers/JTE pages, DTO mappers, and role-based censoring.
+- **Security & Censoring:** Requests may authenticate with `Authorization: ApiKey <key>` or OIDC tokens. `ROLE_<codex-id>` authorities control product ownership and content visibility. `ProductOwnershipResolver` and `CurrentUserCensorFactory` are the single censoring path; do not bypass censoring.
+- **Markup Pipeline:** Rendering order must be strictly preserved: conditional product blocks -> entity references -> raw HTML -> game tokens -> CommonMark (`TorgMarkupService` / `Censor`).
 - **Web & DTO Mapping:** Keep web adapters thin. Controllers return summary DTOs for lists and detail DTOs for item endpoints. MapStruct mappers must be Spring components (`componentModel = "spring"`) sharing rules via `TorgMappingSupport`.
 - **Data Entities:** Value types/records where appropriate; JPA entities extend `TorgEntity` with generated UUID IDs and concrete product collections.
 - **Database Migrations:** Liquibase changesets under `torg-codex-data/src/main/resources/db`. Never alter applied changesets. Follow the expand/migrate/contract phases for breaking changes.
 - **Testing & Mocking:** JUnit 5, AssertJ, and Mockito for unit tests. Integration tests (`*IT`) use Testcontainers PostgreSQL under Failsafe (`./mvnw verify`). External HTTP integrations (e.g., DriveThruRPG API client) MUST use **WireMock** configured via both **annotation-based configuration** (`@AutoConfigureWireMock`, `@WireMockTest`) and **file-based configuration** (JSON stub mappings in `src/test/resources/mappings` and payload bodies in `src/test/resources/__files`).
 - **Documentation & Contributions:** Keep architectural changes aligned with `docs/modules/arc42` (especially ADRs and concepts). Contributions require git sign-off under `CONTRIBUTING.md`.
-

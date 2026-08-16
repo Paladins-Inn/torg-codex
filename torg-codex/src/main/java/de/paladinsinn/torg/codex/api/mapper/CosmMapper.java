@@ -1,9 +1,8 @@
 package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.CosmDetailDto;
 import de.paladinsinn.torg.codex.api.dto.CosmSummaryDto;
-import de.paladinsinn.torg.codex.api.dto.CosmRefDto;
 import de.paladinsinn.torg.codex.domain.model.Cosm;
-import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

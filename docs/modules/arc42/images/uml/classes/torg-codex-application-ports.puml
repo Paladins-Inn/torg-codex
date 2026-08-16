@@ -1,0 +1,83 @@
+@startuml
+
+interface CatalogPersistencePort {
+	{method}  {abstract} +findAll () : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findById ( id : UUID ) : Optional
+}
+
+
+class CatalogPublicationReference {
+	{field} -codexId : String
+	{field} -id : UUID
+	{field} -name : String
+	{method} +codexId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +toString () : String
+}
+
+
+interface CatalogQuery {
+	{method}  {abstract} +findAll () : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findById ( id : UUID ) : Optional
+}
+
+
+class CatalogQueryService {
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : Optional
+}
+
+
+class CatalogReference {
+	{field} -id : UUID
+	{field} -name : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +toString () : String
+}
+
+
+interface CatalogReferencePersistencePort {
+	{method}  {abstract} +findCosmByName ( name : String ) : Optional
+	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
+	{method}  {abstract} +findPublicationsByProductId ( productId : int ) : List
+}
+
+
+interface CatalogReferenceQuery {
+	{method}  {abstract} +findCosmByName ( name : String ) : Optional
+	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
+	{method}  {abstract} +findPublicationsByProductId ( productId : int ) : List
+}
+
+
+class CatalogReferenceQueryService {
+	{method} +findCosmByName ( name : String ) : Optional
+	{method} +findPublicationByCodexId ( codexId : String ) : Optional
+	{method} +findPublicationsByProductId ( productId : int ) : List
+}
+
+
+interface DriveThruRpgProductPort {
+	{method}  {abstract} +findProduct ( productId : String ) : Optional
+}
+
+
+
+
+CatalogQueryService *--  CatalogPersistencePort : persistence
+CatalogQueryService ..|>  CatalogQuery
+CatalogReferenceQueryService *--  CatalogReferencePersistencePort : persistence
+CatalogReferenceQueryService ..|>  CatalogReferenceQuery
+
+hide methods
+
+@enduml

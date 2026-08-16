@@ -70,8 +70,10 @@ so anonymous visitors additionally see the free-tier core-rulebook content.
 
 == Architecture
 
-The security integration lives entirely in the `torg-codex` application module.
-The `torg-codex-data` library module has no Spring Security dependency; it accepts a plain `Set<String>` of product IDs and does not know how that set was obtained.
+The DriveThruRPG authentication integration lives in the `torg-codex-application`
+module. Product-ownership resolution for rendering lives in the `torg-codex` web
+module. The `torg-codex-data` library module has no Spring Security dependency; it
+accepts a plain `Set<String>` of product IDs and does not know how that set was obtained.
 
 There is exactly *one* production mechanism that derives product ownership for censoring (constitution Principle V):
 `CurrentUserCensorFactory`, which delegates to `ProductOwnershipResolver`. Both live in the
@@ -79,6 +81,10 @@ There is exactly *one* production mechanism that derives product ownership for c
 
 [source]
 ----
+torg-codex-application (DriveThruRPG HTTP and API-key security)
+└── de.paladinsinn.drivethru / de.paladinsinn.security
+        Provides authentication and ROLE_* authority producers
+
 torg-codex-data (no Spring Security dependency)
 └── TorgMarkupService
         render(String rawText, Set<String> ownedProducts)

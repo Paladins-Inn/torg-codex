@@ -2,7 +2,7 @@ package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.PerkDetailDto;
 import de.paladinsinn.torg.codex.api.dto.PerkSummaryDto;
 import de.paladinsinn.torg.codex.domain.model.Perk;
-import de.paladinsinn.torg.codex.data.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.Censor;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

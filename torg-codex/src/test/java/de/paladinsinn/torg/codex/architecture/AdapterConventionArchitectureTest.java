@@ -39,26 +39,26 @@ class AdapterConventionArchitectureTest {
     }
 
     @Test
-    void driveThruRpgOutboundAdapterLivesUnderDataAdapterOutHttp() {
+    void driveThruRpgOutboundAdapterLivesUnderDriveThruAdapterOutHttp() {
         JavaClasses imported = ArchitectureTestSupport.IMPORTED_CLASSES;
         boolean found = imported.stream().anyMatch(clazz ->
                 clazz.getSimpleName().equals("DriveThruRpgProductAdapter")
                         && clazz.getPackageName().equals(
-                                "de.paladinsinn.torg.codex.data.adapter.out.http"));
+                                "de.paladinsinn.drivethru.adapter.out.http"));
         assertTrue(found,
-                "DriveThruRpgProductAdapter must exist under data.adapter.out.http "
+                "DriveThruRpgProductAdapter must exist under drivethru.adapter.out.http "
                         + "as the outbound HTTP adapter for the DriveThruRPG product catalog");
     }
 
     @Test
-    void domainEventBridgeOutboundAdapterLivesUnderDataAdapterOutEvent() {
+    void domainEventBridgeOutboundAdapterLivesUnderDriveThruAdapterOutEvent() {
         JavaClasses imported = ArchitectureTestSupport.IMPORTED_CLASSES;
         boolean found = imported.stream().anyMatch(clazz ->
                 clazz.getSimpleName().equals("SpringDomainEventPublisherAdapter")
                         && clazz.getPackageName().equals(
-                                "de.paladinsinn.torg.codex.data.adapter.out.event"));
+                                "de.paladinsinn.drivethru.adapter.out.event"));
         assertTrue(found,
-                "SpringDomainEventPublisherAdapter must exist under data.adapter.out.event "
+                "SpringDomainEventPublisherAdapter must exist under drivethru.adapter.out.event "
                         + "as the outbound bridge from torg-codex-domain events to Spring's "
                         + "ApplicationEventPublisher");
     }
