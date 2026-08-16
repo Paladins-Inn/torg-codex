@@ -33,9 +33,9 @@ description: "Implementation tasks for unified product-ownership censoring autho
 
 **Purpose**: Confirm the current four-module reactor is green and record the pre-change state before any implementation task begins.
 
-- [ ] T001 Run the required baseline build from repository root with `JAVA_HOME=/usr/lib/jvm/temurin-25-jdk-amd64 ./mvnw clean verify`; record that the current baseline is green before changing `torg-codex/src/main/java/` or `torg-codex/src/test/java/`.
-- [ ] T002 [P] Inspect and record the current ownership/censoring call graph in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/security/CurrentUserCensorFactory.java`, `torg-codex/src/main/java/de/paladinsinn/torg/codex/markup/SecuredMarkupService.java`, and the 15 gated controllers under `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/controller/`.
-- [ ] T003 [P] Confirm the pre-fix byte-identical characterization state by comparing `torg-codex/src/test/resources/characterization/cosms/anonymous-detail.json` and `torg-codex/src/test/resources/characterization/cosms/owner-detail.json`, and record the Aysle gated-field/id baseline for later verification.
+- [X] T001 Run the required baseline build from repository root with `JAVA_HOME=/usr/lib/jvm/temurin-25-jdk-amd64 ./mvnw clean verify`; record that the current baseline is green before changing `torg-codex/src/main/java/` or `torg-codex/src/test/java/`.
+- [X] T002 [P] Inspect and record the current ownership/censoring call graph in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/security/CurrentUserCensorFactory.java`, `torg-codex/src/main/java/de/paladinsinn/torg/codex/markup/SecuredMarkupService.java`, and the 15 gated controllers under `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/controller/`.
+- [X] T003 [P] Confirm the pre-fix byte-identical characterization state by comparing `torg-codex/src/test/resources/characterization/cosms/anonymous-detail.json` and `torg-codex/src/test/resources/characterization/cosms/owner-detail.json`, and record the Aysle gated-field/id baseline for later verification.
 
 **Checkpoint**: The repository has a confirmed green baseline and the known defect is reproducible/documented without implementation changes.
 
