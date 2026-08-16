@@ -1,3 +1,43 @@
+<!--
+Sync Impact Report
+==================
+Version change: 1.0.1 -> 1.1.0 (MINOR: new mandatory governance rule added; no principle removed/redefined)
+
+Modified principles:
+- V. Multi-Tier Security, DRM Censorship & Data Protection
+  - Corrected stale/incorrect reference to a non-existent `CensorInjectionAspect`; the
+    censoring-authority-derivation rule is now phrased as a MUST requirement.
+  - Added: single-mechanism rule — product-ownership derivation for censoring MUST be based
+    exclusively on `ROLE_<codex-id>` GrantedAuthority entries in the SecurityContext, regardless
+    of authentication method/principal type. Parallel/duplicate ownership-resolution mechanisms
+    are prohibited and must be consolidated.
+  - Added: test-adequacy rule — censoring tests MUST assert an actual output difference between
+    at least two ownership states for known product-gated content; byte-for-byte-equal fixtures
+    across auth variants do not constitute proof of correct role-based censoring.
+
+Rationale: A post-implementation `/speckit.analyze` investigation of the Hexagonal Architecture
+Migration found that the live REST API's censoring path (`CurrentUserCensorFactory` / `Censor`)
+derives product ownership only from a DriveThruRPG API-key principal type, never from
+`ROLE_<codex-id>` authorities, while a separate, documented-but-unwired class
+(`SecuredMarkupService`) implements the authority-based approach without being used by any
+controller. All 17 catalog areas' characterization fixtures were found to be byte-identical
+between an anonymous and an authenticated "owner" auth variant, including for content
+(the "Aysle" cosm) known to contain `<IF:...>` product-gated markup — meaning role-based
+censoring was never actually exercised or proven correct by the migration's test suite. This
+gap pre-dates the migration (the deleted `CensoringCatalogQuery` used the same factory) but was
+never previously codified as a violation. These rules are added to make this class of gap a
+detectable constitution violation going forward and to require its remediation.
+
+Added sections: none (rules folded into existing Principle V)
+Removed sections: none
+
+Follow-up TODOs (deferred, non-governance, tracked as Next Actions below):
+- Consolidate product-ownership derivation for censoring onto a single ROLE_<codex-id>-based
+  mechanism (retire or rewire `SecuredMarkupService` vs. `CurrentUserCensorFactory`/`Censor`).
+- Add/repair characterization or dedicated tests that assert differing output between an
+  anonymous and a real product-owning auth variant for known gated content.
+-->
+
 # TORG-CODEX Constitution
 
 ## Core Principles
@@ -38,7 +78,9 @@ Database schema changes MUST follow the Parallel Change / Expand-and-Contract pa
 Security combines centralized identity, role-based access, fine-grained attribute control, and DRM content censorship (ADR-007, ADR-010, concepts: rbac, abac, data-protection).
 - Identity management uses Keycloak OIDC (JWT); coarse gating is handled via Spring Security RBAC roles (`Player`, `GM`, `Third Party Systems`, `Orga`, `Judge`, `Admin`).
 - Fine-grained object permissions and DRM use ABAC / UMA 2.0 scope-based permissions per resource type.
-- Content rendering is censored based on product ownership authorities (`ROLE_<codex-id>`) injected via `CensorInjectionAspect`. Repository queries and entities MUST NOT bypass censoring.
+- Content rendering MUST be censored based on product ownership authorities (`ROLE_<codex-id>`) present as Spring Security `GrantedAuthority` entries in the current `SecurityContext`. Repository queries, entities, controllers, and mappers MUST NOT bypass censoring.
+- There MUST be exactly one authorization mechanism that derives product ownership for censoring/gated-content rendering across the entire application. This mechanism MUST resolve ownership from `ROLE_<codex-id>` `GrantedAuthority` entries in the current `SecurityContext`, independent of the authentication method or principal type (API key, OIDC, or any other) used to establish that context. Deriving ownership from a principal-type-specific lookup (e.g., a single authentication-provider's user-details object) instead of, or in addition to, the shared `ROLE_<codex-id>`-authority mechanism is prohibited. Parallel or duplicate censoring/ownership-resolution implementations (e.g., two unrelated services each deciding product ownership differently) MUST NOT coexist; any newly discovered duplicate MUST be consolidated into the single authorized mechanism as a priority fix, not left as parallel dead or partially-wired code.
+- Automated tests verifying censored/gated content MUST assert on an actual difference in rendered output between at least two distinct ownership states (e.g., anonymous vs. an authenticated owner of the relevant product) for content that is known to contain product-gated markup. Tests that only assert byte-for-byte equality between such variants without ever exercising a case where the two states are expected to differ MUST NOT be treated as proof that role-based censoring functions correctly.
 - Sensitive fields at rest MUST be encrypted application-side using JPA `AttributeConverter` (ADR-010).
 - Data privacy rules MUST be strictly enforced: external IdP identity tuples map to UUIDs, 3-year account retention post-closure, and audit trails preserved for account lifetimes.
 
@@ -84,5 +126,5 @@ All new features, schema updates, external integrations, and bug fixes MUST incl
 - Amendments require an approved Architecture Decision Record (ADR) and updates to `docs/modules/arc42`.
 - All PRs, code reviews, and AI-generated plans must verify compliance with this constitution.
 
-**Version**: 1.0.1 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-08-15
+**Version**: 1.1.0 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-08-16
 
