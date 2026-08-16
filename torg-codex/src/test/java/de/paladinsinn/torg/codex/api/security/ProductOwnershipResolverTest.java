@@ -73,4 +73,54 @@ class ProductOwnershipResolverTest {
 
         assertThat(resolver.resolve()).containsExactly("core-rulebook");
     }
+
+    @Test
+    void unauthenticatedAuthentication_resolvesToEmptySet() {
+        // The unauthenticated constructor yields isAuthenticated() == false.
+        var unauthenticated = new UsernamePasswordAuthenticationToken("user", "password");
+        assertThat(unauthenticated.isAuthenticated()).isFalse();
+        SecurityContextHolder.getContext().setAuthentication(unauthenticated);
+
+        assertThat(resolver.resolve()).isEmpty();
+    }
+
+    @Test
+    void unknownOrStaleProductRole_isIncludedAsIs() {
+        var auth = UsernamePasswordAuthenticationToken.authenticated(
+                "user",
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_this-product-does-not-exist")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // Unknown/stale ids are inert (no matching <IF:...> block) but must not be filtered.
+        assertThat(resolver.resolve()).containsExactly("this-product-does-not-exist");
+    }
+
+    @Test
+    void resolve_isIdempotentWithinSameContext() {
+        var auth = UsernamePasswordAuthenticationToken.authenticated(
+                "user",
+                null,
+                List.of(
+                        new SimpleGrantedAuthority("ROLE_core-rulebook"),
+                        new SimpleGrantedAuthority("ROLE_sourcebook-aysle")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        assertThat(resolver.resolve())
+                .isEqualTo(resolver.resolve())
+                .containsExactlyInAnyOrder("core-rulebook", "sourcebook-aysle");
+    }
+
+    @Test
+    void resolvedSet_isUnmodifiable() {
+        var auth = UsernamePasswordAuthenticationToken.authenticated(
+                "user",
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_core-rulebook")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        assertThat(resolver.resolve())
+                .as("resolve() returns an unmodifiable set (no side effects, no leaking mutation)")
+                .isUnmodifiable();
+    }
 }

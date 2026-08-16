@@ -64,14 +64,14 @@ description: "Implementation tasks for unified product-ownership censoring autho
 
 > **TDD rule**: T006 is written and failing before the implementation below; rerun it after each production change.
 
-- [ ] T008 [US1] Refine `torg-codex/src/test/java/de/paladinsinn/torg/codex/api/security/ProductOwnershipResolverTest.java` with explicit null-authentication, unauthenticated-authentication, unknown/stale `ROLE_` id, repeated-resolution/idempotence, and no-I/O expectations from `contracts/product-ownership-resolver.md`.
-- [ ] T009 [US1] Add focused factory integration coverage in `torg-codex/src/test/java/de/paladinsinn/torg/codex/api/security/CurrentUserCensorFactoryTest.java` proving `CurrentUserCensorFactory.create()` passes resolver-owned product ids into `Censor.of(...)` and does not use `DriveThruUserService`; keep this test paired with the factory production change.
+- [X] T008 [US1] Refine `torg-codex/src/test/java/de/paladinsinn/torg/codex/api/security/ProductOwnershipResolverTest.java` with explicit null-authentication, unauthenticated-authentication, unknown/stale `ROLE_` id, repeated-resolution/idempotence, and no-I/O expectations from `contracts/product-ownership-resolver.md`.
+- [X] T009 [US1] Add focused factory integration coverage in `torg-codex/src/test/java/de/paladinsinn/torg/codex/api/security/CurrentUserCensorFactoryTest.java` proving `CurrentUserCensorFactory.create()` passes resolver-owned product ids into `Censor.of(...)` and does not use `DriveThruUserService`; keep this test paired with the factory production change.
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Implement the single `ProductOwnershipResolver` component in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/security/ProductOwnershipResolver.java` with the contract's `Set<String> resolve()` API, reading the current `SecurityContextHolder` authentication, returning an empty set for absent/unauthenticated authentication, stripping only the literal `ROLE_` prefix, filtering non-role authorities, and returning an unmodifiable result without I/O.
-- [ ] T011 [US1] Rewire `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/security/CurrentUserCensorFactory.java` to inject/use `ProductOwnershipResolver` for `Censor.of(markupService, ownedProducts)`, remove the `DriveThruUserService` field/import and principal-specific ownership lookup, and preserve the existing `Censor` and markup pipeline contract.
-- [ ] T012 Run `./mvnw -pl torg-codex test -Dtest=ProductOwnershipResolverTest,CurrentUserCensorFactoryTest`; confirm the tests from T006/T008/T009 now pass and that the implementation remains principal-type-independent.
+- [X] T010 [US1] Implement the single `ProductOwnershipResolver` component in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/security/ProductOwnershipResolver.java` with the contract's `Set<String> resolve()` API, reading the current `SecurityContextHolder` authentication, returning an empty set for absent/unauthenticated authentication, stripping only the literal `ROLE_` prefix, filtering non-role authorities, and returning an unmodifiable result without I/O.
+- [X] T011 [US1] Rewire `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/security/CurrentUserCensorFactory.java` to inject/use `ProductOwnershipResolver` for `Censor.of(markupService, ownedProducts)`, remove the `DriveThruUserService` field/import and principal-specific ownership lookup, and preserve the existing `Censor` and markup pipeline contract.
+- [X] T012 Run `./mvnw -pl torg-codex test -Dtest=ProductOwnershipResolverTest,CurrentUserCensorFactoryTest`; confirm the tests from T006/T008/T009 now pass and that the implementation remains principal-type-independent.
 
 **Checkpoint**: The live censor factory uses the generic role resolver, while all existing controller call sites remain unchanged.
 
