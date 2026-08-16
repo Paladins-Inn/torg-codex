@@ -37,7 +37,8 @@ import org.springframework.security.core.userdetails.UserDetails;
  *
  * <p>This principal is used as the Spring Security <em>anonymous</em> user so that
  * even non-logged-in users automatically own the free {@code core-rulebook} product.
- * As a result, {@link de.paladinsinn.torg.codex.markup.SecuredMarkupService} will
+ * As a result, the application's product-ownership resolver (which reads
+ * {@code ROLE_<codex-id>} authorities from the {@code SecurityContext}) will
  * expose all core-rulebook content to anonymous visitors without requiring login.</p>
  *
  * <ul>
@@ -88,8 +89,8 @@ public final class NotLoggedInUserDetails implements UserDetails {
     /**
      * Returns {@code [ROLE_core-rulebook]}.
      *
-     * <p>{@link de.paladinsinn.torg.codex.markup.SecuredMarkupService} reads these
-     * authorities to determine which product-gated markup blocks are visible to the user.</p>
+     * <p>The application's product-ownership resolver reads these authorities to determine
+     * which product-gated markup blocks are visible to the user.</p>
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -1,8 +1,10 @@
 package de.paladinsinn.torg.codex.architecture;
 
+import com.tngtech.archunit.core.domain.JavaClass;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Enforces constitution Principle V's single-mechanism rule (feature
@@ -20,9 +22,15 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  *       repository, or entity may re-implement that decision. Authority <em>producers</em> such
  *       as {@code DriveThruUserDetails} / {@code NotLoggedInUserDetails} live in the
  *       {@code torg-codex-data} module ({@code de.paladinsinn.security}) and are unaffected.</li>
+ *   <li>Only {@code CurrentUserCensorFactory} (in {@code api.security}) may depend on the
+ *       {@code ProductOwnershipResolver}; controllers reach censoring exclusively through the
+ *       factory, and exactly the 15 gated controllers depend on it (FR-002/FR-003/SC-002).</li>
  * </ul>
  */
 class CensoringSingleMechanismArchitectureTest {
+
+    private static final String CONTROLLER_PACKAGE = "de.paladinsinn.torg.codex.api.controller";
+    private static final int EXPECTED_GATED_CONTROLLER_COUNT = 15;
 
     @Test
     void noSecuredMarkupServiceRemainsInProductionCode() {
@@ -41,5 +49,42 @@ class CensoringSingleMechanismArchitectureTest {
                 .haveFullyQualifiedName("org.springframework.security.core.GrantedAuthority")
                 .as("Only de.paladinsinn.torg.codex.api.security may derive product ownership from "
                         + "GrantedAuthority (constitution Principle V single-mechanism rule)"));
+    }
+
+    @Test
+    void onlyCensorFactoryDependsOnProductOwnershipResolver() {
+        ArchitectureTestSupport.assertNoUnfrozenViolations(noClasses()
+                .that().doNotHaveSimpleName("CurrentUserCensorFactory")
+                .and().doNotHaveSimpleName("ProductOwnershipResolver")
+                .should().dependOnClassesThat().haveSimpleName("ProductOwnershipResolver")
+                .as("Only CurrentUserCensorFactory may depend on ProductOwnershipResolver; "
+                        + "controllers reach censoring through the factory only (FR-002/FR-003)")
+                .allowEmptyShould(true));
+    }
+
+    @Test
+    void gatedControllersDependOnCensorFactoryOnly() {
+        long controllersUsingFactory = ArchitectureTestSupport.IMPORTED_CLASSES.stream()
+                .filter(clazz -> clazz.getPackageName().equals(CONTROLLER_PACKAGE))
+                .filter(clazz -> clazz.getDirectDependenciesFromSelf().stream()
+                        .anyMatch(dependency ->
+                                dependency.getTargetClass().getSimpleName().equals("CurrentUserCensorFactory")))
+                .count();
+
+        assertThat(controllersUsingFactory)
+                .as("exactly the 15 gated controllers depend on CurrentUserCensorFactory (FR-003)")
+                .isEqualTo(EXPECTED_GATED_CONTROLLER_COUNT);
+
+        // And no controller reaches the resolver directly.
+        boolean anyControllerTouchesResolver = ArchitectureTestSupport.IMPORTED_CLASSES.stream()
+                .filter(clazz -> clazz.getPackageName().equals(CONTROLLER_PACKAGE))
+                .flatMap(clazz -> clazz.getDirectDependenciesFromSelf().stream())
+                .map(dependency -> dependency.getTargetClass())
+                .map(JavaClass::getSimpleName)
+                .anyMatch(name -> name.equals("ProductOwnershipResolver"));
+
+        assertThat(anyControllerTouchesResolver)
+                .as("no controller may depend on ProductOwnershipResolver directly")
+                .isFalse();
     }
 }

@@ -6,7 +6,8 @@ include::partial$config.adoc[]
 The TORG markup language uses `<IF:product-id>` / `<IF:!product-id>` conditional blocks to gate content behind product ownership.
 At runtime, the rendering pipeline needs to know which products the current user owns so it can resolve those conditions.
 
-This page describes how Spring Security roles are mapped to product IDs and how the `SecuredMarkupService` bridges the security layer and the markup pipeline.
+This page describes how Spring Security roles are mapped to product IDs and how the single ownership-resolution mechanism
+(`CurrentUserCensorFactory` delegating to `ProductOwnershipResolver`) bridges the security layer and the markup pipeline.
 
 
 == Role Naming Convention
@@ -26,7 +27,11 @@ ROLE_digital-orrorsh     -> digital-orrorsh
 The mapping rule is simple: strip the `ROLE_` prefix.
 Everything that follows becomes the product-id matched against `<IF:product-id>` tags in the markup.
 
-Non-product authorities (e.g., OAuth2 scopes such as `SCOPE_read`) do not carry the `ROLE_` prefix and are therefore ignored by the mapper.
+Non-product authorities (e.g., OAuth2 scopes such as `SCOPE_read`) do not carry the `ROLE_` prefix and are therefore ignored by the resolver.
+
+This mechanism is *principal-type independent*: ownership is derived purely from the `ROLE_<codex-id>` `GrantedAuthority`
+entries on the current `Authentication`, regardless of whether that context was established by a DriveThruRPG API key, an
+OIDC/Keycloak token, or any other authentication method (constitution Principle V).
 
 
 == Markup Semantics Revisited
@@ -59,11 +64,18 @@ As a result:
 
 This gives anonymous visitors the minimal, non-gated view of all content without requiring any authentication check in the rendering code itself.
 
+NOTE: In production, the configured anonymous principal (`NotLoggedInUserDetails`) always carries `ROLE_core-rulebook`,
+so anonymous visitors additionally see the free-tier core-rulebook content.
+
 
 == Architecture
 
 The security integration lives entirely in the `torg-codex` application module.
 The `torg-codex-data` library module has no Spring Security dependency; it accepts a plain `Set<String>` of product IDs and does not know how that set was obtained.
+
+There is exactly *one* production mechanism that derives product ownership for censoring (constitution Principle V):
+`CurrentUserCensorFactory`, which delegates to `ProductOwnershipResolver`. Both live in the
+`de.paladinsinn.torg.codex.api.security` package.
 
 [source]
 ----
@@ -73,84 +85,84 @@ torg-codex-data (no Spring Security dependency)
             |
             └─> ConditionalBlockProcessor.process(text, ownedProducts)
                     Resolves <IF:...> blocks against the Set
+└── Censor
+        of(TorgMarkupService, Set<String> ownedProducts)
+        apply(String rawText) -> render(rawText, ownedProducts)
 
 torg-codex (Spring Security on classpath)
-└── SecuredMarkupService
-        render(String rawText)                    <1>
-        render(String rawText, Set<String> owned) <2>
+└── api.security.ProductOwnershipResolver
+        resolve() : Set<String>                          <1>
+└── api.security.CurrentUserCensorFactory
+        create() : Censor                                <2>
 ----
-<1> Reads `ROLE_*` authorities from `SecurityContextHolder`, strips the prefix, delegates to `TorgMarkupService`.
-<2> Accepts caller-supplied product IDs directly; bypasses the security context (useful for batch or programmatic rendering).
+<1> Reads `ROLE_*` authorities from `SecurityContextHolder`, strips the prefix, returns the owned product-id set. Performs no I/O.
+<2> Calls `ProductOwnershipResolver.resolve()` and constructs a request-scoped `Censor.of(markupService, ownedProducts)`.
 
 
-== SecuredMarkupService
+== Rendering Order
 
-`SecuredMarkupService` is a Spring `@Service` in the `de.paladinsinn.torg.codex.markup` package of the `torg-codex` module.
+The markup pipeline order is fixed and unchanged by ownership resolution — only the `Set<String> ownedProducts` input
+is computed by the resolver. `TorgMarkupService.render(rawText, ownedProducts)` applies its stages in this order:
 
-=== Context-Aware Rendering
+. Conditional product blocks (`<IF:...>` / `<IF:!...>`)
+. Entity references
+. Raw HTML
+. Game tokens
+. CommonMark (Markdown)
 
-[source,java]
-----
-// Web request: product IDs resolved from the current user's security context
-String html = securedMarkupService.render(rawText);
-----
 
-Internally the service extracts the owned product IDs from the security context:
+== ProductOwnershipResolver
+
+`ProductOwnershipResolver` is a Spring `@Component` in the `de.paladinsinn.torg.codex.api.security` package of the `torg-codex` module.
+It is the sole component that reads product ownership from the security context.
+
+Internally it extracts the owned product IDs from the current authentication:
 
 [source,java]
 ----
 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 // null or unauthenticated -> empty set
 // authenticated -> stream ROLE_* authorities, strip prefix
-Set<String> ownedProducts = auth.getAuthorities().stream()
+if (auth == null || !auth.isAuthenticated()) {
+    return Set.of();
+}
+return auth.getAuthorities().stream()
     .map(GrantedAuthority::getAuthority)
     .filter(a -> a.startsWith("ROLE_"))
     .map(a -> a.substring("ROLE_".length()))
     .collect(Collectors.toUnmodifiableSet());
 ----
 
-=== Explicit Product-ID Rendering
-
-[source,java]
-----
-// Batch processing or programmatic rendering: supply product IDs directly
-String html = securedMarkupService.render(rawText, Set.of("core-rulebook", "sourcebook-aysle"));
-----
-
-This overload passes the supplied set directly to `TorgMarkupService` without touching the security context.
-Use it when there is no active HTTP request scope, such as in scheduled jobs or data export pipelines.
-
 
 == Usage in Web Controllers
 
-A typical Spring MVC controller injects `SecuredMarkupService` instead of `TorgMarkupService`:
+The 15 gated REST controllers do not resolve ownership themselves. They inject `CurrentUserCensorFactory`, obtain a
+request-scoped `Censor`, and pass it to their MapStruct mapper as a `@Context` parameter:
 
 [source,java]
 ----
-@Controller
+@RestController
+@RequestMapping("/api/cosms")
+@RequiredArgsConstructor
 public class CosmController {
 
-    private final CosmRepository cosmRepository;
-    private final SecuredMarkupService markupService;
+    private final CatalogQuery<Cosm> catalogQuery;
+    private final CosmMapper mapper;
+    private final CurrentUserCensorFactory censorFactory;
 
-    public CosmController(CosmRepository cosmRepository,
-                          SecuredMarkupService markupService) {
-        this.cosmRepository = cosmRepository;
-        this.markupService = markupService;
-    }
-
-    @GetMapping("/cosms/{id}")
-    public String showCosm(@PathVariable String id, Model model) {
-        Cosm cosm = cosmRepository.findById(id).orElseThrow();
-        model.addAttribute("worldLaws", markupService.render(cosm.getWorldLaws()));
-        model.addAttribute("text",      markupService.render(cosm.getText()));
-        return "cosm-detail";
+    @GetMapping("/{id}")
+    public ResponseEntity<CosmDetailDto> getById(@PathVariable UUID id) {
+        final Censor censor = censorFactory.create();
+        return catalogQuery.findById(id)
+                .map(e -> mapper.toDetail(e, censor))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
 ----
 
 The controller does not handle roles itself.
-`SecuredMarkupService` resolves the current user's product ownership transparently.
+`CurrentUserCensorFactory` → `ProductOwnershipResolver` resolves the current user's product ownership transparently.
 
 
 == Module Boundary
@@ -160,12 +172,12 @@ The controller does not handle roles itself.
 | Module | Responsibility
 
 | `torg-codex-data`
-| Markup parsing pipeline (`TorgMarkupService`, `ConditionalBlockProcessor`, …).
+| Markup parsing pipeline (`TorgMarkupService`, `ConditionalBlockProcessor`, `Censor`, …).
 No knowledge of Spring Security or HTTP sessions.
 Accepts `Set<String> ownedProducts` as a plain parameter.
 
 | `torg-codex`
-| Spring Security integration (`SecuredMarkupService`).
+| Spring Security integration (`ProductOwnershipResolver`, `CurrentUserCensorFactory`).
 Extracts product IDs from the authenticated user's `ROLE_*` authorities and passes them to the data module.
 |===
 
@@ -174,9 +186,9 @@ This boundary keeps the data module independently testable and reusable without 
 
 == Test Strategy
 
-`SecuredMarkupServiceTest` covers the following scenarios using Mockito (no Spring context required):
+`ProductOwnershipResolverTest` covers the following scenarios using plain JUnit 5 (no Spring context required):
 
-.Test scenarios for SecuredMarkupService
+.Test scenarios for ProductOwnershipResolver
 [cols="<.<7,<.<5",options="header",frame="topbot",grid="rows"]
 |===
 | Scenario | Expected product-id set
@@ -184,18 +196,25 @@ This boundary keeps the data module independently testable and reusable without 
 | No `Authentication` in security context
 | Empty set
 
+| Unauthenticated `Authentication` (`isAuthenticated() == false`)
+| Empty set
+
 | Anonymous authentication with `ROLE_ANONYMOUS`
 | `{ "ANONYMOUS" }` (stripped prefix)
 
-| Authenticated user with `ROLE_core-rulebook`, `ROLE_delphi-missions-aysle`
+| Authenticated (generic) principal with `ROLE_core-rulebook`, `ROLE_delphi-missions-aysle`
 | `{ "core-rulebook", "delphi-missions-aysle" }`
 
 | Non-`ROLE_` authority present (e.g., `SCOPE_read`)
 | Filtered out; not included in the set
 
-| Explicit product-IDs passed directly (no security context)
-| Exactly the supplied set, security context not consulted
+| Unknown/stale `ROLE_` id (no matching `<IF:...>` block)
+| Included as-is; inert during rendering
 
 |===
+
+In addition, `CensoringDifferentialTest` asserts — via live MockMvc requests to the Aysle cosm detail endpoint — that an
+anonymous request and a `ROLE_sourcebook-aysle` owner request produce genuinely *different* `worldLaws` output, and
+`CensoringSingleMechanismArchitectureTest` enforces that exactly one component derives ownership from `GrantedAuthority`.
 
 <<<

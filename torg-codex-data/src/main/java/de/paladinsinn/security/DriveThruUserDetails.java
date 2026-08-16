@@ -92,8 +92,8 @@ public class DriveThruUserDetails implements UserDetails {
      * <ul>
      *   <li>{@code ROLE_DRIVETHRU_USER} – always present for authenticated users.</li>
      *   <li>{@code ROLE_<codexId>} – one entry per owned publication, e.g.
-     *       {@code ROLE_core-rulebook}. These authorities are read by
-     *       {@code SecuredMarkupService} to resolve product-gated markup blocks.</li>
+     *       {@code ROLE_core-rulebook}. These authorities are read by the application's
+     *       product-ownership resolver to resolve product-gated markup blocks.</li>
      * </ul>
      */
     @Override

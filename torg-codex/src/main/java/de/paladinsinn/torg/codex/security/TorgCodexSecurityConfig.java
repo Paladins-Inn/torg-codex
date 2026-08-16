@@ -47,7 +47,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * <h2>Design decisions</h2>
  * <ul>
  *   <li>All HTTP endpoints are publicly accessible – content protection happens at the
- *       markup level via {@link de.paladinsinn.torg.codex.markup.SecuredMarkupService}
+ *       markup level via {@link de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory}
+ *       (which resolves ownership through
+ *       {@link de.paladinsinn.torg.codex.api.security.ProductOwnershipResolver})
  *       and {@code <IF:product-id>} blocks in the templates.</li>
  *   <li>Authentication is <em>optional</em>: users may send an
  *       {@code Authorization: ApiKey <key>} header, which triggers DriveThruRPG login.
@@ -66,8 +68,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * them in {@link DriveThruUserDetails#getOwnedCodexIds()}.
  * {@code DriveThruUserDetails.getAuthorities()} then emits one
  * {@code ROLE_<codexId>} authority per owned publication.
- * {@code SecuredMarkupService} strips the {@code ROLE_} prefix to obtain the product-id
- * set used for markup gating.
+ * {@link de.paladinsinn.torg.codex.api.security.ProductOwnershipResolver} strips the
+ * {@code ROLE_} prefix to obtain the product-id set used for markup gating.
  */
 @Configuration
 @EnableMethodSecurity
