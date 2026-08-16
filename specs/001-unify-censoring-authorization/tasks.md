@@ -121,11 +121,11 @@ description: "Implementation tasks for unified product-ownership censoring autho
 
 **Purpose**: Confirm all requirements, unchanged pipeline/data boundaries, and full reactor health after the complete feature.
 
-- [ ] T024 [P] Run a production-source audit over `torg-codex/src/main/java/de/paladinsinn/torg/codex/` and `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/` confirming no `Censor`, mapper, controller, JPA/entity, or repository bypasses the resolver, and that markup order remains conditional blocks → entity references → raw HTML → game tokens → CommonMark.
-- [ ] T025 [P] Run a persistence/contract audit confirming no files changed under `torg-codex-data/src/main/resources/db`, no JPA/domain/business-logic files changed outside the planned security layer, and no REST DTO/controller signatures or media types changed; record the audit against `FR-006`, `FR-009`, and `FR-010`.
-- [ ] T026 [P] Run the quickstart validation commands from `specs/001-unify-censoring-authorization/quickstart.md`, including the single-mechanism grep and 15-controller count, and record the expected results.
-- [ ] T027 Run the required final build from repository root with `JAVA_HOME=/usr/lib/jvm/temurin-25-jdk-amd64 ./mvnw clean verify`; confirm the four-module reactor, unit tests, architecture tests, Testcontainers/Failsafe integration tests, characterization replay, and differential test all pass.
-- [ ] T028 Record final implementation evidence and requirement traceability in `specs/001-unify-censoring-authorization/tasks.md`, including the actual fixture-diff result and any explicitly justified non-changes under `torg-codex-data/`.
+- [X] T024 [P] Run a production-source audit over `torg-codex/src/main/java/de/paladinsinn/torg/codex/` and `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/` confirming no `Censor`, mapper, controller, JPA/entity, or repository bypasses the resolver, and that markup order remains conditional blocks → entity references → raw HTML → game tokens → CommonMark.
+- [X] T025 [P] Run a persistence/contract audit confirming no files changed under `torg-codex-data/src/main/resources/db`, no JPA/domain/business-logic files changed outside the planned security layer, and no REST DTO/controller signatures or media types changed; record the audit against `FR-006`, `FR-009`, and `FR-010`.
+- [X] T026 [P] Run the quickstart validation commands from `specs/001-unify-censoring-authorization/quickstart.md`, including the single-mechanism grep and 15-controller count, and record the expected results.
+- [X] T027 Run the required final build from repository root with `JAVA_HOME=/usr/lib/jvm/temurin-25-jdk-amd64 ./mvnw clean verify`; confirm the four-module reactor, unit tests, architecture tests, Testcontainers/Failsafe integration tests, characterization replay, and differential test all pass.
+- [X] T028 Record final implementation evidence and requirement traceability in `specs/001-unify-censoring-authorization/tasks.md`, including the actual fixture-diff result and any explicitly justified non-changes under `torg-codex-data/`.
 
 **Checkpoint**: The complete build is green, the single-mechanism invariant is verified, differential behavior is tested, and no prohibited schema/pipeline/API changes were introduced.
 
@@ -202,3 +202,44 @@ description: "Implementation tasks for unified product-ownership censoring autho
 - All tasks are unchecked because this file is an executable implementation plan, not an implementation record.
 - Production-code changes are explicitly paired with tests: T010 with T006/T008, T011 with T009, and T015 with T013/T014 plus the ported resolver tests.
 - No implementation, production edit, fixture regeneration, or `/speckit.implement` execution is part of task generation.
+
+---
+
+## Implementation Evidence (T028)
+
+**Final build**: `JAVA_HOME=/usr/lib/jvm/temurin-25-jdk-amd64 ./mvnw clean verify` → **BUILD SUCCESS** (four-module reactor; Testcontainers-backed Failsafe integration tests, ArchUnit, characterization replay, and differential test all green).
+
+**Production changes** (security/adapter layer only):
+
+- NEW `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/security/ProductOwnershipResolver.java` — single `@Component`, `Set<String> resolve()`, reads `ROLE_<codex-id>` authorities from `SecurityContextHolder`, principal-type-agnostic, no I/O.
+- MODIFIED `CurrentUserCensorFactory.java` — delegates to `ProductOwnershipResolver`; `DriveThruUserService` dependency removed; the 15 gated controller call sites (`censorFactory.create()`) unchanged.
+- DELETED `torg-codex/src/main/java/de/paladinsinn/torg/codex/markup/SecuredMarkupService.java` (dead duplicate, FR-007).
+- Javadoc-only refresh in `TorgCodexSecurityConfig.java`, `NotLoggedInUserDetails.java`, `DriveThruUserDetails.java`.
+- No changes under `torg-codex-data/src/main/resources/db` (FR-010), no JPA/domain/application changes, no REST DTO/controller signature or media-type changes (FR-009), markup pipeline (`Censor`/`TorgMarkupService`/`ConditionalBlockProcessor`) untouched so rendering order is preserved (FR-006).
+
+**Fixture-diff result** (T021/T022): regenerating characterization fixtures changed exactly three files:
+
+- `cosms/owner-detail.json` — now contains the `<IF:sourcebook-aysle>` owner-only world-law text (marker: "The laws of reality in Aysle form the foundation") and no longer the upsell text; `cosms/anonymous-detail.json` is unchanged (still the `<IF:!sourcebook-aysle>` upsell), so the pair is no longer byte-identical.
+- `articles/anonymous-detail.json` + `articles/owner-detail.json` — the capture's `findDrmSensitiveId()` probe now selects a genuinely DRM-sensitive article id (`dbb3b2d6-860f-491d-9065-82cdcdccf08f`, previously the arbitrary first entity `b3a08d46-...`), so both article detail fixtures changed and now differ between anonymous and owner.
+
+No other catalog area's fixtures changed (FR-009 non-regression for non-gated content confirmed).
+
+**Tests added**:
+
+- `ProductOwnershipResolverTest` (8 scenarios, generic principals — principal-type independence).
+- `CurrentUserCensorFactoryTest` (3 — delegation + no `DriveThruUserService`).
+- `CensoringDifferentialTest` (live anon vs `ROLE_sourcebook-aysle` owner; asserts genuine `worldLaws` difference; verified failing pre-fix, passing post-fix).
+- `CensoringSingleMechanismArchitectureTest` (4 — no `SecuredMarkupService`, `GrantedAuthority` derivation confined to `api.security`, only `CurrentUserCensorFactory` depends on the resolver, exactly 15 controllers use the factory).
+
+**Requirement traceability** (validated by):
+
+- FR-001 → ProductOwnershipResolverTest, CensoringDifferentialTest.
+- FR-002/FR-003 → CensoringSingleMechanismArchitectureTest, grep (15 controllers), full build.
+- FR-004/FR-005 → CensoringDifferentialTest, regenerated cosms fixtures.
+- FR-006 → markup pipeline untouched (git diff), rendering-order doc preserved.
+- FR-007 → SecuredMarkupService(+Test) deleted; arch name rule.
+- FR-008 → CensoringDifferentialTest + regenerated fixtures.
+- FR-009 → only 3 fixtures changed; no DTO/controller/schema change (git diff).
+- FR-010 → no `db/` change (git diff), no JPA/domain change.
+- FR-011 → constitution Principle V satisfied end-to-end (single mechanism + differential test).
+- SC-001..SC-005 → CensoringDifferentialTest, arch test, fixture non-regression, `clean verify` green, single in-memory `SecurityContext` read (no added round-trips).
