@@ -130,7 +130,7 @@
               <dependency>
                 <groupId>de.kaiserpfalz-edv.commons</groupId>
                 <artifactId>kp-checkstyle</artifactId>
-                <version>4.1.0</version>
+                <version>4.0.13</version>
               </dependency>
             </dependencies>
             <executions>
