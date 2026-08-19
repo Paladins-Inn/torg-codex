@@ -74,10 +74,6 @@ class NotLoggedInUserDetails {
 	{field} {static} +USERNAME : String
 	{method} +getOwnedCodexIds () : List
 	{method} +getPassword () : String
-	{method} +isAccountNonExpired () : boolean
-	{method} +isAccountNonLocked () : boolean
-	{method} +isCredentialsNonExpired () : boolean
-	{method} +isEnabled () : boolean
 	{method} +toString () : String
 }
 
