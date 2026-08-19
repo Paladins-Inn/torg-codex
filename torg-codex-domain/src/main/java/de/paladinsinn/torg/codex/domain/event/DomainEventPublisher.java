@@ -27,8 +27,19 @@ package de.paladinsinn.torg.codex.domain.event;
 
 public interface DomainEventPublisher {
 
+    /**
+     * Publishes one domain event.
+     *
+     * @param event the event to publish
+     */
     void publish(DomainEvent<?> event);
 
+    /**
+     * Publishes all supplied domain events in iteration order.
+     *
+     * @param events the events to publish
+     */
+    @SuppressWarnings("unused")
     default void publishAll(Iterable<? extends DomainEvent<?>> events) {
         for (DomainEvent<?> event : events) {
             publish(event);

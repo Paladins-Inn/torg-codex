@@ -742,7 +742,7 @@ interface ThreatRepository {
 
 
 class TorgCodexDataApplication {
-	{method}  {static} +main ( args : String[] ) : void
+	{method}  {static} ~main ( args : String[] ) : void
 }
 
 

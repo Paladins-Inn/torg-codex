@@ -10,22 +10,12 @@ class Article {
 	{field} -id : UUID
 	{field} -name : String
 	{field} -text : String
-	{method}  {static} +builder () : ArticleBuilder
+	{method} +clearanceLevel () : ClearanceLevel
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
-	{method} +toString () : String
-}
-
-
-class ArticleBuilder {
-	{field} -id : UUID
-	{field} -name : String
-	{field} -text : String
-	{method} +build () : Article
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : ArticleBuilder
-	{method} +id ( id : UUID ) : ArticleBuilder
-	{method} +name ( name : String ) : ArticleBuilder
-	{method} +text ( text : String ) : ArticleBuilder
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +text () : String
 	{method} +toString () : String
 }
 
@@ -106,8 +96,11 @@ class CatalogProduct {
 	{field} -coverUrl : String
 	{field} -id : int
 	{field} -name : String
+	{method} +coverUrl () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : int
+	{method} +name () : String
 	{method} +toString () : String
 }
 
@@ -226,6 +219,7 @@ class ClearanceLevelConverter {
 
 
 class ConditionalBlockProcessor {
+	{field} {static} -CONTENT_GROUP : int
 	{field} {static} -IF_BLOCK : Pattern
 	{method} +process ( text : String , ownedProducts : Set ) : String
 }
@@ -238,10 +232,16 @@ class Cosm {
 	{field} -products : Set
 	{field} -text : String
 	{field} -worldLaws : String
-	{method}  {static} +builder () : CosmBuilder
+	{method} +axioms () : Map
+	{method} +clearanceLevel () : ClearanceLevel
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +products () : Set
+	{method} +text () : String
 	{method} +toString () : String
+	{method} +worldLaws () : String
 }
 
 
@@ -252,25 +252,6 @@ class Cosm {
 	{field} +worldLaws : String
 	{method} +getRawText () : String
 	{method} +getRawWorldLaws () : String
-}
-
-
-class CosmBuilder {
-	{field} -axioms : Map
-	{field} -id : UUID
-	{field} -name : String
-	{field} -products : Set
-	{field} -text : String
-	{field} -worldLaws : String
-	{method} +axioms ( axioms : Map ) : CosmBuilder
-	{method} +build () : Cosm
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : CosmBuilder
-	{method} +id ( id : UUID ) : CosmBuilder
-	{method} +name ( name : String ) : CosmBuilder
-	{method} +products ( products : Set ) : CosmBuilder
-	{method} +text ( text : String ) : CosmBuilder
-	{method} +toString () : String
-	{method} +worldLaws ( worldLaws : String ) : CosmBuilder
 }
 
 
@@ -342,6 +323,8 @@ class CosmReference {
 	{field} -name : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
 	{method} +toString () : String
 }
 
@@ -377,6 +360,8 @@ class DifficultyNumber {
 	{field} -text : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +level () : String
+	{method} +text () : String
 	{method} +toString () : String
 }
 
@@ -531,45 +516,24 @@ class Item {
 	{field} -range : String
 	{field} -text : String
 	{field} -type : String
-	{method}  {static} +builder () : ItemBuilder
+	{method} +additionalFeatures () : String
+	{method} +ammo () : String
+	{method} +axiomMagic () : String
+	{method} +axiomTech () : String
+	{method} +bonus () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : String
 	{method} +equals ( o : Object ) : boolean
+	{method} +features () : String
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +price () : String
+	{method} +products () : Set
+	{method} +range () : String
+	{method} +text () : String
 	{method} +toString () : String
-}
-
-
-class ItemBuilder {
-	{field} -additionalFeatures : String
-	{field} -ammo : String
-	{field} -axiomMagic : String
-	{field} -axiomTech : String
-	{field} -bonus : String
-	{field} -cosm : String
-	{field} -features : String
-	{field} -id : UUID
-	{field} -name : String
-	{field} -price : String
-	{field} -products : Set
-	{field} -range : String
-	{field} -text : String
-	{field} -type : String
-	{method} +additionalFeatures ( additionalFeatures : String ) : ItemBuilder
-	{method} +ammo ( ammo : String ) : ItemBuilder
-	{method} +axiomMagic ( axiomMagic : String ) : ItemBuilder
-	{method} +axiomTech ( axiomTech : String ) : ItemBuilder
-	{method} +bonus ( bonus : String ) : ItemBuilder
-	{method} +build () : Item
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : ItemBuilder
-	{method} +cosm ( cosm : String ) : ItemBuilder
-	{method} +features ( features : String ) : ItemBuilder
-	{method} +id ( id : UUID ) : ItemBuilder
-	{method} +name ( name : String ) : ItemBuilder
-	{method} +price ( price : String ) : ItemBuilder
-	{method} +products ( products : Set ) : ItemBuilder
-	{method} +range ( range : String ) : ItemBuilder
-	{method} +text ( text : String ) : ItemBuilder
-	{method} +toString () : String
-	{method} +type ( type : String ) : ItemBuilder
+	{method} +type () : String
 }
 
 
@@ -841,35 +805,19 @@ class Miracle {
 	{field} -range : String
 	{field} -requiredSkills : Map
 	{field} -text : String
-	{method}  {static} +builder () : MiracleBuilder
+	{method} +axiom () : String
+	{method} +castingTime () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +dn () : DifficultyNumber
+	{method} +duration () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
-	{method} +toString () : String
-}
-
-
-class MiracleBuilder {
-	{field} -axiom : String
-	{field} -castingTime : String
-	{field} -duration : String
-	{field} -id : UUID
-	{field} -name : String
-	{field} -products : Set
-	{field} -range : String
-	{field} -requiredSkills : Map
-	{field} -text : String
-	{method} +axiom ( axiom : String ) : MiracleBuilder
-	{method} +build () : Miracle
-	{method} +castingTime ( castingTime : String ) : MiracleBuilder
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : MiracleBuilder
-	{method} +dn ( dn : DifficultyNumber ) : MiracleBuilder
-	{method} +duration ( duration : String ) : MiracleBuilder
-	{method} +id ( id : UUID ) : MiracleBuilder
-	{method} +name ( name : String ) : MiracleBuilder
-	{method} +products ( products : Set ) : MiracleBuilder
-	{method} +range ( range : String ) : MiracleBuilder
-	{method} +requiredSkills ( requiredSkills : Map ) : MiracleBuilder
-	{method} +text ( text : String ) : MiracleBuilder
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +products () : Set
+	{method} +range () : String
+	{method} +requiredSkills () : Map
+	{method} +text () : String
 	{method} +toString () : String
 }
 
@@ -941,35 +889,19 @@ class MiracleList {
 	{field} -products : Set
 	{field} -text : String
 	{field} -unlockingPerk : String
-	{method}  {static} +builder () : MiracleListBuilder
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : String
+	{method} +disableIf () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +miracles () : List
+	{method} +name () : String
+	{method} +notes () : String
+	{method} +products () : Set
+	{method} +text () : String
 	{method} +toString () : String
-}
-
-
-class MiracleListBuilder {
-	{field} -cosm : String
-	{field} -disableIf : String
-	{field} -id : UUID
-	{field} -miracles : List
-	{field} -name : String
-	{field} -notes : String
-	{field} -products : Set
-	{field} -text : String
-	{field} -unlockingPerk : String
-	{method} +build () : MiracleList
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : MiracleListBuilder
-	{method} +cosm ( cosm : String ) : MiracleListBuilder
-	{method} +disableIf ( disableIf : String ) : MiracleListBuilder
-	{method} +id ( id : UUID ) : MiracleListBuilder
-	{method} +miracles ( miracles : List ) : MiracleListBuilder
-	{method} +name ( name : String ) : MiracleListBuilder
-	{method} +notes ( notes : String ) : MiracleListBuilder
-	{method} +products ( products : Set ) : MiracleListBuilder
-	{method} +text ( text : String ) : MiracleListBuilder
-	{method} +toString () : String
-	{method} +unlockingPerk ( unlockingPerk : String ) : MiracleListBuilder
+	{method} +unlockingPerk () : String
 }
 
 
@@ -1108,32 +1040,17 @@ class Perk {
 	{field} -prerequisites : String
 	{field} -products : Set
 	{field} -text : String
-	{method}  {static} +builder () : PerkBuilder
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +contradiction () : boolean
+	{method} +cosm () : String
 	{method} +equals ( o : Object ) : boolean
+	{method} +group () : String
 	{method} +hashCode () : int
-	{method} +toString () : String
-}
-
-
-class PerkBuilder {
-	{field} -contradiction : boolean
-	{field} -cosm : String
-	{field} -group : String
-	{field} -id : UUID
-	{field} -name : String
-	{field} -prerequisites : String
-	{field} -products : Set
-	{field} -text : String
-	{method} +build () : Perk
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : PerkBuilder
-	{method} +contradiction ( contradiction : boolean ) : PerkBuilder
-	{method} +cosm ( cosm : String ) : PerkBuilder
-	{method} +group ( group : String ) : PerkBuilder
-	{method} +id ( id : UUID ) : PerkBuilder
-	{method} +name ( name : String ) : PerkBuilder
-	{method} +prerequisites ( prerequisites : String ) : PerkBuilder
-	{method} +products ( products : Set ) : PerkBuilder
-	{method} +text ( text : String ) : PerkBuilder
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +prerequisites () : String
+	{method} +products () : Set
+	{method} +text () : String
 	{method} +toString () : String
 }
 
@@ -1193,26 +1110,14 @@ class PerkGroup {
 	{field} -name : String
 	{field} -products : Set
 	{field} -text : String
-	{method}  {static} +builder () : PerkGroupBuilder
+	{method} +clearanceLevel () : ClearanceLevel
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
-	{method} +toString () : String
-}
-
-
-class PerkGroupBuilder {
-	{field} -id : UUID
-	{field} -infos : String
-	{field} -name : String
-	{field} -products : Set
-	{field} -text : String
-	{method} +build () : PerkGroup
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : PerkGroupBuilder
-	{method} +id ( id : UUID ) : PerkGroupBuilder
-	{method} +infos ( infos : String ) : PerkGroupBuilder
-	{method} +name ( name : String ) : PerkGroupBuilder
-	{method} +products ( products : Set ) : PerkGroupBuilder
-	{method} +text ( text : String ) : PerkGroupBuilder
+	{method} +id () : UUID
+	{method} +infos () : String
+	{method} +name () : String
+	{method} +products () : Set
+	{method} +text () : String
 	{method} +toString () : String
 }
 
@@ -1336,9 +1241,21 @@ class Power {
 	{field} -range : String
 	{field} -requiredSkills : Map
 	{field} -text : String
-	{method}  {static} +builder () : PowerBuilder
+	{method} +axiom () : String
+	{method} +castingTime () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +dn () : DifficultyNumber
+	{method} +duration () : String
+	{method} +enhancements () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +limitations () : String
+	{method} +name () : String
+	{method} +products () : Set
+	{method} +range () : String
+	{method} +requiredSkills () : Map
+	{method} +text () : String
 	{method} +toString () : String
 }
 
@@ -1356,36 +1273,6 @@ class Power {
 	{method} +getRawEnhancements () : String
 	{method} +getRawLimitations () : String
 	{method} +getRawText () : String
-}
-
-
-class PowerBuilder {
-	{field} -axiom : String
-	{field} -castingTime : String
-	{field} -duration : String
-	{field} -enhancements : String
-	{field} -id : UUID
-	{field} -limitations : String
-	{field} -name : String
-	{field} -products : Set
-	{field} -range : String
-	{field} -requiredSkills : Map
-	{field} -text : String
-	{method} +axiom ( axiom : String ) : PowerBuilder
-	{method} +build () : Power
-	{method} +castingTime ( castingTime : String ) : PowerBuilder
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : PowerBuilder
-	{method} +dn ( dn : DifficultyNumber ) : PowerBuilder
-	{method} +duration ( duration : String ) : PowerBuilder
-	{method} +enhancements ( enhancements : String ) : PowerBuilder
-	{method} +id ( id : UUID ) : PowerBuilder
-	{method} +limitations ( limitations : String ) : PowerBuilder
-	{method} +name ( name : String ) : PowerBuilder
-	{method} +products ( products : Set ) : PowerBuilder
-	{method} +range ( range : String ) : PowerBuilder
-	{method} +requiredSkills ( requiredSkills : Map ) : PowerBuilder
-	{method} +text ( text : String ) : PowerBuilder
-	{method} +toString () : String
 }
 
 
@@ -1460,35 +1347,19 @@ class PowerList {
 	{field} -products : Set
 	{field} -text : String
 	{field} -unlockingPerk : String
-	{method}  {static} +builder () : PowerListBuilder
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : String
+	{method} +disableIf () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +notes () : String
+	{method} +powers () : List
+	{method} +products () : Set
+	{method} +text () : String
 	{method} +toString () : String
-}
-
-
-class PowerListBuilder {
-	{field} -cosm : String
-	{field} -disableIf : String
-	{field} -id : UUID
-	{field} -name : String
-	{field} -notes : String
-	{field} -powers : List
-	{field} -products : Set
-	{field} -text : String
-	{field} -unlockingPerk : String
-	{method} +build () : PowerList
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : PowerListBuilder
-	{method} +cosm ( cosm : String ) : PowerListBuilder
-	{method} +disableIf ( disableIf : String ) : PowerListBuilder
-	{method} +id ( id : UUID ) : PowerListBuilder
-	{method} +name ( name : String ) : PowerListBuilder
-	{method} +notes ( notes : String ) : PowerListBuilder
-	{method} +powers ( powers : List ) : PowerListBuilder
-	{method} +products ( products : Set ) : PowerListBuilder
-	{method} +text ( text : String ) : PowerListBuilder
-	{method} +toString () : String
-	{method} +unlockingPerk ( unlockingPerk : String ) : PowerListBuilder
+	{method} +unlockingPerk () : String
 }
 
 
@@ -1632,28 +1503,15 @@ class Publication {
 	{field} -primaryProductId : int
 	{field} -productIds : Set
 	{field} -thirdParty : String
-	{method}  {static} +builder () : PublicationBuilder
+	{method} +codexId () : String
+	{method} +coverURL () : String
 	{method} +equals ( o : Object ) : boolean
-	{method} +getCoverURL () : String
 	{method} +hashCode () : int
-	{method} +toString () : String
-}
-
-
-class PublicationBuilder {
-	{field} -codexId : String
-	{field} -id : UUID
-	{field} -name : String
-	{field} -primaryProductId : int
-	{field} -productIds : Set
-	{field} -thirdParty : String
-	{method} +build () : Publication
-	{method} +codexId ( codexId : String ) : PublicationBuilder
-	{method} +id ( id : UUID ) : PublicationBuilder
-	{method} +name ( name : String ) : PublicationBuilder
-	{method} +primaryProductId ( primaryProductId : int ) : PublicationBuilder
-	{method} +productIds ( productIds : Set ) : PublicationBuilder
-	{method} +thirdParty ( thirdParty : String ) : PublicationBuilder
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +primaryProductId () : int
+	{method} +productIds () : Set
+	{method} +thirdParty () : String
 	{method} +toString () : String
 }
 
@@ -1725,6 +1583,8 @@ class PublicationReference {
 	{field} -name : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
 	{method} +toString () : String
 }
 
@@ -1774,32 +1634,17 @@ class Race {
 	{field} -perkText : String
 	{field} -products : Set
 	{field} -text : String
-	{method}  {static} +builder () : RaceBuilder
+	{method} +abilities () : String
+	{method} +attributeLimits () : Map
+	{method} +clearanceLevel () : ClearanceLevel
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
-	{method} +toString () : String
-}
-
-
-class RaceBuilder {
-	{field} -abilities : String
-	{field} -attributeLimits : Map
-	{field} -id : UUID
-	{field} -major : boolean
-	{field} -name : String
-	{field} -perkText : String
-	{field} -products : Set
-	{field} -text : String
-	{method} +abilities ( abilities : String ) : RaceBuilder
-	{method} +attributeLimits ( attributeLimits : Map ) : RaceBuilder
-	{method} +build () : Race
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : RaceBuilder
-	{method} +id ( id : UUID ) : RaceBuilder
-	{method} +major ( major : boolean ) : RaceBuilder
-	{method} +name ( name : String ) : RaceBuilder
-	{method} +perkText ( perkText : String ) : RaceBuilder
-	{method} +products ( products : Set ) : RaceBuilder
-	{method} +text ( text : String ) : RaceBuilder
+	{method} +id () : UUID
+	{method} +major () : boolean
+	{method} +name () : String
+	{method} +perkText () : String
+	{method} +products () : Set
+	{method} +text () : String
 	{method} +toString () : String
 }
 
@@ -1898,9 +1743,19 @@ class Shard {
 	{field} -restrictions : String
 	{field} -tappingDifficulty : String
 	{field} -text : String
-	{method}  {static} +builder () : ShardBuilder
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +possibilities () : String
+	{method} +powers () : String
+	{method} +products () : Set
+	{method} +purpose () : String
+	{method} +restrictions () : String
+	{method} +tappingDifficulty () : String
+	{method} +text () : String
 	{method} +toString () : String
 }
 
@@ -1918,33 +1773,6 @@ class Shard {
 	{method} +getRawPurpose () : String
 	{method} +getRawRestrictions () : String
 	{method} +getRawText () : String
-}
-
-
-class ShardBuilder {
-	{field} -cosm : String
-	{field} -id : UUID
-	{field} -name : String
-	{field} -possibilities : String
-	{field} -powers : String
-	{field} -products : Set
-	{field} -purpose : String
-	{field} -restrictions : String
-	{field} -tappingDifficulty : String
-	{field} -text : String
-	{method} +build () : Shard
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : ShardBuilder
-	{method} +cosm ( cosm : String ) : ShardBuilder
-	{method} +id ( id : UUID ) : ShardBuilder
-	{method} +name ( name : String ) : ShardBuilder
-	{method} +possibilities ( possibilities : String ) : ShardBuilder
-	{method} +powers ( powers : String ) : ShardBuilder
-	{method} +products ( products : Set ) : ShardBuilder
-	{method} +purpose ( purpose : String ) : ShardBuilder
-	{method} +restrictions ( restrictions : String ) : ShardBuilder
-	{method} +tappingDifficulty ( tappingDifficulty : String ) : ShardBuilder
-	{method} +text ( text : String ) : ShardBuilder
-	{method} +toString () : String
 }
 
 
@@ -2039,9 +1867,19 @@ class Spell {
 	{field} -range : String
 	{field} -requiredSkills : Map
 	{field} -text : String
-	{method}  {static} +builder () : SpellBuilder
+	{method} +axiom () : String
+	{method} +castingTime () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +dn () : DifficultyNumber
+	{method} +duration () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +products () : Set
+	{method} +range () : String
+	{method} +requiredSkills () : Map
+	{method} +text () : String
 	{method} +toString () : String
 }
 
@@ -2055,32 +1893,6 @@ class Spell {
 	{field} +requiredSkills : Map
 	{field} +text : String
 	{method} +getRawText () : String
-}
-
-
-class SpellBuilder {
-	{field} -axiom : String
-	{field} -castingTime : String
-	{field} -duration : String
-	{field} -id : UUID
-	{field} -name : String
-	{field} -products : Set
-	{field} -range : String
-	{field} -requiredSkills : Map
-	{field} -text : String
-	{method} +axiom ( axiom : String ) : SpellBuilder
-	{method} +build () : Spell
-	{method} +castingTime ( castingTime : String ) : SpellBuilder
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : SpellBuilder
-	{method} +dn ( dn : DifficultyNumber ) : SpellBuilder
-	{method} +duration ( duration : String ) : SpellBuilder
-	{method} +id ( id : UUID ) : SpellBuilder
-	{method} +name ( name : String ) : SpellBuilder
-	{method} +products ( products : Set ) : SpellBuilder
-	{method} +range ( range : String ) : SpellBuilder
-	{method} +requiredSkills ( requiredSkills : Map ) : SpellBuilder
-	{method} +text ( text : String ) : SpellBuilder
-	{method} +toString () : String
 }
 
 
@@ -2151,35 +1963,19 @@ class SpellList {
 	{field} -spells : List
 	{field} -text : String
 	{field} -unlockingPerk : String
-	{method}  {static} +builder () : SpellListBuilder
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : String
+	{method} +disableIf () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +notes () : String
+	{method} +products () : Set
+	{method} +spells () : List
+	{method} +text () : String
 	{method} +toString () : String
-}
-
-
-class SpellListBuilder {
-	{field} -cosm : String
-	{field} -disableIf : String
-	{field} -id : UUID
-	{field} -name : String
-	{field} -notes : String
-	{field} -products : Set
-	{field} -spells : List
-	{field} -text : String
-	{field} -unlockingPerk : String
-	{method} +build () : SpellList
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : SpellListBuilder
-	{method} +cosm ( cosm : String ) : SpellListBuilder
-	{method} +disableIf ( disableIf : String ) : SpellListBuilder
-	{method} +id ( id : UUID ) : SpellListBuilder
-	{method} +name ( name : String ) : SpellListBuilder
-	{method} +notes ( notes : String ) : SpellListBuilder
-	{method} +products ( products : Set ) : SpellListBuilder
-	{method} +spells ( spells : List ) : SpellListBuilder
-	{method} +text ( text : String ) : SpellListBuilder
-	{method} +toString () : String
-	{method} +unlockingPerk ( unlockingPerk : String ) : SpellListBuilder
+	{method} +unlockingPerk () : String
 }
 
 
@@ -2301,28 +2097,18 @@ class Tag {
 	{field} -id : UUID
 	{field} -name : String
 	{field} -parent : UUID
-	{method}  {static} +builder () : TagBuilder
+	{method} +clearanceLevel () : ClearanceLevel
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +parent () : UUID
 	{method} +toString () : String
 }
 
 
 class Tag {
 	{field} +parent : UUID
-}
-
-
-class TagBuilder {
-	{field} -id : UUID
-	{field} -name : String
-	{field} -parent : UUID
-	{method} +build () : Tag
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : TagBuilder
-	{method} +id ( id : UUID ) : TagBuilder
-	{method} +name ( name : String ) : TagBuilder
-	{method} +parent ( parent : UUID ) : TagBuilder
-	{method} +toString () : String
 }
 
 
@@ -2446,65 +2232,34 @@ class Threat {
 	{field} -tough : String
 	{field} -unique : boolean
 	{field} -wounds : String
-	{method}  {static} +builder () : ThreatBuilder
+	{method} +charisma () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : String
+	{method} +dexterity () : String
 	{method} +equals ( o : Object ) : boolean
+	{method} +equipment () : List
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +mind () : String
+	{method} +moveFly () : String
+	{method} +moveSwim () : String
+	{method} +moveWalk () : String
+	{method} +name () : String
+	{method} +perks () : List
+	{method} +possibilities () : String
+	{method} +products () : Set
+	{method} +quote () : String
+	{method} +shock () : String
+	{method} +skills () : Map
+	{method} +specialAbilities () : Map
+	{method} +spirit () : String
+	{method} +strength () : String
+	{method} +subName () : String
+	{method} +text () : String
 	{method} +toString () : String
-}
-
-
-class ThreatBuilder {
-	{field} -charisma : String
-	{field} -cosm : String
-	{field} -dexterity : String
-	{field} -equipment : List
-	{field} -id : UUID
-	{field} -mind : String
-	{field} -moveFly : String
-	{field} -moveSwim : String
-	{field} -moveWalk : String
-	{field} -name : String
-	{field} -perks : List
-	{field} -possibilities : String
-	{field} -products : Set
-	{field} -quote : String
-	{field} -shock : String
-	{field} -skills : Map
-	{field} -specialAbilities : Map
-	{field} -spirit : String
-	{field} -strength : String
-	{field} -subName : String
-	{field} -text : String
-	{field} -tough : String
-	{field} -unique : boolean
-	{field} -wounds : String
-	{method} +build () : Threat
-	{method} +charisma ( charisma : String ) : ThreatBuilder
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : ThreatBuilder
-	{method} +cosm ( cosm : String ) : ThreatBuilder
-	{method} +dexterity ( dexterity : String ) : ThreatBuilder
-	{method} +equipment ( equipment : List ) : ThreatBuilder
-	{method} +id ( id : UUID ) : ThreatBuilder
-	{method} +mind ( mind : String ) : ThreatBuilder
-	{method} +moveFly ( moveFly : String ) : ThreatBuilder
-	{method} +moveSwim ( moveSwim : String ) : ThreatBuilder
-	{method} +moveWalk ( moveWalk : String ) : ThreatBuilder
-	{method} +name ( name : String ) : ThreatBuilder
-	{method} +perks ( perks : List ) : ThreatBuilder
-	{method} +possibilities ( possibilities : String ) : ThreatBuilder
-	{method} +products ( products : Set ) : ThreatBuilder
-	{method} +quote ( quote : String ) : ThreatBuilder
-	{method} +shock ( shock : String ) : ThreatBuilder
-	{method} +skills ( skills : Map ) : ThreatBuilder
-	{method} +specialAbilities ( specialAbilities : Map ) : ThreatBuilder
-	{method} +spirit ( spirit : String ) : ThreatBuilder
-	{method} +strength ( strength : String ) : ThreatBuilder
-	{method} +subName ( subName : String ) : ThreatBuilder
-	{method} +text ( text : String ) : ThreatBuilder
-	{method} +toString () : String
-	{method} +tough ( tough : String ) : ThreatBuilder
-	{method} +unique ( unique : boolean ) : ThreatBuilder
-	{method} +wounds ( wounds : String ) : ThreatBuilder
+	{method} +tough () : String
+	{method} +unique () : boolean
+	{method} +wounds () : String
 }
 
 
@@ -2625,7 +2380,7 @@ class TorgCodexApplication {
 
 
 class TorgCodexDataApplication {
-	{method}  {static} +main ( args : String[] ) : void
+	{method}  {static} ~main ( args : String[] ) : void
 }
 
 
@@ -2718,52 +2473,28 @@ class Vehicle {
 	{field} -type : String
 	{field} -unique : boolean
 	{field} -wounds : String
-	{method}  {static} +builder () : VehicleBuilder
+	{method} +axiomTech () : String
+	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosm () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +maneuverRating () : String
+	{method} +name () : String
+	{method} +passengers () : String
+	{method} +price () : String
+	{method} +products () : Set
+	{method} +size () : String
+	{method} +speed () : String
+	{method} +speedMod () : String
+	{method} +speedValue () : String
+	{method} +text () : String
 	{method} +toString () : String
-}
-
-
-class VehicleBuilder {
-	{field} -axiomTech : String
-	{field} -cosm : String
-	{field} -id : UUID
-	{field} -maneuverRating : String
-	{field} -name : String
-	{field} -passengers : String
-	{field} -price : String
-	{field} -products : Set
-	{field} -size : String
-	{field} -speed : String
-	{field} -speedMod : String
-	{field} -speedValue : String
-	{field} -text : String
-	{field} -tough : String
-	{field} -type : String
-	{field} -unique : boolean
-	{field} -wounds : String
-	{method} +axiomTech ( axiomTech : String ) : VehicleBuilder
-	{method} +build () : Vehicle
-	{method} +clearanceLevel ( clearanceLevel : ClearanceLevel ) : VehicleBuilder
-	{method} +cosm ( cosm : String ) : VehicleBuilder
-	{method} +id ( id : UUID ) : VehicleBuilder
-	{method} +maneuverRating ( maneuverRating : String ) : VehicleBuilder
-	{method} +name ( name : String ) : VehicleBuilder
-	{method} +passengers ( passengers : String ) : VehicleBuilder
-	{method} +price ( price : String ) : VehicleBuilder
-	{method} +products ( products : Set ) : VehicleBuilder
-	{method} +size ( size : String ) : VehicleBuilder
-	{method} +speed ( speed : String ) : VehicleBuilder
-	{method} +speedMod ( speedMod : String ) : VehicleBuilder
-	{method} +speedValue ( speedValue : String ) : VehicleBuilder
-	{method} +text ( text : String ) : VehicleBuilder
-	{method} +toString () : String
-	{method} +tough ( tough : String ) : VehicleBuilder
-	{method} +type ( type : String ) : VehicleBuilder
-	{method} +unique ( unique : boolean ) : VehicleBuilder
-	{method} +weaponry ( weaponry : List ) : VehicleBuilder
-	{method} +wounds ( wounds : String ) : VehicleBuilder
+	{method} +tough () : String
+	{method} +type () : String
+	{method} +unique () : boolean
+	{method} +weaponry () : List
+	{method} +wounds () : String
 }
 
 
@@ -2875,9 +2606,12 @@ class VehicleWeapon {
 	{field} -ammo : String
 	{field} -amount : String
 	{field} -weaponId : UUID
+	{method} +ammo () : String
+	{method} +amount () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +toString () : String
+	{method} +weaponId () : UUID
 }
 
 
@@ -2905,7 +2639,6 @@ class VehicleWeaponDto {
 
 Article *--  ClearanceLevel : clearanceLevel
 Article --|>  TorgEntity
-ArticleBuilder -->  ClearanceLevel : clearanceLevel
 ArticleController *--  ArticleMapper : mapper
 ArticleController *--  CatalogQuery : catalogQuery
 ArticleController *--  CurrentUserCensorFactory : censorFactory
@@ -2924,7 +2657,6 @@ CatalogReferenceQueryService ..|>  CatalogReferenceQuery
 Censor *--  TorgMarkupService : markupService
 Cosm *--  ClearanceLevel : clearanceLevel
 Cosm --|>  TorgEntity
-CosmBuilder -->  ClearanceLevel : clearanceLevel
 CosmController *--  CatalogQuery : catalogQuery
 CosmController *--  CosmMapper : mapper
 CosmController *--  CurrentUserCensorFactory : censorFactory
@@ -2948,7 +2680,6 @@ EntitySummaryDto *--  ClearanceLevel : clearanceLevel
 EntitySummaryDto *--  CosmRefDto : cosm
 Item *--  ClearanceLevel : clearanceLevel
 Item --|>  TorgEntity
-ItemBuilder -->  ClearanceLevel : clearanceLevel
 ItemController *--  CatalogQuery : catalogQuery
 ItemController *--  CurrentUserCensorFactory : censorFactory
 ItemController *--  ItemMapper : mapper
@@ -3020,8 +2751,6 @@ Miracle *--  ClearanceLevel : clearanceLevel
 Miracle *--  DifficultyNumber : dn
 Miracle -->  DifficultyNumber : dn
 Miracle --|>  TorgEntity
-MiracleBuilder -->  ClearanceLevel : clearanceLevel
-MiracleBuilder -->  DifficultyNumber : dn
 MiracleController *--  CatalogQuery : catalogQuery
 MiracleController *--  CurrentUserCensorFactory : censorFactory
 MiracleController *--  MiracleMapper : mapper
@@ -3032,7 +2761,6 @@ MiracleEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 MiracleEntityMapperImpl ..|>  MiracleEntityMapper
 MiracleList *--  ClearanceLevel : clearanceLevel
 MiracleList --|>  TorgEntity
-MiracleListBuilder -->  ClearanceLevel : clearanceLevel
 MiracleListController *--  CatalogQuery : catalogQuery
 MiracleListController *--  CurrentUserCensorFactory : censorFactory
 MiracleListController *--  MiracleListMapper : mapper
@@ -3052,7 +2780,6 @@ MiracleSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 MiracleSummaryDto *--  ClearanceLevel : clearanceLevel
 Perk *--  ClearanceLevel : clearanceLevel
 Perk --|>  TorgEntity
-PerkBuilder -->  ClearanceLevel : clearanceLevel
 PerkController *--  CatalogQuery : catalogQuery
 PerkController *--  CurrentUserCensorFactory : censorFactory
 PerkController *--  PerkMapper : mapper
@@ -3063,7 +2790,6 @@ PerkEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 PerkEntityMapperImpl ..|>  PerkEntityMapper
 PerkGroup *--  ClearanceLevel : clearanceLevel
 PerkGroup --|>  TorgEntity
-PerkGroupBuilder -->  ClearanceLevel : clearanceLevel
 PerkGroupController *--  CatalogQuery : catalogQuery
 PerkGroupController *--  CurrentUserCensorFactory : censorFactory
 PerkGroupController *--  PerkGroupMapper : mapper
@@ -3084,8 +2810,6 @@ Power *--  ClearanceLevel : clearanceLevel
 Power *--  DifficultyNumber : dn
 Power -->  DifficultyNumber : dn
 Power --|>  TorgEntity
-PowerBuilder -->  ClearanceLevel : clearanceLevel
-PowerBuilder -->  DifficultyNumber : dn
 PowerController *--  CatalogQuery : catalogQuery
 PowerController *--  CurrentUserCensorFactory : censorFactory
 PowerController *--  PowerMapper : mapper
@@ -3096,7 +2820,6 @@ PowerEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 PowerEntityMapperImpl ..|>  PowerEntityMapper
 PowerList *--  ClearanceLevel : clearanceLevel
 PowerList --|>  TorgEntity
-PowerListBuilder -->  ClearanceLevel : clearanceLevel
 PowerListController *--  CatalogQuery : catalogQuery
 PowerListController *--  CurrentUserCensorFactory : censorFactory
 PowerListController *--  PowerListMapper : mapper
@@ -3120,7 +2843,6 @@ PublicationEntityMapperImpl ..|>  PublicationEntityMapper
 PublicationMapperImpl ..|>  PublicationMapper
 Race *--  ClearanceLevel : clearanceLevel
 Race --|>  TorgEntity
-RaceBuilder -->  ClearanceLevel : clearanceLevel
 RaceController *--  CatalogQuery : catalogQuery
 RaceController *--  CurrentUserCensorFactory : censorFactory
 RaceController *--  RaceMapper : mapper
@@ -3134,7 +2856,6 @@ RaceSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 RaceSummaryDto *--  ClearanceLevel : clearanceLevel
 Shard *--  ClearanceLevel : clearanceLevel
 Shard --|>  TorgEntity
-ShardBuilder -->  ClearanceLevel : clearanceLevel
 ShardController *--  CatalogQuery : catalogQuery
 ShardController *--  CurrentUserCensorFactory : censorFactory
 ShardController *--  ShardMapper : mapper
@@ -3152,8 +2873,6 @@ Spell *--  ClearanceLevel : clearanceLevel
 Spell *--  DifficultyNumber : dn
 Spell -->  DifficultyNumber : dn
 Spell --|>  TorgEntity
-SpellBuilder -->  ClearanceLevel : clearanceLevel
-SpellBuilder -->  DifficultyNumber : dn
 SpellController *--  CatalogQuery : catalogQuery
 SpellController *--  CurrentUserCensorFactory : censorFactory
 SpellController *--  SpellMapper : mapper
@@ -3164,7 +2883,6 @@ SpellEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 SpellEntityMapperImpl ..|>  SpellEntityMapper
 SpellList *--  ClearanceLevel : clearanceLevel
 SpellList --|>  TorgEntity
-SpellListBuilder -->  ClearanceLevel : clearanceLevel
 SpellListController *--  CatalogQuery : catalogQuery
 SpellListController *--  CurrentUserCensorFactory : censorFactory
 SpellListController *--  SpellListMapper : mapper
@@ -3184,7 +2902,6 @@ SpellSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 SpellSummaryDto *--  ClearanceLevel : clearanceLevel
 Tag *--  ClearanceLevel : clearanceLevel
 Tag --|>  TorgEntity
-TagBuilder -->  ClearanceLevel : clearanceLevel
 TagController *--  CatalogQuery : catalogQuery
 TagController *--  TagMapper : mapper
 TagDetailDto "1" o-- "0..*"  PublicationRefDto : publications
@@ -3196,7 +2913,6 @@ TagSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 TagSummaryDto *--  ClearanceLevel : clearanceLevel
 Threat *--  ClearanceLevel : clearanceLevel
 Threat --|>  TorgEntity
-ThreatBuilder -->  ClearanceLevel : clearanceLevel
 ThreatController *--  CatalogQuery : catalogQuery
 ThreatController *--  CurrentUserCensorFactory : censorFactory
 ThreatController *--  ThreatMapper : mapper
@@ -3225,8 +2941,6 @@ Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry
 Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry
 Vehicle *--  ClearanceLevel : clearanceLevel
 Vehicle --|>  TorgEntity
-VehicleBuilder "1" o-- "0..*"  VehicleWeapon : weaponry
-VehicleBuilder -->  ClearanceLevel : clearanceLevel
 VehicleController *--  CatalogQuery : catalogQuery
 VehicleController *--  CurrentUserCensorFactory : censorFactory
 VehicleController *--  VehicleMapper : mapper

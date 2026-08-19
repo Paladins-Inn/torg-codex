@@ -28,6 +28,8 @@ package de.paladinsinn.security;
 import java.util.Collection;
 import java.util.List;
 
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -49,6 +51,7 @@ import org.springframework.security.core.userdetails.UserDetails;
  *
  * <p>Use the pre-built singleton {@link #INSTANCE} wherever this principal is needed.</p>
  */
+@NullMarked
 public final class NotLoggedInUserDetails implements UserDetails {
 
     /** Display name shown for unauthenticated users. */
@@ -69,7 +72,8 @@ public final class NotLoggedInUserDetails implements UserDetails {
     private static final List<String> OWNED_CODEX_IDS = List.of(FREE_PRODUCT_ID);
 
     /** Use {@link #INSTANCE} instead. */
-    private NotLoggedInUserDetails() {}
+    private NotLoggedInUserDetails() {
+    }
 
     // -------------------------------------------------------------------------
     // UserDetails
@@ -82,7 +86,7 @@ public final class NotLoggedInUserDetails implements UserDetails {
 
     /** Always {@code null} – no password-based authentication. */
     @Override
-    public String getPassword() {
+    public @Nullable String getPassword() {
         return null;
     }
 
@@ -97,11 +101,6 @@ public final class NotLoggedInUserDetails implements UserDetails {
         return AUTHORITIES;
     }
 
-    @Override public boolean isAccountNonExpired()     { return true; }
-    @Override public boolean isAccountNonLocked()      { return true; }
-    @Override public boolean isCredentialsNonExpired() { return true; }
-    @Override public boolean isEnabled()               { return true; }
-
     // -------------------------------------------------------------------------
     // Torg Codex helpers
     // -------------------------------------------------------------------------
@@ -111,6 +110,7 @@ public final class NotLoggedInUserDetails implements UserDetails {
      *
      * @return unmodifiable list of owned codex ids for anonymous users
      */
+    @SuppressWarnings("unused")
     public List<String> getOwnedCodexIds() {
         return OWNED_CODEX_IDS;
     }
@@ -120,4 +120,3 @@ public final class NotLoggedInUserDetails implements UserDetails {
         return "NotLoggedInUserDetails{username='" + USERNAME + "', ownedCodexIds=" + OWNED_CODEX_IDS + "}";
     }
 }
-

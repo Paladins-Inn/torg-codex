@@ -33,6 +33,12 @@ public class RawHtmlProcessor {
 
     private static final Pattern HTML_BLOCK = Pattern.compile("\\[HTML:(.*?)]");
 
+    /**
+     * Replaces raw HTML blocks with their enclosed HTML.
+     *
+     * @param text the markup to process
+     * @return the processed markup
+     */
     public String process(String text) {
         if (text == null || text.isEmpty()) {
             return "";

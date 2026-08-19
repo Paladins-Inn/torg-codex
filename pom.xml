@@ -104,4 +104,46 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <profiles>
+    <profile>
+      <id>java</id>
+      <activation>
+        <file>
+          <exists>src/main/java</exists>
+        </file>
+      </activation>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <version>3.6.0</version>
+            <configuration>
+              <configLocation>kaiserpfalz/checkstyle.xml</configLocation>
+              <propertyExpansion>
+                org.checkstyle.sun.suppressionfilter.config=${maven.multiModuleProjectDirectory}/checkstyle-suppressions.xml
+              </propertyExpansion>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>de.kaiserpfalz-edv.commons</groupId>
+                <artifactId>kp-checkstyle</artifactId>
+                <version>4.1.0</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <phase>process-sources</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

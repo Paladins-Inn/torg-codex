@@ -23,6 +23,8 @@ class DriveThruMultiMessage {
 
 
 class DriveThruProperties {
+	{field} {static} -DEFAULT_CONNECT_TIMEOUT_SECONDS : int
+	{field} {static} -DEFAULT_READ_TIMEOUT_SECONDS : int
 	{field} +baseUrl : String
 	{field} +connectTimeout : Duration
 	{field} +readTimeout : Duration

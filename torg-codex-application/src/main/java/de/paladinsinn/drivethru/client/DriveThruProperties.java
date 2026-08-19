@@ -37,7 +37,7 @@ import lombok.Setter;
  *
  * <pre>
  * drivethru:
- *   base-url: https://www.drivethrurpg.com/api/v1
+ *   base-url: <a href="https://www.drivethrurpg.com/api/v1">...</a>
  *   connect-timeout: 5s
  *   read-timeout: 10s
  * </pre>
@@ -47,13 +47,15 @@ import lombok.Setter;
 @Setter
 public class DriveThruProperties {
 
+    private static final int DEFAULT_CONNECT_TIMEOUT_SECONDS = 5;
+    private static final int DEFAULT_READ_TIMEOUT_SECONDS = 10;
+
     /** Base URL of the DriveThruRPG REST API. */
     private String baseUrl = "https://www.drivethrurpg.com/api/v1";
 
     /** HTTP connection timeout. */
-    private Duration connectTimeout = Duration.ofSeconds(5);
+    private Duration connectTimeout = Duration.ofSeconds(DEFAULT_CONNECT_TIMEOUT_SECONDS);
 
     /** HTTP read timeout. */
-    private Duration readTimeout = Duration.ofSeconds(10);
+    private Duration readTimeout = Duration.ofSeconds(DEFAULT_READ_TIMEOUT_SECONDS);
 }
-

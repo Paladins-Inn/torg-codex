@@ -33,10 +33,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = TorgMappingSupport.class)
 public interface CosmMapper {
-    @Mapping(target = "cosm", expression = "java(new CosmRefDto(cosm.getId(), cosm.getName()))")
+    @Mapping(target = "cosm", expression = "java(new CosmRefDto(cosm.id(), cosm.name()))")
     @Mapping(target = "publications", source = "products")
     CosmSummaryDto toSummary(Cosm cosm);
-    @Mapping(target = "cosm", expression = "java(new CosmRefDto(cosm.getId(), cosm.getName()))")
+    @Mapping(target = "cosm", expression = "java(new CosmRefDto(cosm.id(), cosm.name()))")
     @Mapping(target = "publications", source = "products")
     @Mapping(target = "text", qualifiedByName = "censorText")
     @Mapping(target = "worldLaws", qualifiedByName = "censorText")

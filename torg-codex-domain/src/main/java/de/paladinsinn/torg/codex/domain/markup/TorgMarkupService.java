@@ -36,6 +36,15 @@ public class TorgMarkupService {
     private final GameTokenProcessor gameTokenProcessor;
     private final MarkdownProcessor markdownProcessor;
 
+    /**
+     * Creates a markup-rendering pipeline.
+     *
+     * @param conditionalProcessor the conditional-block processor
+     * @param entityProcessor the entity-reference processor
+     * @param rawHtmlProcessor the raw-HTML processor
+     * @param gameTokenProcessor the game-token processor
+     * @param markdownProcessor the Markdown processor
+     */
     public TorgMarkupService(
             ConditionalBlockProcessor conditionalProcessor,
             EntityReferenceProcessor entityProcessor,
@@ -50,6 +59,13 @@ public class TorgMarkupService {
         this.markdownProcessor = markdownProcessor;
     }
 
+    /**
+     * Renders markup in its required processing order.
+     *
+     * @param rawText the markup to render
+     * @param ownedProducts the owned product identifiers
+     * @return the rendered HTML
+     */
     public String render(String rawText, Set<String> ownedProducts) {
         if (rawText == null || rawText.isBlank()) {
             return "";

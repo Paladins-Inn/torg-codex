@@ -34,4 +34,5 @@ import org.springframework.context.annotation.Configuration;
 @ComponentScan({
     "de.paladinsinn.drivethru"
 })
-public class DriveThruRPGConfiguration {}
+public class DriveThruRPGConfiguration {
+}

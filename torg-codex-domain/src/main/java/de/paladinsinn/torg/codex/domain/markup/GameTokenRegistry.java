@@ -61,13 +61,27 @@ public final class GameTokenRegistry {
 
     private static final Set<String> KNOWN_TOKENS = TOKEN_CSS_CLASSES.keySet();
 
-    private GameTokenRegistry() {}
+    private GameTokenRegistry() {
+    }
 
+    /**
+     * Resolves the CSS class for a game token.
+     *
+     * @param tokenName the token name
+     * @return the matching CSS class, or the unknown-token CSS class
+     */
     public static String cssClassFor(String tokenName) {
         String normalized = tokenName.toLowerCase();
         return TOKEN_CSS_CLASSES.getOrDefault(normalized, "game-token-unknown");
     }
 
+    /**
+     * Checks whether a game token is known.
+     *
+     * @param tokenName the token name
+     * @return {@code true} when the token is known
+     */
+    @SuppressWarnings("unused")
     public static boolean isKnown(String tokenName) {
         return KNOWN_TOKENS.contains(tokenName.toLowerCase());
     }

@@ -35,6 +35,12 @@ public class EntityReferenceProcessor {
             "<([a-z][-a-z]*):([a-z0-9][-a-z0-9]*)>"
     );
 
+    /**
+     * Replaces entity references with links to the referenced entities.
+     *
+     * @param text the markup to process
+     * @return the processed markup
+     */
     public String process(String text) {
         if (text == null || text.isEmpty()) {
             return "";

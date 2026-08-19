@@ -32,11 +32,20 @@ import java.util.regex.Pattern;
 
 public class ConditionalBlockProcessor {
 
+    private static final int CONTENT_GROUP = 3;
+
     private static final Pattern IF_BLOCK = Pattern.compile(
             "<IF:(!?)([a-z0-9-]+)>([\\s\\S]*?)</IF>",
             Pattern.DOTALL
     );
 
+    /**
+     * Resolves conditional blocks according to the products owned by the current user.
+     *
+     * @param text the markup to process
+     * @param ownedProducts the owned product identifiers
+     * @return the markup with conditional blocks resolved
+     */
     public String process(String text, Set<String> ownedProducts) {
         if (text == null || text.isEmpty()) {
             return "";
@@ -48,7 +57,7 @@ public class ConditionalBlockProcessor {
         while (matcher.find()) {
             boolean negated = "!".equals(matcher.group(1));
             String productId = matcher.group(2);
-            String content = matcher.group(3);
+            String content = matcher.group(CONTENT_GROUP);
 
             boolean owned = ownedProducts.contains(productId);
             boolean include = negated != owned;

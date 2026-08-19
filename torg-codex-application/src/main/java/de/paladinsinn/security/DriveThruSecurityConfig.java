@@ -67,6 +67,9 @@ public class DriveThruSecurityConfig {
     /**
      * Builds the {@link AuthenticationManager} backed exclusively by the
      * {@link DriveThruAuthenticationProvider}.
+     *
+     * @param provider the authentication provider
+     * @return the authentication manager
      */
     @Bean
     public AuthenticationManager authenticationManager(
@@ -91,6 +94,10 @@ public class DriveThruSecurityConfig {
      * being registered alongside it. Spring Security rejects a context that declares
      * two chains both matching {@code anyRequest()} at startup, so only one of the two
      * "any request" chains may ever be present on the classpath at a time.</p>
+     *
+     * @param http the HTTP security configuration
+     * @param authenticationManager the authentication manager
+     * @return the configured security filter chain
      */
     @Bean
     @Order(2)

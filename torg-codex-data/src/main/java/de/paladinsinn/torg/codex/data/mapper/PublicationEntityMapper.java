@@ -26,7 +26,6 @@
 package de.paladinsinn.torg.codex.data.mapper;
 
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 /**
  * MapStruct mapper between the {@code Publication} JPA entity and the framework-independent

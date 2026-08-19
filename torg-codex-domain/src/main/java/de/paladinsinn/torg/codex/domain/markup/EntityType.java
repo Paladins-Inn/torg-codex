@@ -58,23 +58,47 @@ public enum EntityType {
         this.urlSegment = urlSegment;
     }
 
+    /**
+     * Returns the markup tag for this entity type.
+     *
+     * @return the markup tag
+     */
     public String tag() {
         return tag;
     }
 
+    /**
+     * Returns the URL path segment for this entity type.
+     *
+     * @return the URL path segment
+     */
     public String urlSegment() {
         return urlSegment;
     }
 
+    /**
+     * Finds an entity type by its markup tag.
+     *
+     * @param tag the markup tag
+     * @return the matching entity type, if present
+     */
     public static Optional<EntityType> fromTag(String tag) {
         return Optional.ofNullable(BY_TAG.get(tag));
     }
 
+    /**
+     * Converts a hyphenated entity identifier to its display name.
+     *
+     * @param entityId the entity identifier
+     * @return the display name
+     */
     public static String toDisplayName(String entityId) {
         String[] parts = entityId.split("-");
         var sb = new StringBuilder();
         for (int i = 0; i < parts.length; i++) {
-            if (i > 0) sb.append(' ');
+            if (i > 0) {
+                sb.append(' ');
+            }
             String part = parts[i];
             if (!part.isEmpty()) {
                 sb.append(Character.toUpperCase(part.charAt(0)));

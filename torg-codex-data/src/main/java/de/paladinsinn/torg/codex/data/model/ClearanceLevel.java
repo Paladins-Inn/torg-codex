@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.data.model;
 
+import lombok.Getter;
+
 /**
  * Access clearance levels for product-gated content in the Torg Eternity Codex.
  *
@@ -34,6 +36,7 @@ package de.paladinsinn.torg.codex.data.model;
  *
  * <p>Levels in ascending order: ALPHA &lt; BETA &lt; GAMMA &lt; DELTA &lt; OMEGA.</p>
  */
+@Getter
 public enum ClearanceLevel {
 
     /** α – lowest clearance, generally available to all Storm Knights. */
@@ -53,29 +56,19 @@ public enum ClearanceLevel {
 
     // -------------------------------------------------------------------------
 
+    /** The lower-case English full name of this level. */
     private final String fullName;
+
+    /**
+     * The Greek symbol used for this level.
+     *
+     * <p>This is also the value stored in the database column.</p>
+     */
     private final String symbol;
 
     ClearanceLevel(String fullName, String symbol) {
         this.fullName = fullName;
         this.symbol   = symbol;
-    }
-
-    /**
-     * Returns the lower-case English full name of this level
-     * (e.g. {@code "alpha"}, {@code "beta"}, …).
-     */
-    public String getFullName() {
-        return fullName;
-    }
-
-    /**
-     * Returns the Greek symbol used for this level
-     * (e.g. {@code "α"}, {@code "β"}, {@code "γ"}, {@code "Δ"}, {@code "Ω"}).
-     * This is also the value stored in the database column.
-     */
-    public String getSymbol() {
-        return symbol;
     }
 
     /**
@@ -86,8 +79,10 @@ public enum ClearanceLevel {
      */
     public static ClearanceLevel fromDb(String value) {
         // if it is not set, it is ALPHA.
-        if (value == null || value.isBlank()) return ALPHA;
-        
+        if (value == null || value.isBlank()) {
+            return ALPHA;
+        }
+
         for (final ClearanceLevel c : values()) {
             if (c.symbol.equals(value) || c.name().equalsIgnoreCase(value) || c.fullName.equalsIgnoreCase(value)) {
                 return c;
@@ -97,4 +92,3 @@ public enum ClearanceLevel {
         throw new IllegalArgumentException("Unknown ClearanceLevel value: " + value);
     }
 }
-

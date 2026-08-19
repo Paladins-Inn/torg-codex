@@ -33,9 +33,21 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
     private final Object principal;
     private Object credentials;
+    /**
+     * Creates an unauthenticated token carrying a raw API key.
+     *
+     * @param apiKey the raw API key
+     * @return the unauthenticated token
+     */
     public static ApiKeyAuthenticationToken unauthenticated(final String apiKey) {
         return new ApiKeyAuthenticationToken(apiKey, apiKey);
     }
+    /**
+     * Creates an authenticated token for a DriveThruRPG user.
+     *
+     * @param userDetails the authenticated user
+     * @return the authenticated token
+     */
     public static ApiKeyAuthenticationToken authenticated(final DriveThruUserDetails userDetails) {
         final ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(userDetails, null);
         token.setAuthenticated(true);
@@ -46,8 +58,15 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
         this.principal   = principal;
         this.credentials = credentials;
     }
-    @Override public Object getPrincipal()   { return principal; }
-    @Override public Object getCredentials() { return credentials; }
+    @Override
+    public Object getPrincipal() {
+        return principal;
+    }
+
+    @Override
+    public Object getCredentials() {
+        return credentials;
+    }
     @Override
     public void eraseCredentials() {
         super.eraseCredentials();

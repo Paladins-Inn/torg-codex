@@ -25,6 +25,9 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import lombok.Getter;
+
+@Getter
 public enum ClearanceLevel {
     ALPHA("alpha", "α"),
     BETA("beta", "β"),
@@ -32,7 +35,13 @@ public enum ClearanceLevel {
     DELTA("delta", "Δ"),
     OMEGA("omega", "Ω");
 
+    /**
+     *  Returns the full name of this clearance level.
+     */
     private final String fullName;
+    /**
+     *  Returns the symbol of this clearance level.
+     */
     private final String symbol;
 
     ClearanceLevel(String fullName, String symbol) {
@@ -40,14 +49,14 @@ public enum ClearanceLevel {
         this.symbol = symbol;
     }
 
-    public String getFullName() {
-        return fullName;
-    }
-
-    public String getSymbol() {
-        return symbol;
-    }
-
+    /**
+     * Resolves a clearance level from its stored name or symbol.
+     *
+     * @param value the stored value
+     * @return the matching clearance level
+     * @throws IllegalArgumentException when the value does not identify a clearance level
+     */
+    @SuppressWarnings("unused")
     public static ClearanceLevel fromDb(String value) {
         if (value == null || value.isBlank()) {
             return ALPHA;

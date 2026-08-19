@@ -32,10 +32,10 @@ import java.util.Set;
  *
  * <p>A {@code Censor} is created with a set of product-ids the current user owns
  * and a {@link TorgMarkupService}.  When {@link #apply(String)} is called on a raw
- * text field that may contain {@code <IF:product-id>…</IF>} blocks, it:
+ * text field that may contain product-gated blocks, it:
  * <ul>
- *   <li>Keeps content inside {@code <IF:id>…</IF>} only when the user owns {@code id}.</li>
- *   <li>Keeps content inside {@code <IF:!id>…</IF>} only when the user does <em>not</em>
+ *   <li>Keeps content inside product-gated blocks only when the user owns the product.</li>
+ *   <li>Keeps content inside negated product-gated blocks only when the user does <em>not</em>
  *       own {@code id} (typically a "buy this book" notice).</li>
  *   <li>Processes entity references, raw HTML, game tokens, and markdown.</li>
  * </ul>
@@ -61,6 +61,7 @@ public final class Censor {
      *
      * @param markupService  the rendering pipeline to apply
      * @param ownedProducts  product-ids the user currently owns (without {@code ROLE_} prefix)
+     * @return a censor configured for the supplied products
      */
     public static Censor of(TorgMarkupService markupService, Set<String> ownedProducts) {
         return new Censor(markupService, ownedProducts);
@@ -69,6 +70,9 @@ public final class Censor {
     /**
      * Creates a {@code Censor} for a user who owns no products.
      * Only {@code <IF:!…>} (upsell) blocks remain visible.
+     *
+     * @param markupService the rendering pipeline to apply
+     * @return a censor configured without owned products
      */
     public static Censor unauthenticated(TorgMarkupService markupService) {
         return new Censor(markupService, Set.of());

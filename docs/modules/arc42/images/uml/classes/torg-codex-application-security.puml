@@ -38,16 +38,20 @@ class DriveThruUserDetails {
 	{field} {static} -ROLE_USER : GrantedAuthority
 	{field} -ownedCodexIds : List
 	{field} -token : DrivethruToken
+	{method} +equals ( o : Object ) : boolean
 	{method} +getAuthorities () : Collection
 	{method} +getBearerToken () : String
 	{method} +getCustomerId () : String
 	{method} +getPassword () : String
 	{method} +getUsername () : String
+	{method} +hashCode () : int
 	{method} +isAccountNonExpired () : boolean
 	{method} +isAccountNonLocked () : boolean
 	{method} +isCredentialsNonExpired () : boolean
 	{method} +isEnabled () : boolean
+	{method} +ownedCodexIds () : List
 	{method} +toString () : String
+	{method} +token () : DrivethruToken
 }
 
 

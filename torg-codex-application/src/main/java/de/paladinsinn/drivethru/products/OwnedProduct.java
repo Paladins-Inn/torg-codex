@@ -28,7 +28,11 @@ package de.paladinsinn.drivethru.products;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.paladinsinn.drivethru.resource.DriveThruResource;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -63,7 +67,33 @@ public class OwnedProduct extends DriveThruResource {
     @ToString.Include
     private OffsetDateTime datePurchased;
 
-    public Optional<String> getArchived() { return Optional.ofNullable(archived); }
-    public Optional<String> getCoverURL() { return Optional.ofNullable(coverURL); }
-    public Optional<OffsetDateTime> getDatePurchased() { return Optional.ofNullable(datePurchased); }
+    /**
+     * Returns the archived status when supplied by DriveThruRPG.
+     *
+     * @return the optional archived status
+     */
+    @SuppressWarnings("unused")
+    public Optional<String> getArchived() {
+        return Optional.ofNullable(archived);
+    }
+
+    /**
+     * Returns the cover URL when supplied by DriveThruRPG.
+     *
+     * @return the optional cover URL
+     */
+    @SuppressWarnings("unused")
+    public Optional<String> getCoverURL() {
+        return Optional.ofNullable(coverURL);
+    }
+
+    /**
+     * Returns the purchase date when supplied by DriveThruRPG.
+     *
+     * @return the optional purchase date
+     */
+    @SuppressWarnings("unused")
+    public Optional<OffsetDateTime> getDatePurchased() {
+        return Optional.ofNullable(datePurchased);
+    }
 }

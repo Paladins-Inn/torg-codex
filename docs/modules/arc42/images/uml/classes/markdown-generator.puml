@@ -9,6 +9,7 @@ class Censor {
 
 
 class ConditionalBlockProcessor {
+	{field} {static} -CONTENT_GROUP : int
 	{field} {static} -IF_BLOCK : Pattern
 	{method} +process ( text : String , ownedProducts : Set ) : String
 }

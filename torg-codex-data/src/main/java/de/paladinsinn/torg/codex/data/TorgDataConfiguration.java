@@ -45,4 +45,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
     "de.paladinsinn.torg.codex.data.repository",
     "de.kaiserpfalz.liquibase"
 })
-public class TorgDataConfiguration {}
+public class TorgDataConfiguration {
+}

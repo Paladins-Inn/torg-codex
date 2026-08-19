@@ -25,7 +25,12 @@
 
 package de.paladinsinn.torg.codex.data;
 import org.springframework.context.annotation.Import;
-import java.lang.annotation.*;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 /**
  * Enables the Torg Eternity Codex data layer: JPA entities, Spring Data
  * repositories, markup services, and all supporting components.
@@ -43,4 +48,5 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Import(TorgDataConfiguration.class)
-public @interface EnableTorgData {}
+public @interface EnableTorgData {
+}

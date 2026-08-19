@@ -37,6 +37,12 @@ public class MarkdownProcessor {
     private final Parser parser = Parser.builder().build();
     private final HtmlRenderer renderer = HtmlRenderer.builder().build();
 
+    /**
+     * Renders Markdown markup to HTML.
+     *
+     * @param text the Markdown text to render
+     * @return the rendered HTML
+     */
     public String process(String text) {
         if (text == null || text.isEmpty()) {
             return "";

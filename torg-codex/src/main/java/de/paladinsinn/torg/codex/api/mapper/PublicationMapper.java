@@ -28,8 +28,11 @@ import de.paladinsinn.torg.codex.api.dto.PublicationDetailDto;
 import de.paladinsinn.torg.codex.api.dto.PublicationSummaryDto;
 import de.paladinsinn.torg.codex.domain.model.Publication;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface PublicationMapper {
     PublicationSummaryDto toSummary(Publication publication);
+
+    @Mapping(target = "coverURL", expression = "java(publication.coverURL())")
     PublicationDetailDto toDetail(Publication publication);
 }

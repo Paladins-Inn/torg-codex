@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+  <!-- Lombok generates the public accessors for immutable domain fields. -->
+  <suppress checks="JavadocVariable|VisibilityModifier" files=".*\.java$"/>
+  <!-- Final parameters and constructor parameter names add no value to immutable Java records and Lombok classes. -->
+  <suppress checks="FinalParameters|HiddenField" files=".*\.java$"/>
+  <!-- Package and framework wiring types do not expose application-facing API contracts. -->
+  <suppress checks="JavadocPackage" files=".*\.java$"/>
+  <suppress checks="MissingJavadocMethod|JavadocMethod" files=".*\.java$"/>
+  <suppress checks="JavadocType" files=".*/domain/model/.*\.java$"/>
+  <suppress checks="MissingJavadocMethod" files=".*/MarkupConfiguration\.java$"/>
+  <!-- Persistence mappings encode schema values and derive boilerplate accessors. -->
+  <suppress checks="MagicNumber|AvoidStarImport" files=".*/(data/model|data/repository|data/mapper|de/kaiserpfalz/liquibase)/.*\.java$"/>
+  <!-- Spring Boot configuration classes must retain a constructor visible to CGLIB. -->
+  <suppress checks="HideUtilityClassConstructor" files=".*/TorgCodexDataApplication\.java$"/>
+</suppressions>

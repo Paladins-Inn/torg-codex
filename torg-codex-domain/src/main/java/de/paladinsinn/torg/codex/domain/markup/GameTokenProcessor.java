@@ -33,6 +33,12 @@ public class GameTokenProcessor {
 
     private static final Pattern GAME_TOKEN = Pattern.compile("\\[([a-zA-Z][a-zA-Z0-9]*)]");
 
+    /**
+     * Replaces game-token markup with its HTML representation.
+     *
+     * @param text the markup to process
+     * @return the processed markup
+     */
     public String process(String text) {
         if (text == null || text.isEmpty()) {
             return "";

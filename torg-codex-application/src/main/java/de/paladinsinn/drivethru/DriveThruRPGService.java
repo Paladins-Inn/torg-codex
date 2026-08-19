@@ -81,8 +81,7 @@ public class DriveThruRPGService {
         final LinkedHashMap<String, String> response =
             client.getToken("Bearer " + apiKey)
                     .getData()
-                    .orElseThrow(() -> new NoValidTokenException(apiKey))
-            ;
+                    .orElseThrow(() -> new NoValidTokenException(apiKey));
 
         final LocalDateTime serverTime = parse(response.get("server_time"));
         final LocalDateTime expireTime = parse(response.get("expires"));
@@ -129,6 +128,7 @@ public class DriveThruRPGService {
      * @param publisherId DriveThruRPG publisher id
      * @return the publisher, or empty if not found
      */
+    @SuppressWarnings("unused")
     @Cacheable("drivethru.publisher")
     public Optional<Publisher> getPublisher(final String publisherId) {
         log.trace("Retrieving publisher. publisherId={}", publisherId);
@@ -151,11 +151,13 @@ public class DriveThruRPGService {
      * @return list of owned products on the requested page
      * @throws NoValidTokenException if the bearer token cannot be obtained
      */
+    @SuppressWarnings("unused")
     public List<OwnedProduct> getOwnedProducts(
             final String apiKey, final int page, final int pageSize, final int archived)
             throws NoValidTokenException {
         log.trace("Retrieving owned products. apiKey={}, page={}, pageSize={}, archived={}",
                 apiKey, page, pageSize, archived);
+        //noinspection SpringCacheableMethodCallsInspection
         final DrivethruToken token = getToken(apiKey);
         return getOwnedProducts(token, page, pageSize, archived);
     }
@@ -227,4 +229,3 @@ public class DriveThruRPGService {
         return LocalDateTime.parse(raw, DATE_FORMATTER);
     }
 }
-
