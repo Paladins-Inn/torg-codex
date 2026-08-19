@@ -5,6 +5,7 @@ databaseChangeLog:
   - include:
       file: ../load/torg-data-load.yaml
       relativeToChangelogFile: true
+      errorIfMissing: false
   - include:
       file: ../load/torg-free-load.yaml
       relativeToChangelogFile: true
