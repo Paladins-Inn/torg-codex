@@ -41,9 +41,22 @@ class LiquibaseChangelogGuardTest {
     private static final Path CHANGELOG_ROOT = Path.of("src", "main", "resources", "db");
     private static final Path BASELINE_MANIFEST = Path.of("src", "test", "resources", "liquibase-changelog-manifest.sha256");
 
+    /**
+     * {@code torg-data-load.yaml} contains copyrighted game data and is only present in local,
+     * fully-checked-out working copies (see .gitignore). The public repository checkout does not
+     * contain this file, so the baseline entry for it must be ignored whenever the file is absent.
+     */
+    private static final String OPTIONAL_PROPRIETARY_FILE = "load/torg-data-load.yaml";
+
     @Test
     void liquibaseYamlFilesMatchTheCapturedBaseline() throws Exception {
-        assertThat(currentManifest()).isEqualTo(expectedManifest());
+        Map<String, String> current = currentManifest();
+        Map<String, String> expected = expectedManifest();
+        if (!current.containsKey(OPTIONAL_PROPRIETARY_FILE)) {
+            expected.remove(OPTIONAL_PROPRIETARY_FILE);
+        }
+
+        assertThat(current).isEqualTo(expected);
     }
 
     private Map<String, String> expectedManifest() throws IOException {
