@@ -167,6 +167,25 @@ V2 --> DB : reads new column
 
 The *Expand* phase is the enabler: it guarantees that both v1 and v2 are compatible with the current schema throughout the entire canary window.
 
+== Feature-scoped Exception: Catalog List Repair
+
+ADR-018 documents one bounded exception to the normal three-deployment rule. The catalog
+list repair has no production installation that requires mixed-version operation, so its
+Expand, Migrate, and Contract changesets execute in one deployment.
+
+The ordered changesets are consolidated in `data-fix-lists.yaml`, included by
+`db.changelog-master.yaml` only after all public and optional proprietary data imports:
+
+. add and normalize stable cosm slugs;
+. create the cosm and unlocking-perk collection tables;
+. backfill scalar and encoded-list references with duplicate suppression;
+. convert complete encoded prose lists through a Java `CustomTaskChange`;
+. drop the legacy scalar `cosm` and `unlocking_perk` columns.
+
+This exception does not weaken the general rule above. The contract changeset remains last,
+so a failed backfill prevents destructive changes. Liquibase records every contained
+changeset in `DATABASECHANGELOG`; the consolidated file becomes immutable once released.
+
 == 📚 Further Reading and References
 
 * {parallel-change} — Martin Fowler: *ParallelChange* — the canonical description of the pattern.
@@ -177,4 +196,3 @@ The *Expand* phase is the enabler: it guarantees that both v1 and v2 are compati
 * {expand-contract-fowler} — Martin Fowler: *Expand Contract* — a concise summary of the two outer phases.
 
 <<<
-

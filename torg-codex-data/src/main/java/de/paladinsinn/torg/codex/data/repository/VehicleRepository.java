@@ -25,6 +25,7 @@
 
 package de.paladinsinn.torg.codex.data.repository;
 
+import de.paladinsinn.torg.codex.data.model.ClearanceLevel;
 import de.paladinsinn.torg.codex.data.model.Vehicle;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
 
     Optional<Vehicle> findByNameIgnoreCase(String name);
@@ -42,13 +44,14 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
 
     List<Vehicle> findByType(String type);
 
-    List<Vehicle> findByCosm(String cosm);
+    @Query("SELECT v FROM Vehicle v WHERE :cosm MEMBER OF v.cosms")
+    List<Vehicle> findByCosm(@Param("cosm") String cosm);
 
     List<Vehicle> findBySize(String size);
 
     List<Vehicle> findByUnique(boolean unique);
 
-    List<Vehicle> findByClearanceLevel(String clearanceLevel);
+    List<Vehicle> findByClearanceLevel(ClearanceLevel clearanceLevel);
 
     @Query("SELECT v FROM Vehicle v WHERE :product MEMBER OF v.products")
     List<Vehicle> findByProduct(@Param("product") String product);

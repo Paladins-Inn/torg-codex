@@ -33,10 +33,11 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = TorgMappingSupport.class)
 public interface SpellListMapper {
-    @Mapping(target = "cosm", source = "cosm")
+    @Mapping(target = "cosm", source = "cosms")
     @Mapping(target = "publications", source = "products")
     SpellListSummaryDto toSummary(SpellList spellList);
-    @Mapping(target = "cosm", source = "cosm")
+    @Mapping(target = "cosm", source = "cosms")
+    @Mapping(target = "unlockingPerk", source = "unlockingPerks", qualifiedByName = "foldSlugs")
     @Mapping(target = "publications", source = "products")
     @Mapping(target = "notes", qualifiedByName = "censorText")
     @Mapping(target = "text", qualifiedByName = "censorText")

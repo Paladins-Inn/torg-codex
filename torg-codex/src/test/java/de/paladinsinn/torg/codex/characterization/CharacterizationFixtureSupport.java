@@ -35,12 +35,14 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 final class CharacterizationFixtureSupport {
     static final Path FIXTURE_ROOT = Path.of("src", "test", "resources", "characterization");
     static final UUID MISSING_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
@@ -73,7 +75,7 @@ final class CharacterizationFixtureSupport {
                         (String) response.get("body")));
     }
 
-    static Map<String, List<String>> queryParameters(String name, String value) {
+    static Map<String, List<String>> queryParameters(@SuppressWarnings("SameParameterValue") String name, String value) {
         return Map.of(name, List.of(value));
     }
 
@@ -88,6 +90,7 @@ final class CharacterizationFixtureSupport {
 
     static String normalizeBody(MockHttpServletResponse response) throws IOException {
         String body = response.getContentAsString();
+        //noinspection ConstantValue
         if (body == null || body.isBlank()) {
             return null;
         }
@@ -104,7 +107,12 @@ final class CharacterizationFixtureSupport {
     }
 
     static String sampleCosm(Object entity) {
-        return invoke(entity, "getCosm", String.class);
+        Collection<?> cosms = invoke(entity, "getCosms", Collection.class);
+        return cosms.stream()
+                .map(String.class::cast)
+                .sorted()
+                .findFirst()
+                .orElse(null);
     }
 
     static <T> T invoke(Object target, String methodName, Class<T> returnType) {

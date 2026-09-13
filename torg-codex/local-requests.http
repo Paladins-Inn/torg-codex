@@ -1,0 +1,5 @@
+### Cosms
+GET http://localhost:8080/api/cosms
+### Shards
+GET http://localhost:8080/api/shards
+###

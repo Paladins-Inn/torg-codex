@@ -25,11 +25,24 @@ include::partial$config.adoc[]
 |===
 | Name | Method | URL | Permission
 
-.2+h| _**TBD**_ | GET\|POST\|PUT\|DELETE\|PATCH\|HEAD | /
-| anon
-3+a| _**TBD**_
+.2+h| Catalog collections | GET | /api/<resource>
+| Anonymous; product ownership controls censored content
+3+a| Lists items, miracle lists, perks, power lists, shards, spell lists, threats, or
+vehicles. The optional `cosm=<slug>` query parameter matches every entry whose cosm set
+contains the exact slug. Unknown slugs and display names return an empty list.
+
+.2+h| Catalog details | GET | /api/<resource>/<id>
+| Anonymous; product ownership controls censored content
+3+a| Returns one catalog entry. A single cosm is represented by its UUID and display name.
+Several cosms retain the same object shape, use `id = null`, and expose alphabetically
+sorted display names joined by comma-space. Multi-valued unlocking perks remain sorted,
+comma-separated slugs.
 
 |===
+
+`resource` is one of `items`, `miracle-lists`, `perks`, `power-lists`, `shards`,
+`spell-lists`, `threats`, or `vehicles`. Status codes, media types, authentication, and
+authorization are unchanged by the multi-valued reference support.
 
 
 [[runtime-pandurart-transcludes]]

@@ -81,7 +81,7 @@ public class MarkupConfiguration {
             RawHtmlProcessor rawHtmlProcessor,
             GameTokenProcessor gameTokenProcessor,
             MarkdownProcessor markdownProcessor
-    ) {
+) {
         return new TorgMarkupService(
                 conditionalBlockProcessor,
                 entityReferenceProcessor,

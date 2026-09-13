@@ -46,6 +46,15 @@ import java.util.Set;
 @NoArgsConstructor
 public class Cosm extends TorgEntity {
 
+    /**
+     * Stable, URL-safe identifier of this cosm (e.g. {@code "living-land"}).
+     *
+     * <p>Entity tables reference their cosm by this slug, and API filters compare
+     * against it. The inherited {@code name} is the display name shown to users.</p>
+     */
+    @Column(name = "slug", length = 128, nullable = false, unique = true)
+    private String slug;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "torg_cosm_products", joinColumns = @JoinColumn(name = "cosm_id"))
     @Column(name = "product")

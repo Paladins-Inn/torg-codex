@@ -43,7 +43,7 @@ public record Threat(
     @NotNull String name,
     ClearanceLevel clearanceLevel,
     Set<String> products,
-    String cosm,
+    Set<String> cosms,
     boolean unique,
     String subName,
     String quote,

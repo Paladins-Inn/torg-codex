@@ -33,10 +33,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = TorgMappingSupport.class)
 public interface ThreatMapper {
-    @Mapping(target = "cosm", source = "cosm")
+    @Mapping(target = "cosm", source = "cosms")
     @Mapping(target = "publications", source = "products")
     ThreatSummaryDto toSummary(Threat threat);
-    @Mapping(target = "cosm", source = "cosm")
+    @Mapping(target = "cosm", source = "cosms")
     @Mapping(target = "publications", source = "products")
     @Mapping(target = "quote", qualifiedByName = "censorText")
     @Mapping(target = "text", qualifiedByName = "censorText")

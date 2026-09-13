@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -80,6 +81,9 @@ class LiquibaseImportIT {
 
     @Autowired
     private PerkRepository perkRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     // -----------------------------------------------------------------------
     // Tests: Liquibase metadata
@@ -157,7 +161,7 @@ class LiquibaseImportIT {
                 .as("DATABASECHANGELOGLOCK must contain exactly one row")
                 .hasSize(1);
 
-        assertThat(locks.get(0).isLocked())
+        assertThat(locks.getFirst().isLocked())
                 .as("The Liquibase lock must be released after migration")
                 .isFalse();
     }
@@ -192,5 +196,39 @@ class LiquibaseImportIT {
                 .as("At least 100 perks must have been imported via CSV")
                 .isGreaterThan(100L);
     }
-}
 
+    @Test
+    @DisplayName("Reference collections are normalized and legacy columns are removed")
+    void multiValueReferencesWereNormalized() {
+        Integer encodedCosms = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM torg_perk_cosms WHERE cosm LIKE '[%' OR cosm LIKE '%]'",
+                Integer.class);
+        Integer encodedPerks = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM torg_miracle_list_unlocking_perks "
+                        + "WHERE perk_slug LIKE '[%' OR perk_slug LIKE '%]'",
+                Integer.class);
+        Integer legacyColumns = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM information_schema.columns "
+                        + "WHERE column_name IN ('cosm', 'unlocking_perk') "
+                        + "AND table_name IN ('torg_item', 'torg_miracle_list', 'torg_perk', "
+                        + "'torg_power_list', 'torg_shard', 'torg_spell_list', 'torg_threat', 'torg_vehicle')",
+                Integer.class);
+
+        assertThat(encodedCosms).isZero();
+        assertThat(encodedPerks).isZero();
+        assertThat(legacyColumns).isZero();
+        assertThat(perkRepository.findByCosm("core-earth")).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Encoded prose lists were repaired without leaving list literals")
+    void proseListsWereRepaired() {
+        Integer remaining = jdbcTemplate.queryForObject(
+                "SELECT (SELECT count(*) FROM torg_item WHERE additional_features LIKE '[%]') "
+                        + "+ (SELECT count(*) FROM torg_threat WHERE quote LIKE '[%]') "
+                        + "+ (SELECT count(*) FROM torg_spell_list WHERE notes LIKE '[%]')",
+                Integer.class);
+
+        assertThat(remaining).isZero();
+    }
+}

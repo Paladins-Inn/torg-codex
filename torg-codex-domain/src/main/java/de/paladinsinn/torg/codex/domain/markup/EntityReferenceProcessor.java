@@ -33,7 +33,7 @@ public class EntityReferenceProcessor {
 
     private static final Pattern ENTITY_REF = Pattern.compile(
             "<([a-z][-a-z]*):([a-z0-9][-a-z0-9]*)>"
-    );
+);
 
     /**
      * Replaces entity references with links to the referenced entities.

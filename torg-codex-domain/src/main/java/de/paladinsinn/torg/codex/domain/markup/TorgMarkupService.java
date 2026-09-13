@@ -51,7 +51,7 @@ public class TorgMarkupService {
             RawHtmlProcessor rawHtmlProcessor,
             GameTokenProcessor gameTokenProcessor,
             MarkdownProcessor markdownProcessor
-    ) {
+) {
         this.conditionalProcessor = conditionalProcessor;
         this.entityProcessor = entityProcessor;
         this.rawHtmlProcessor = rawHtmlProcessor;

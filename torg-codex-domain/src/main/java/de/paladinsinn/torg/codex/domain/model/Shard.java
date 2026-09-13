@@ -38,7 +38,7 @@ public record Shard(
     @NotNull String name,
     ClearanceLevel clearanceLevel,
     Set<String> products,
-    String cosm,
+    Set<String> cosms,
     String possibilities,
     String tappingDifficulty,
     String purpose,

@@ -36,10 +36,7 @@ import org.mapstruct.Context;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Helper component used by all MapStruct mappers (via {@code uses = TorgMappingSupport.class}).
@@ -47,6 +44,7 @@ import java.util.Set;
  * <p>Provides type-conversion methods that require catalog reference lookups (cosm lookup,
  * publication resolution) as well as simple value-object mappings (difficulty number).</p>
  */
+@SuppressWarnings("unused")
 @Component
 @RequiredArgsConstructor
 public class TorgMappingSupport {
@@ -54,14 +52,50 @@ public class TorgMappingSupport {
     private final CatalogReferenceQuery catalogReferenceQuery;
 
     /**
-     * Converts a cosm name (String) held in an entity into a {@link CosmRefDto}.
-     * Falls back to {@code CosmRefDto(null, cosmName)} if the cosm cannot be found.
+     * Converts the cosm slug held in an entity into a {@link CosmRefDto} carrying the
+     * cosm id and its display name.
+     *
+     * <p>Falls back to {@code CosmRefDto(null, cosmSlug)} if the slug cannot be resolved,
+     * so an unknown reference still identifies itself.</p>
      */
-    public CosmRefDto toCosmRef(String cosmName) {
-        if (cosmName == null || cosmName.isBlank()) return null;
-        return catalogReferenceQuery.findCosmByName(cosmName)
+    public CosmRefDto toCosmRef(String cosmSlug) {
+        if (cosmSlug == null || cosmSlug.isBlank()) return null;
+        return catalogReferenceQuery.findCosmBySlug(cosmSlug)
                 .map(c -> new CosmRefDto(c.id(), c.name()))
-                .orElse(new CosmRefDto(null, cosmName));
+                .orElse(new CosmRefDto(null, cosmSlug));
+    }
+
+    /**
+     * Folds zero, one, or many cosm slugs into the existing single cosm response field.
+     */
+    public CosmRefDto toCosmRef(Set<String> cosmSlugs) {
+        if (cosmSlugs == null || cosmSlugs.isEmpty()) return null;
+        final var names = cosmSlugs.stream()
+                .filter(slug -> slug != null && !slug.isBlank())
+                .distinct()
+                .map(slug -> catalogReferenceQuery.findCosmBySlug(slug)
+                        .map(cosm -> new CosmRefDto(cosm.id(), cosm.name()))
+                        .orElse(new CosmRefDto(null, slug)))
+                .sorted(java.util.Comparator.comparing(CosmRefDto::name))
+                .toList();
+        if (names.isEmpty()) return null;
+        if (names.size() == 1) return names.getFirst();
+        return new CosmRefDto(null, names.stream()
+                .filter(Objects::nonNull)
+                .map(CosmRefDto::name)
+                .collect(java.util.stream.Collectors.joining(", ")));
+    }
+
+    /** Folds stable reference slugs into the retained comma-separated API field. */
+    @Named("foldSlugs")
+    public String foldSlugs(Set<String> slugs) {
+        if (slugs == null || slugs.isEmpty()) return null;
+        final var value = slugs.stream()
+                .filter(slug -> slug != null && !slug.isBlank())
+                .distinct()
+                .sorted()
+                .collect(java.util.stream.Collectors.joining(", "));
+        return value.isEmpty() ? null : value;
     }
 
     /**

@@ -34,7 +34,8 @@ import org.mapstruct.Mapping;
  * accessors so the domain model carries the exact persisted value.
  */
 @Mapper(componentModel = "spring", uses = ValueObjectMapper.class)
-public interface TagEntityMapper {
+public
+interface TagEntityMapper {
 
     de.paladinsinn.torg.codex.domain.model.Tag toDomain(de.paladinsinn.torg.codex.data.model.Tag entity);
 

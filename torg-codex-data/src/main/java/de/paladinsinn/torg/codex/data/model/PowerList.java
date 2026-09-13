@@ -52,11 +52,15 @@ public class PowerList extends TorgEntity {
     @Column(name = "product")
     private Set<String> products = new HashSet<>();
 
-    @Column(length = 64)
-    private String cosm;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "torg_power_list_cosms", joinColumns = @JoinColumn(name = "list_id"))
+    @Column(name = "cosm", length = 128)
+    private Set<String> cosms = new HashSet<>();
 
-    @Column(name = "unlocking_perk", length = 128)
-    private String unlockingPerk;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "torg_power_list_unlocking_perks", joinColumns = @JoinColumn(name = "list_id"))
+    @Column(name = "perk_slug", length = 128)
+    private Set<String> unlockingPerks = new HashSet<>();
 
     @ElementCollection
     @CollectionTable(name = "torg_power_list_entries", joinColumns = @JoinColumn(name = "list_id"))

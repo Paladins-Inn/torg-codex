@@ -166,21 +166,21 @@ class CatalogReference {
 
 
 interface CatalogReferencePersistencePort {
-	{method}  {abstract} +findCosmByName ( name : String ) : Optional
+	{method}  {abstract} +findCosmBySlug ( slug : String ) : Optional
 	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method}  {abstract} +findPublicationsByProductId ( productId : int ) : List
 }
 
 
 interface CatalogReferenceQuery {
-	{method}  {abstract} +findCosmByName ( name : String ) : Optional
+	{method}  {abstract} +findCosmBySlug ( slug : String ) : Optional
 	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method}  {abstract} +findPublicationsByProductId ( productId : int ) : List
 }
 
 
 class CatalogReferenceQueryService {
-	{method} +findCosmByName ( name : String ) : Optional
+	{method} +findCosmBySlug ( slug : String ) : Optional
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
 }
@@ -230,6 +230,7 @@ class Cosm {
 	{field} -id : UUID
 	{field} -name : String
 	{field} -products : Set
+	{field} -slug : String
 	{field} -text : String
 	{field} -worldLaws : String
 	{method} +axioms () : Map
@@ -239,6 +240,7 @@ class Cosm {
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +products () : Set
+	{method} +slug () : String
 	{method} +text () : String
 	{method} +toString () : String
 	{method} +worldLaws () : String
@@ -248,6 +250,7 @@ class Cosm {
 class Cosm {
 	{field} +axioms : Map
 	{field} +products : Set
+	{field} +slug : String
 	{field} +text : String
 	{field} +worldLaws : String
 	{method} +getRawText () : String
@@ -333,6 +336,7 @@ interface CosmRepository {
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
 	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findBySlug ( slug : String ) : Optional
 }
 
 
@@ -415,6 +419,13 @@ interface DriveThruRpgProductPort {
 
 annotation EnableTorgData
 
+class EncodedListTokenizer {
+	{method}  {static} +parse ( value : String ) : Optional
+	{method}  {static} -skipWhitespace ( input : String , index : int ) : int
+	{method}  {static} +toMarkdown ( statements : List ) : String
+}
+
+
 class EntityDetailDto {
 	{field} -details : Map
 	{field} -id : UUID
@@ -489,7 +500,7 @@ class Item {
 	{field} +axiomMagic : String
 	{field} +axiomTech : String
 	{field} +bonus : String
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +features : String
 	{field} +price : String
 	{field} +products : Set
@@ -507,7 +518,7 @@ class Item {
 	{field} -axiomMagic : String
 	{field} -axiomTech : String
 	{field} -bonus : String
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -features : String
 	{field} -id : UUID
 	{field} -name : String
@@ -522,7 +533,7 @@ class Item {
 	{method} +axiomTech () : String
 	{method} +bonus () : String
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +equals ( o : Object ) : boolean
 	{method} +features () : String
 	{method} +hashCode () : int
@@ -637,7 +648,7 @@ class JpaArticlePersistenceAdapter {
 
 
 class JpaCatalogReferenceAdapter {
-	{method} +findCosmByName ( name : String ) : Optional
+	{method} +findCosmBySlug ( slug : String ) : Optional
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
 	{method} -toPublicationReference ( publication : Publication ) : CatalogPublicationReference
@@ -867,20 +878,20 @@ class MiracleEntityMapperImpl {
 
 
 class MiracleList {
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +disableIf : String
 	{field} +miracles : List
 	{field} +notes : String
 	{field} +products : Set
 	{field} +text : String
-	{field} +unlockingPerk : String
+	{field} +unlockingPerks : Set
 	{method} +getRawNotes () : String
 	{method} +getRawText () : String
 }
 
 
 class MiracleList {
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -disableIf : String
 	{field} -id : UUID
 	{field} -miracles : List
@@ -888,9 +899,9 @@ class MiracleList {
 	{field} -notes : String
 	{field} -products : Set
 	{field} -text : String
-	{field} -unlockingPerk : String
+	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -901,7 +912,7 @@ class MiracleList {
 	{method} +products () : Set
 	{method} +text () : String
 	{method} +toString () : String
-	{method} +unlockingPerk () : String
+	{method} +unlockingPerks () : Set
 }
 
 
@@ -1021,7 +1032,7 @@ class MiracleSummaryDto {
 
 class Perk {
 	{field} +contradiction : boolean
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +group : String
 	{field} +prerequisites : String
 	{field} +products : Set
@@ -1033,7 +1044,7 @@ class Perk {
 
 class Perk {
 	{field} -contradiction : boolean
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -group : String
 	{field} -id : UUID
 	{field} -name : String
@@ -1042,7 +1053,7 @@ class Perk {
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +contradiction () : boolean
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +equals ( o : Object ) : boolean
 	{method} +group () : String
 	{method} +hashCode () : int
@@ -1325,20 +1336,20 @@ class PowerEntityMapperImpl {
 
 
 class PowerList {
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +disableIf : String
 	{field} +notes : String
 	{field} +powers : List
 	{field} +products : Set
 	{field} +text : String
-	{field} +unlockingPerk : String
+	{field} +unlockingPerks : Set
 	{method} +getRawNotes () : String
 	{method} +getRawText () : String
 }
 
 
 class PowerList {
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -disableIf : String
 	{field} -id : UUID
 	{field} -name : String
@@ -1346,9 +1357,9 @@ class PowerList {
 	{field} -powers : List
 	{field} -products : Set
 	{field} -text : String
-	{field} -unlockingPerk : String
+	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -1359,7 +1370,7 @@ class PowerList {
 	{method} +products () : Set
 	{method} +text () : String
 	{method} +toString () : String
-	{method} +unlockingPerk () : String
+	{method} +unlockingPerks () : Set
 }
 
 
@@ -1480,6 +1491,18 @@ class PowerSummaryDto {
 class ProductOwnershipResolver {
 	{field} {static} -ROLE_PREFIX : String
 	{method} +resolve () : Set
+}
+
+
+class ProseListToMarkdownChange {
+	{field} {static} -FIELDS : Field[]
+	{field} -changedRows : int
+	{method} +execute ( database : Database ) : void
+	{method} +getConfirmationMessage () : String
+	{method} -repair ( connection : Connection , field : Field ) : int
+	{method} +setFileOpener ( resourceAccessor : ResourceAccessor ) : void
+	{method} +setUp () : void
+	{method} +validate ( database : Database ) : ValidationErrors
 }
 
 
@@ -1733,7 +1756,7 @@ class RawHtmlProcessor {
 
 
 class Shard {
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -id : UUID
 	{field} -name : String
 	{field} -possibilities : String
@@ -1744,7 +1767,7 @@ class Shard {
 	{field} -tappingDifficulty : String
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -1761,7 +1784,7 @@ class Shard {
 
 
 class Shard {
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +possibilities : String
 	{field} +powers : String
 	{field} +products : Set
@@ -1941,20 +1964,20 @@ class SpellEntityMapperImpl {
 
 
 class SpellList {
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +disableIf : String
 	{field} +notes : String
 	{field} +products : Set
 	{field} +spells : List
 	{field} +text : String
-	{field} +unlockingPerk : String
+	{field} +unlockingPerks : Set
 	{method} +getRawNotes () : String
 	{method} +getRawText () : String
 }
 
 
 class SpellList {
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -disableIf : String
 	{field} -id : UUID
 	{field} -name : String
@@ -1962,9 +1985,9 @@ class SpellList {
 	{field} -products : Set
 	{field} -spells : List
 	{field} -text : String
-	{field} -unlockingPerk : String
+	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -1975,7 +1998,7 @@ class SpellList {
 	{method} +spells () : List
 	{method} +text () : String
 	{method} +toString () : String
-	{method} +unlockingPerk () : String
+	{method} +unlockingPerks () : Set
 }
 
 
@@ -2180,7 +2203,7 @@ class TagSummaryDto {
 
 class Threat {
 	{field} +charisma : String
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +dexterity : String
 	{field} +equipment : List
 	{field} +mind : String
@@ -2209,7 +2232,7 @@ class Threat {
 
 class Threat {
 	{field} -charisma : String
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -dexterity : String
 	{field} -equipment : List
 	{field} -id : UUID
@@ -2234,7 +2257,7 @@ class Threat {
 	{field} -wounds : String
 	{method} +charisma () : String
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +dexterity () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +equipment () : List
@@ -2405,7 +2428,9 @@ abstract class TorgEntity {
 class TorgMappingSupport {
 	{method} +censorMap ( rawMap : Map , censor : Censor ) : Map
 	{method} +censorText ( rawText : String , censor : Censor ) : String
-	{method} +toCosmRef ( cosmName : String ) : CosmRefDto
+	{method} +foldSlugs ( slugs : Set ) : String
+	{method} +toCosmRef ( cosmSlugs : Set ) : CosmRefDto
+	{method} +toCosmRef ( cosmSlug : String ) : CosmRefDto
 	{method} +toDifficultyNumberDto ( dn : DifficultyNumber ) : DifficultyNumberDto
 	{method} +toDifficultyNumberDto ( dn : DifficultyNumber ) : DifficultyNumberDto
 	{method} +toPublicationRefs ( products : Set ) : List
@@ -2437,7 +2462,7 @@ class ValueObjectMapperImpl {
 
 class Vehicle {
 	{field} +axiomTech : String
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +maneuverRating : String
 	{field} +passengers : String
 	{field} +price : String
@@ -2457,7 +2482,7 @@ class Vehicle {
 
 class Vehicle {
 	{field} -axiomTech : String
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -id : UUID
 	{field} -maneuverRating : String
 	{field} -name : String
@@ -2475,7 +2500,7 @@ class Vehicle {
 	{field} -wounds : String
 	{method} +axiomTech () : String
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID

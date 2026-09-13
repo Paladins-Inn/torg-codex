@@ -39,7 +39,7 @@ public record Perk(
     ClearanceLevel clearanceLevel,
     Set<String> products,
     boolean contradiction,
-    String cosm,
+    Set<String> cosms,
     String group,
     String prerequisites,
     String text

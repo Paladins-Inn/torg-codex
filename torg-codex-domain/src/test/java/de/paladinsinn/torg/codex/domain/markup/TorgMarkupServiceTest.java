@@ -40,7 +40,7 @@ class TorgMarkupServiceTest {
             new RawHtmlProcessor(),
             new GameTokenProcessor(),
             new MarkdownProcessor()
-    );
+);
 
     @Test
     void fullPipeline_withConditionalAndTokens() {

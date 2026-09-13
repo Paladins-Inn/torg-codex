@@ -14,3 +14,4 @@
 :adr-015: xref:pandurart:arc42:09_architecture_decisions/015_mapstruct.adoc[&uparrow;ADR-015]
 :adr-016: xref:pandurart:arc42:09_architecture_decisions/016_application-integration-boundaries.adoc[&uparrow;ADR-016]
 :adr-017: xref:pandurart:arc42:09_architecture_decisions/017_markup-domain-service.adoc[&uparrow;ADR-017]
+

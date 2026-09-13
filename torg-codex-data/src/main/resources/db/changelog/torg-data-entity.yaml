@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: "1"
-      author: codex
+      author: klenkes74 (with codex)
       changes:
         - createTable:
             tableName: torg_article

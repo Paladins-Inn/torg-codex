@@ -25,6 +25,7 @@
 
 package de.paladinsinn.torg.codex.data.repository;
 
+import de.paladinsinn.torg.codex.data.model.ClearanceLevel;
 import de.paladinsinn.torg.codex.data.model.Miracle;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -34,13 +35,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public interface MiracleRepository extends JpaRepository<Miracle, UUID> {
 
     Optional<Miracle> findByNameIgnoreCase(String name);
 
     List<Miracle> findByNameContainingIgnoreCase(String namePart);
 
-    List<Miracle> findByClearanceLevel(String clearanceLevel);
+    List<Miracle> findByClearanceLevel(ClearanceLevel clearanceLevel);
 
 
     @Query("SELECT m FROM Miracle m WHERE :product MEMBER OF m.products")

@@ -52,8 +52,10 @@ public class Perk extends TorgEntity {
     @Column(nullable = false)
     private boolean contradiction = false;
 
-    @Column(length = 64)
-    private String cosm;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "torg_perk_cosms", joinColumns = @JoinColumn(name = "perk_id"))
+    @Column(name = "cosm", length = 128)
+    private Set<String> cosms = new HashSet<>();
 
     @Column(name = "perk_group", length = 64)
     private String group;

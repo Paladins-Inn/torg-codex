@@ -25,9 +25,11 @@
 
 package de.paladinsinn.torg.codex.characterization;
 
+import org.json.JSONException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -41,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.skyscreamer.jsonassert.JSONAssert.assertEquals;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
@@ -84,8 +87,13 @@ class CharacterizationReplayTest {
         assertThat(CharacterizationFixtureSupport.normalizeHeaders(mvcResult.getResponse()))
                 .as("headers for %s", path)
                 .isEqualTo(fixture.response().headers());
-        assertThat(CharacterizationFixtureSupport.normalizeBody(mvcResult.getResponse()))
-                .as("body for %s", path)
-                .isEqualTo(fixture.response().body());
+        assertBody(
+                path,
+                fixture.response().body(),
+                CharacterizationFixtureSupport.normalizeBody(mvcResult.getResponse()));
+    }
+
+    static void assertBody(java.nio.file.Path path, String expected, String actual) throws JSONException {
+        assertEquals("body for %s".formatted(path), expected, actual, JSONCompareMode.NON_EXTENSIBLE);
     }
 }

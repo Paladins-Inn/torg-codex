@@ -25,6 +25,7 @@
 
 package de.paladinsinn.torg.codex.data.repository;
 
+import de.paladinsinn.torg.codex.data.model.ClearanceLevel;
 import de.paladinsinn.torg.codex.data.model.Race;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public interface RaceRepository extends JpaRepository<Race, UUID> {
 
     Optional<Race> findByNameIgnoreCase(String name);
@@ -42,7 +44,7 @@ public interface RaceRepository extends JpaRepository<Race, UUID> {
 
     List<Race> findByMajor(boolean major);
 
-    List<Race> findByClearanceLevel(String clearanceLevel);
+    List<Race> findByClearanceLevel(ClearanceLevel clearanceLevel);
 
     @Query("SELECT r FROM Race r WHERE :product MEMBER OF r.products")
     List<Race> findByProduct(@Param("product") String product);

@@ -49,8 +49,10 @@ public class Shard extends TorgEntity {
     @Column(name = "product")
     private Set<String> products = new HashSet<>();
 
-    @Column(length = 64)
-    private String cosm;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "torg_shard_cosms", joinColumns = @JoinColumn(name = "shard_id"))
+    @Column(name = "cosm", length = 128)
+    private Set<String> cosms = new HashSet<>();
 
     @Column(length = 64)
     private String possibilities;

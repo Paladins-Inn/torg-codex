@@ -144,7 +144,7 @@ read_feature_json_feature_directory() {
     if [[ -z "$_fd" ]]; then
         # Last-resort single-line grep/sed fallback. The `|| true` guards against
         # grep returning 1 (no match) aborting under `set -e` / `pipefail`.
-        _fd=$( { grep -E '"feature_directory"[[:space:]]*:' "$fj" 2>/dev/null || true; } \
+        _fd=$({ grep -E '"feature_directory"[[:space:]]*:' "$fj" 2>/dev/null || true; } \
             | head -n 1 \
             | sed -E 's/^[^:]*:[[:space:]]*"([^"]*)".*$/\1/' )
     fi
@@ -409,10 +409,10 @@ json_escape() {
     # so multi-byte UTF-8 sequences (first byte >= 0xC0) pass through intact.
     local LC_ALL=C
     local i char code
-    for (( i=0; i<${#s}; i++ )); do
+    for ((i=0; i<${#s}; i++ )); do
         char="${s:$i:1}"
         printf -v code '%d' "'$char" 2>/dev/null || code=256
-        if (( code >= 1 && code <= 31 )); then
+        if ((code >= 1 && code <= 31 )); then
             printf '\\u%04x' "$code"
         else
             printf '%s' "$char"
@@ -881,7 +881,7 @@ except Exception as exc:
     # to find the nearest replace layer. Only compose layers above that base.
     local base_idx=-1
     local i
-    for (( i=0; i<count; i++ )); do
+    for ((i=0; i<count; i++ )); do
         if [ "${layer_strategies[$i]}" = "replace" ]; then
             base_idx=$i
             break
@@ -901,7 +901,7 @@ except Exception as exc:
     fi
     content="${content%x}"
 
-    for (( i=base_idx-1; i>=0; i-- )); do
+    for ((i=base_idx-1; i>=0; i-- )); do
         local path="${layer_paths[$i]}"
         local strat="${layer_strategies[$i]}"
         local layer_content

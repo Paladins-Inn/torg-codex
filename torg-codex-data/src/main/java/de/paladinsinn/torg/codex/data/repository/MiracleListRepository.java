@@ -34,13 +34,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public interface MiracleListRepository extends JpaRepository<MiracleList, UUID> {
 
     Optional<MiracleList> findByNameIgnoreCase(String name);
 
-    List<MiracleList> findByCosm(String cosm);
+    @Query("SELECT m FROM MiracleList m WHERE :cosm MEMBER OF m.cosms")
+    List<MiracleList> findByCosm(@Param("cosm") String cosm);
 
-    List<MiracleList> findByUnlockingPerk(String perkId);
+    @Query("SELECT m FROM MiracleList m WHERE :perk MEMBER OF m.unlockingPerks")
+    List<MiracleList> findByUnlockingPerk(@Param("perk") String perkId);
 
     @Query("SELECT ml FROM MiracleList ml WHERE :product MEMBER OF ml.products")
     List<MiracleList> findByProduct(@Param("product") String product);

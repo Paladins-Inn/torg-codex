@@ -34,13 +34,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public interface PowerListRepository extends JpaRepository<PowerList, UUID> {
 
     Optional<PowerList> findByNameIgnoreCase(String name);
 
-    List<PowerList> findByCosm(String cosm);
+    @Query("SELECT p FROM PowerList p WHERE :cosm MEMBER OF p.cosms")
+    List<PowerList> findByCosm(@Param("cosm") String cosm);
 
-    List<PowerList> findByUnlockingPerk(String perkId);
+    @Query("SELECT p FROM PowerList p WHERE :perk MEMBER OF p.unlockingPerks")
+    List<PowerList> findByUnlockingPerk(@Param("perk") String perkId);
 
     @Query("SELECT pl FROM PowerList pl WHERE :product MEMBER OF pl.products")
     List<PowerList> findByProduct(@Param("product") String product);

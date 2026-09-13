@@ -1,0 +1,378 @@
+databaseChangeLog:
+  # Expand phase (ADR-012): introduce a stable slug for every cosm and normalise
+  # the slug references stored in the entity tables.
+  #
+  # Background: entity tables reference their cosm by slug (e.g. "living-land"),
+  # while torg_cosm only carried the human-readable display name ("Living Land").
+  # The reference lookup therefore matched by name and silently degraded to a
+  # null-id placeholder. The slug is now a first-class column: filtering and
+  # comparison use the slug, presentation uses the name.
+  - changeSet:
+      id: "data-fix-lists"
+      author: klenkes74 (with codex)
+      comment: >-
+        - Add the cosm slug to the torg_cosm table. The slug is a stable identifier for the cosm, used
+          for filtering and comparison.
+        - Populate the cosm slugs matching the references used by the entity tables.
+        - Normalise cosm references that were imported as display names instead of
+          slugs. Affects every entity table carrying a cosm column.
+        - Enforce slug uniqueness once every cosm carries one.
+
+      changes:
+        - addColumn:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  type: varchar(128)
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: aysle
+            where: id = '6cf031c3-ab0a-4d12-9173-91d74f7c809f'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: core-earth
+            where: id = 'f56ffdc1-8637-4ebb-835f-4a39e24f21da'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: cyberpapacy
+            where: id = '68e5839e-7687-4b9e-881f-efeb0a8aeed8'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: living-land
+            where: id = '07efcfee-4fb5-4b74-bb30-bf71c927e691'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: nile-empire
+            where: id = 'db0a4833-3c91-46e3-b952-dca689018840'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: orrorsh
+            where: id = 'af5b89f6-755a-4c5d-bc4b-f0d72251cdd1'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: pan-pacifica
+            where: id = 'ac0f5890-cfe3-4a06-8b92-3b46d630544d'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: tharkold
+            where: id = '59e13c3d-c815-4c40-af50-8b788ecb43ff'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: universal
+            where: id = '8f857f27-6fea-4c6d-b8c4-85fe5cf99e3a'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: unknown
+            where: id = '601c22b6-f14d-4dba-a072-0032c1e3c08e'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: akasha
+            where: id = '3377a8ec-57e5-4430-bfaf-4913d5a38b04'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: mechopotamia
+            where: id = 'c9b12d63-19bf-46cc-9a18-23e853c7da63'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: ukhaan
+            where: id = '63cf6d3f-e2df-402e-b6d2-c57092995eab'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: the-dead-world
+            where: id = '478c9556-f840-4386-a2ef-1230e01b7e47'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: tombspace
+            where: id = '3c74738a-9fee-4bf0-88f4-0edd90da9d4b'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: waldeck
+            where: id = '9dfddf6b-bc07-45d7-a3ed-e0cbf8e633ea'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: elfame
+            where: id = '76474097-a821-4e3c-8f3a-051c84969388'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: fairy-tale-aysle
+            where: id = '06d1e0b3-e20f-4441-b49c-3d3d9419b204'
+        - update:
+            tableName: torg_cosm
+            columns:
+              - column:
+                  name: slug
+                  value: aysle-tharkold
+            where: id = 'c8c5c75e-af0b-449c-b81c-77cdef9bed26'
+        - update:
+            tableName: torg_item
+            columns:
+              - column:
+                  name: cosm
+                  value: core-earth
+            where: cosm = 'Core Earth'
+        - update:
+            tableName: torg_item
+            columns:
+              - column:
+                  name: cosm
+                  value: nile-empire
+            where: cosm = 'Nile Empire'
+        - update:
+            tableName: torg_miracle_list
+            columns:
+              - column:
+                  name: cosm
+                  value: core-earth
+            where: cosm = 'Core Earth'
+        - update:
+            tableName: torg_miracle_list
+            columns:
+              - column:
+                  name: cosm
+                  value: nile-empire
+            where: cosm = 'Nile Empire'
+        - update:
+            tableName: torg_perk
+            columns:
+              - column:
+                  name: cosm
+                  value: core-earth
+            where: cosm = 'Core Earth'
+        - update:
+            tableName: torg_perk
+            columns:
+              - column:
+                  name: cosm
+                  value: nile-empire
+            where: cosm = 'Nile Empire'
+        - update:
+            tableName: torg_power_list
+            columns:
+              - column:
+                  name: cosm
+                  value: core-earth
+            where: cosm = 'Core Earth'
+        - update:
+            tableName: torg_power_list
+            columns:
+              - column:
+                  name: cosm
+                  value: nile-empire
+            where: cosm = 'Nile Empire'
+        - update:
+            tableName: torg_shard
+            columns:
+              - column:
+                  name: cosm
+                  value: core-earth
+            where: cosm = 'Core Earth'
+        - update:
+            tableName: torg_shard
+            columns:
+              - column:
+                  name: cosm
+                  value: nile-empire
+            where: cosm = 'Nile Empire'
+        - update:
+            tableName: torg_spell_list
+            columns:
+              - column:
+                  name: cosm
+                  value: core-earth
+            where: cosm = 'Core Earth'
+        - update:
+            tableName: torg_spell_list
+            columns:
+              - column:
+                  name: cosm
+                  value: nile-empire
+            where: cosm = 'Nile Empire'
+        - update:
+            tableName: torg_threat
+            columns:
+              - column:
+                  name: cosm
+                  value: core-earth
+            where: cosm = 'Core Earth'
+        - update:
+            tableName: torg_threat
+            columns:
+              - column:
+                  name: cosm
+                  value: nile-empire
+            where: cosm = 'Nile Empire'
+        - update:
+            tableName: torg_vehicle
+            columns:
+              - column:
+                  name: cosm
+                  value: core-earth
+            where: cosm = 'Core Earth'
+        - update:
+            tableName: torg_vehicle
+            columns:
+              - column:
+                  name: cosm
+                  value: nile-empire
+            where: cosm = 'Nile Empire'
+
+        - addNotNullConstraint:
+            tableName: torg_cosm
+            columnName: slug
+            columnDataType: varchar(128)
+        - addUniqueConstraint:
+            tableName: torg_cosm
+            columnNames: slug
+            constraintName: uk_torg_cosm_slug
+
+  - changeSet:
+      id: 2026-09-13-001-expand
+      author: klenkes74 (with codex)
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE TABLE torg_item_cosms (item_id uuid NOT NULL REFERENCES torg_item(id) ON DELETE CASCADE, cosm varchar(128) NOT NULL, PRIMARY KEY (item_id, cosm));
+              CREATE INDEX idx_item_cosms_cosm ON torg_item_cosms(cosm);
+              CREATE TABLE torg_miracle_list_cosms (list_id uuid NOT NULL REFERENCES torg_miracle_list(id) ON DELETE CASCADE, cosm varchar(128) NOT NULL, PRIMARY KEY (list_id, cosm));
+              CREATE INDEX idx_miracle_list_cosms_cosm ON torg_miracle_list_cosms(cosm);
+              CREATE TABLE torg_perk_cosms (perk_id uuid NOT NULL REFERENCES torg_perk(id) ON DELETE CASCADE, cosm varchar(128) NOT NULL, PRIMARY KEY (perk_id, cosm));
+              CREATE INDEX idx_perk_cosms_cosm ON torg_perk_cosms(cosm);
+              CREATE TABLE torg_power_list_cosms (list_id uuid NOT NULL REFERENCES torg_power_list(id) ON DELETE CASCADE, cosm varchar(128) NOT NULL, PRIMARY KEY (list_id, cosm));
+              CREATE INDEX idx_power_list_cosms_cosm ON torg_power_list_cosms(cosm);
+              CREATE TABLE torg_shard_cosms (shard_id uuid NOT NULL REFERENCES torg_shard(id) ON DELETE CASCADE, cosm varchar(128) NOT NULL, PRIMARY KEY (shard_id, cosm));
+              CREATE INDEX idx_shard_cosms_cosm ON torg_shard_cosms(cosm);
+              CREATE TABLE torg_spell_list_cosms (list_id uuid NOT NULL REFERENCES torg_spell_list(id) ON DELETE CASCADE, cosm varchar(128) NOT NULL, PRIMARY KEY (list_id, cosm));
+              CREATE INDEX idx_spell_list_cosms_cosm ON torg_spell_list_cosms(cosm);
+              CREATE TABLE torg_threat_cosms (threat_id uuid NOT NULL REFERENCES torg_threat(id) ON DELETE CASCADE, cosm varchar(128) NOT NULL, PRIMARY KEY (threat_id, cosm));
+              CREATE INDEX idx_threat_cosms_cosm ON torg_threat_cosms(cosm);
+              CREATE TABLE torg_vehicle_cosms (vehicle_id uuid NOT NULL REFERENCES torg_vehicle(id) ON DELETE CASCADE, cosm varchar(128) NOT NULL, PRIMARY KEY (vehicle_id, cosm));
+              CREATE INDEX idx_vehicle_cosms_cosm ON torg_vehicle_cosms(cosm);
+              CREATE TABLE torg_miracle_list_unlocking_perks (list_id uuid NOT NULL REFERENCES torg_miracle_list(id) ON DELETE CASCADE, perk_slug varchar(128) NOT NULL, PRIMARY KEY (list_id, perk_slug));
+              CREATE INDEX idx_miracle_list_unlocking_perks_slug ON torg_miracle_list_unlocking_perks(perk_slug);
+              CREATE TABLE torg_power_list_unlocking_perks (list_id uuid NOT NULL REFERENCES torg_power_list(id) ON DELETE CASCADE, perk_slug varchar(128) NOT NULL, PRIMARY KEY (list_id, perk_slug));
+              CREATE INDEX idx_power_list_unlocking_perks_slug ON torg_power_list_unlocking_perks(perk_slug);
+              CREATE TABLE torg_spell_list_unlocking_perks (list_id uuid NOT NULL REFERENCES torg_spell_list(id) ON DELETE CASCADE, perk_slug varchar(128) NOT NULL, PRIMARY KEY (list_id, perk_slug));
+              CREATE INDEX idx_spell_list_unlocking_perks_slug ON torg_spell_list_unlocking_perks(perk_slug);
+
+  - changeSet:
+      id: 2026-09-13-002-migrate-references
+      author: klenkes74 (with codex)
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              INSERT INTO torg_item_cosms SELECT id, trim(both '''" ' from value) FROM torg_item CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from cosm), '\s*,\s*') value WHERE cosm IS NOT NULL AND btrim(cosm) <> '' ON CONFLICT DO NOTHING;
+              INSERT INTO torg_miracle_list_cosms SELECT id, trim(both '''" ' from value) FROM torg_miracle_list CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from cosm), '\s*,\s*') value WHERE cosm IS NOT NULL AND btrim(cosm) <> '' ON CONFLICT DO NOTHING;
+              INSERT INTO torg_perk_cosms SELECT id, trim(both '''" ' from value) FROM torg_perk CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from cosm), '\s*,\s*') value WHERE cosm IS NOT NULL AND btrim(cosm) <> '' ON CONFLICT DO NOTHING;
+              INSERT INTO torg_power_list_cosms SELECT id, trim(both '''" ' from value) FROM torg_power_list CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from cosm), '\s*,\s*') value WHERE cosm IS NOT NULL AND btrim(cosm) <> '' ON CONFLICT DO NOTHING;
+              INSERT INTO torg_shard_cosms SELECT id, trim(both '''" ' from value) FROM torg_shard CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from cosm), '\s*,\s*') value WHERE cosm IS NOT NULL AND btrim(cosm) <> '' ON CONFLICT DO NOTHING;
+              INSERT INTO torg_spell_list_cosms SELECT id, trim(both '''" ' from value) FROM torg_spell_list CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from cosm), '\s*,\s*') value WHERE cosm IS NOT NULL AND btrim(cosm) <> '' ON CONFLICT DO NOTHING;
+              INSERT INTO torg_threat_cosms SELECT id, trim(both '''" ' from value) FROM torg_threat CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from cosm), '\s*,\s*') value WHERE cosm IS NOT NULL AND btrim(cosm) <> '' ON CONFLICT DO NOTHING;
+              INSERT INTO torg_vehicle_cosms SELECT id, trim(both '''" ' from value) FROM torg_vehicle CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from cosm), '\s*,\s*') value WHERE cosm IS NOT NULL AND btrim(cosm) <> '' ON CONFLICT DO NOTHING;
+              INSERT INTO torg_miracle_list_unlocking_perks SELECT id, trim(both '''" ' from value) FROM torg_miracle_list CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from unlocking_perk), '\s*,\s*') value WHERE unlocking_perk IS NOT NULL AND btrim(unlocking_perk) <> '' ON CONFLICT DO NOTHING;
+              INSERT INTO torg_power_list_unlocking_perks SELECT id, trim(both '''" ' from value) FROM torg_power_list CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from unlocking_perk), '\s*,\s*') value WHERE unlocking_perk IS NOT NULL AND btrim(unlocking_perk) <> '' ON CONFLICT DO NOTHING;
+              INSERT INTO torg_spell_list_unlocking_perks SELECT id, trim(both '''" ' from value) FROM torg_spell_list CROSS JOIN LATERAL regexp_split_to_table(trim(both '[]' from unlocking_perk), '\s*,\s*') value WHERE unlocking_perk IS NOT NULL AND btrim(unlocking_perk) <> '' ON CONFLICT DO NOTHING;
+
+  - changeSet:
+      id: 2026-09-13-003-migrate-prose
+      author: klenkes74 (with codex)
+      changes:
+        - customChange:
+            class: de.paladinsinn.torg.codex.data.migration.ProseListToMarkdownChange
+
+  - changeSet:
+      id: 2026-09-13-004-contract
+      author: klenkes74 (with codex)
+      changes:
+        - dropColumn:
+            tableName: torg_item
+            columnName: cosm
+        - dropColumn:
+            tableName: torg_miracle_list
+            columns:
+              - column:
+                  name: cosm
+              - column:
+                  name: unlocking_perk
+        - dropColumn:
+            tableName: torg_perk
+            columnName: cosm
+        - dropColumn:
+            tableName: torg_power_list
+            columns:
+              - column:
+                  name: cosm
+              - column:
+                  name: unlocking_perk
+        - dropColumn:
+            tableName: torg_shard
+            columnName: cosm
+        - dropColumn:
+            tableName: torg_spell_list
+            columns:
+              - column:
+                  name: cosm
+              - column:
+                  name: unlocking_perk
+        - dropColumn:
+            tableName: torg_threat
+            columnName: cosm
+        - dropColumn:
+            tableName: torg_vehicle
+            columnName: cosm

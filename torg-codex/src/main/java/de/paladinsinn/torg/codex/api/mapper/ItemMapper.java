@@ -33,10 +33,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = TorgMappingSupport.class)
 public interface ItemMapper {
-    @Mapping(target = "cosm", source = "cosm")
+    @Mapping(target = "cosm", source = "cosms")
     @Mapping(target = "publications", source = "products")
     ItemSummaryDto toSummary(Item item);
-    @Mapping(target = "cosm", source = "cosm")
+    @Mapping(target = "cosm", source = "cosms")
     @Mapping(target = "publications", source = "products")
     @Mapping(target = "additionalFeatures", qualifiedByName = "censorText")
     @Mapping(target = "text", qualifiedByName = "censorText")

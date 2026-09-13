@@ -36,6 +36,7 @@ import java.util.UUID;
  */
 public record Cosm(
     @NotNull UUID id,
+    @NotNull String slug,
     @NotNull String name,
     ClearanceLevel clearanceLevel,
     Set<String> products,

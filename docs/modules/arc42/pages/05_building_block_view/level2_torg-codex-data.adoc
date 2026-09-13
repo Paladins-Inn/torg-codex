@@ -61,6 +61,11 @@ repos    -down-> db         : JPA / Liquibase
 
 Persistenz aller Torg-Eternity-Spielobjekte via JPA/Hibernate; Schema-Migration via Liquibase.
 
+Katalogeinträge modellieren Cosm-Zuordnungen als ungeordnete, duplikatfreie Mengen von Slugs.
+`Item`, `MiracleList`, `Perk`, `PowerList`, `Shard`, `SpellList`, `Threat` und `Vehicle`
+verwenden dafür eager geladene JPA-`@ElementCollection`-Mengen. `MiracleList`, `PowerList`
+und `SpellList` verwenden dasselbe Muster zusätzlich für freischaltende Perks.
+
 [cols="<.<3h,<.<9a",frame="topbot",grid="rows"]
 |===
 | Klasse / Interface | Verantwortung
@@ -76,9 +81,32 @@ Persistenz aller Torg-Eternity-Spielobjekte via JPA/Hibernate; Schema-Migration 
 
 | Repository-Interfaces
 | `JpaRepository<Entität, UUID>` für jede Entitätsklasse; typisierte Finder-Methoden
-  (`findByCosm`, `findByClearanceLevel`, `findByProduct` u.ä.).
+  (`findByCosm`, `findByClearanceLevel`, `findByProduct` u.ä.). Cosm- und
+  Unlocking-Perk-Abfragen verwenden JPQL `MEMBER OF`, damit jeder einzelne Slug einer
+  Mehrfachzuordnung exakt gefunden wird.
+
+| Referenz-Collection-Tables
+| Acht Tabellen `torg_<entität>_cosms` und drei Tabellen
+  `torg_<liste>_unlocking_perks`. Der zusammengesetzte Primärschlüssel aus Owner-ID und
+  Slug verhindert Duplikate. Ein Foreign Key mit `ON DELETE CASCADE` bindet die Zuordnung
+  an ihren Owner; bewusst existiert kein Foreign Key auf Cosm bzw. Perk, damit unbekannte
+  Slugs verlustfrei erhalten bleiben.
 
 | Liquibase-Changesets
-| Changeset 1: Schema-Erstellung (`torg-data-entity.yaml`). +
-  Changeset 2: Testdaten-Import via CSV (`torg-data-load.yaml`).
+| Basisschema: `torg-data-entity.yaml`. +
+  Datenimporte: `torg-data-load.yaml` und `torg-free-load.yaml`. +
+  Nachgelagerte Datenkorrektur: `data-fix-lists.yaml`. Sie normalisiert Cosm-Slugs,
+  erzeugt und befüllt die Referenz-Collections, konvertiert vollständig kodierte
+  Prosa-Listen mittels `ProseListToMarkdownChange` und entfernt zuletzt die alten
+  skalaren Spalten.
 |===
+
+== Abbildung auf die REST-API
+
+Die Persistenz speichert ausschließlich Slugs. Die Web-Mapper lösen Cosm-Slugs über
+`CatalogReferenceQuery` zu Anzeigenamen auf. Eine einzelne bekannte Zuordnung behält
+UUID und Namen; mehrere Zuordnungen werden alphabetisch als kommaseparierte Namen mit
+`id = null` dargestellt. Unbekannte Cosm-Slugs bleiben als Rohwert sichtbar.
+
+Unlocking-Perks werden nicht zu Anzeigenamen aufgelöst. Mehrere Werte erscheinen im
+bestehenden String-Feld alphabetisch sortiert und kommasepariert.

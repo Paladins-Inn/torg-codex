@@ -37,7 +37,7 @@ public class ConditionalBlockProcessor {
     private static final Pattern IF_BLOCK = Pattern.compile(
             "<IF:(!?)([a-z0-9-]+)>([\\s\\S]*?)</IF>",
             Pattern.DOTALL
-    );
+);
 
     /**
      * Resolves conditional blocks according to the products owned by the current user.

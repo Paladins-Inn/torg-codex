@@ -5,8 +5,11 @@ databaseChangeLog:
   - include:
       file: ../load/torg-data-load.yaml
       relativeToChangelogFile: true
+      # noinspection YAMLSchemaValidation
       errorIfMissing: false
   - include:
       file: ../load/torg-free-load.yaml
       relativeToChangelogFile: true
-
+  - include:
+      file: data-fix-lists.yaml
+      relativeToChangelogFile: true

@@ -40,7 +40,7 @@ public record Vehicle(
     ClearanceLevel clearanceLevel,
     Set<String> products,
     String type,
-    String cosm,
+    Set<String> cosms,
     String axiomTech,
     boolean unique,
     String speed,

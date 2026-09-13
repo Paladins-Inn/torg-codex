@@ -33,10 +33,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = TorgMappingSupport.class)
 public interface ShardMapper {
-    @Mapping(target = "cosm", source = "cosm")
+    @Mapping(target = "cosm", source = "cosms")
     @Mapping(target = "publications", source = "products")
     ShardSummaryDto toSummary(Shard shard);
-    @Mapping(target = "cosm", source = "cosm")
+    @Mapping(target = "cosm", source = "cosms")
     @Mapping(target = "publications", source = "products")
     @Mapping(target = "powers", qualifiedByName = "censorText")
     @Mapping(target = "purpose", qualifiedByName = "censorText")

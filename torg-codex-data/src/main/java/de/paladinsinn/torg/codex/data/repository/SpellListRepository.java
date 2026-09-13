@@ -34,13 +34,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public interface SpellListRepository extends JpaRepository<SpellList, UUID> {
 
     Optional<SpellList> findByNameIgnoreCase(String name);
 
-    List<SpellList> findByCosm(String cosm);
+    @Query("SELECT s FROM SpellList s WHERE :cosm MEMBER OF s.cosms")
+    List<SpellList> findByCosm(@Param("cosm") String cosm);
 
-    List<SpellList> findByUnlockingPerk(String perkId);
+    @Query("SELECT s FROM SpellList s WHERE :perk MEMBER OF s.unlockingPerks")
+    List<SpellList> findByUnlockingPerk(@Param("perk") String perkId);
 
     @Query("SELECT sl FROM SpellList sl WHERE :product MEMBER OF sl.products")
     List<SpellList> findByProduct(@Param("product") String product);

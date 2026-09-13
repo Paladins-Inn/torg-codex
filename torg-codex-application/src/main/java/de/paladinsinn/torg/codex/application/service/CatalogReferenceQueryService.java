@@ -45,8 +45,8 @@ public final class CatalogReferenceQueryService implements CatalogReferenceQuery
     }
 
     @Override
-    public Optional<CatalogReference> findCosmByName(String name) {
-        return persistence.findCosmByName(name);
+    public Optional<CatalogReference> findCosmBySlug(String slug) {
+        return persistence.findCosmBySlug(slug);
     }
 
     @Override

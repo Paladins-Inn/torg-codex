@@ -41,6 +41,7 @@ class ClearanceLevelConverter {
 class Cosm {
 	{field} +axioms : Map
 	{field} +products : Set
+	{field} +slug : String
 	{field} +text : String
 	{field} +worldLaws : String
 	{method} +getRawText () : String
@@ -64,6 +65,7 @@ interface CosmRepository {
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
 	{method}  {abstract} +findByProduct ( product : String ) : List
+	{method}  {abstract} +findBySlug ( slug : String ) : Optional
 }
 
 
@@ -125,13 +127,20 @@ class DifficultyNumber {
 
 annotation EnableTorgData
 
+class EncodedListTokenizer {
+	{method}  {static} +parse ( value : String ) : Optional
+	{method}  {static} -skipWhitespace ( input : String , index : int ) : int
+	{method}  {static} +toMarkdown ( statements : List ) : String
+}
+
+
 class Item {
 	{field} +additionalFeatures : String
 	{field} +ammo : String
 	{field} +axiomMagic : String
 	{field} +axiomTech : String
 	{field} +bonus : String
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +features : String
 	{field} +price : String
 	{field} +products : Set
@@ -175,7 +184,7 @@ class JpaArticlePersistenceAdapter {
 
 
 class JpaCatalogReferenceAdapter {
-	{method} +findCosmByName ( name : String ) : Optional
+	{method} +findCosmBySlug ( slug : String ) : Optional
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
 	{method} -toPublicationReference ( publication : Publication ) : CatalogPublicationReference
@@ -321,13 +330,13 @@ class MiracleEntityMapperImpl {
 
 
 class MiracleList {
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +disableIf : String
 	{field} +miracles : List
 	{field} +notes : String
 	{field} +products : Set
 	{field} +text : String
-	{field} +unlockingPerk : String
+	{field} +unlockingPerks : Set
 	{method} +getRawNotes () : String
 	{method} +getRawText () : String
 }
@@ -364,7 +373,7 @@ interface MiracleRepository {
 
 class Perk {
 	{field} +contradiction : boolean
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +group : String
 	{field} +prerequisites : String
 	{field} +products : Set
@@ -453,13 +462,13 @@ class PowerEntityMapperImpl {
 
 
 class PowerList {
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +disableIf : String
 	{field} +notes : String
 	{field} +powers : List
 	{field} +products : Set
 	{field} +text : String
-	{field} +unlockingPerk : String
+	{field} +unlockingPerks : Set
 	{method} +getRawNotes () : String
 	{method} +getRawText () : String
 }
@@ -491,6 +500,18 @@ interface PowerRepository {
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
 	{method}  {abstract} +findByProduct ( product : String ) : List
+}
+
+
+class ProseListToMarkdownChange {
+	{field} {static} -FIELDS : Field[]
+	{field} -changedRows : int
+	{method} +execute ( database : Database ) : void
+	{method} +getConfirmationMessage () : String
+	{method} -repair ( connection : Connection , field : Field ) : int
+	{method} +setFileOpener ( resourceAccessor : ResourceAccessor ) : void
+	{method} +setUp () : void
+	{method} +validate ( database : Database ) : ValidationErrors
 }
 
 
@@ -563,7 +584,7 @@ interface RaceRepository {
 
 
 class Shard {
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +possibilities : String
 	{field} +powers : String
 	{field} +products : Set
@@ -624,13 +645,13 @@ class SpellEntityMapperImpl {
 
 
 class SpellList {
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +disableIf : String
 	{field} +notes : String
 	{field} +products : Set
 	{field} +spells : List
 	{field} +text : String
-	{field} +unlockingPerk : String
+	{field} +unlockingPerks : Set
 	{method} +getRawNotes () : String
 	{method} +getRawText () : String
 }
@@ -691,7 +712,7 @@ interface TagRepository {
 
 class Threat {
 	{field} +charisma : String
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +dexterity : String
 	{field} +equipment : List
 	{field} +mind : String
@@ -779,7 +800,7 @@ class ValueObjectMapperImpl {
 
 class Vehicle {
 	{field} +axiomTech : String
-	{field} +cosm : String
+	{field} +cosms : Set
 	{field} +maneuverRating : String
 	{field} +passengers : String
 	{field} +price : String

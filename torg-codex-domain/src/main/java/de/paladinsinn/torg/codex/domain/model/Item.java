@@ -39,7 +39,7 @@ public record Item(
     ClearanceLevel clearanceLevel,
     Set<String> products,
     String type,
-    String cosm,
+    Set<String> cosms,
     String axiomTech,
     String axiomMagic,
     String price,

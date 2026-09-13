@@ -34,9 +34,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public interface CosmRepository extends JpaRepository<Cosm, UUID> {
 
     Optional<Cosm> findByNameIgnoreCase(String name);
+
+    /**
+     * Looks up a cosm by its stable slug (e.g. {@code "living-land"}), which is the
+     * value entity tables use to reference their cosm.
+     *
+     * @param slug the cosm slug
+     * @return the matching cosm, if any
+     */
+    Optional<Cosm> findBySlug(String slug);
 
     List<Cosm> findByNameContainingIgnoreCase(String namePart);
 

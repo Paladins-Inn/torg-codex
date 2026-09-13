@@ -52,8 +52,10 @@ public class Item extends TorgEntity {
     @Column(length = 32)
     private String type;
 
-    @Column(length = 64)
-    private String cosm;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "torg_item_cosms", joinColumns = @JoinColumn(name = "item_id"))
+    @Column(name = "cosm", length = 128)
+    private Set<String> cosms = new HashSet<>();
 
     @Column(name = "axiom_tech", length = 8)
     private String axiomTech;

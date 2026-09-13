@@ -91,10 +91,6 @@
     </dependency>
     <dependency>
       <groupId>net.ttddyy.observation</groupId>
-      <artifactId>datasource-micrometer-opentelemetry</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>net.ttddyy.observation</groupId>
       <artifactId>datasource-micrometer-spring-boot</artifactId>
     </dependency>
 
@@ -197,6 +193,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.5.3</version>
         <configuration>
+          <!--suppress MavenModelInspection -->
           <argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
         </configuration>
       </plugin>
@@ -205,6 +202,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>3.5.3</version>
         <configuration>
+          <!--suppress MavenModelInspection -->
           <argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
         </configuration>
         <executions>

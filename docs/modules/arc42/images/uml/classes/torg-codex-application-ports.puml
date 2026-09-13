@@ -46,21 +46,21 @@ class CatalogReference {
 
 
 interface CatalogReferencePersistencePort {
-	{method}  {abstract} +findCosmByName ( name : String ) : Optional
+	{method}  {abstract} +findCosmBySlug ( slug : String ) : Optional
 	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method}  {abstract} +findPublicationsByProductId ( productId : int ) : List
 }
 
 
 interface CatalogReferenceQuery {
-	{method}  {abstract} +findCosmByName ( name : String ) : Optional
+	{method}  {abstract} +findCosmBySlug ( slug : String ) : Optional
 	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method}  {abstract} +findPublicationsByProductId ( productId : int ) : List
 }
 
 
 class CatalogReferenceQueryService {
-	{method} +findCosmByName ( name : String ) : Optional
+	{method} +findCosmBySlug ( slug : String ) : Optional
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
 }

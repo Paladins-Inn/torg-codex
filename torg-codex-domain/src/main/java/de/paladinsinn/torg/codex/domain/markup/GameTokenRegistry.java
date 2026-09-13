@@ -57,7 +57,7 @@ public final class GameTokenRegistry {
             Map.entry("dazing", "game-token-dazing"),
             Map.entry("fatigues", "game-token-fatigues"),
             Map.entry("head", "game-token-head")
-    );
+);
 
     private static final Set<String> KNOWN_TOKENS = TOKEN_CSS_CLASSES.keySet();
 

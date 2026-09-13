@@ -50,8 +50,10 @@ public class Threat extends TorgEntity {
     private Set<String> products = new HashSet<>();
 
     /** Slug id of the cosm this threat originates from. */
-    @Column(length = 64)
-    private String cosm;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "torg_threat_cosms", joinColumns = @JoinColumn(name = "threat_id"))
+    @Column(name = "cosm", length = 128)
+    private Set<String> cosms = new HashSet<>();
 
     /** Whether this is a unique named character (true) or a generic template (false). */
     @Column(nullable = false)
@@ -208,7 +210,7 @@ public class Threat extends TorgEntity {
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> render(e.getValue()),
-                        (a, b) -> b,
+                        (_, b) -> b,
                         LinkedHashMap::new
                 ));
     }

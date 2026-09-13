@@ -59,6 +59,31 @@ src/main/resources/db/
 | `.images.yml` | Images | Card deck image definitions
 |===
 
+== Multi-valued Catalog References
+
+Catalog entries may belong to zero, one, or several cosms. The domain and persistence
+models represent these assignments as sets of stable cosm slugs rather than encoded list
+strings. Miracle, power, and spell lists use the same set-based representation for their
+unlocking-perk slugs.
+
+The `cosm` query parameter remains singular and accepts a slug such as `core-earth`.
+An entry is returned when that slug is one member of its assigned set. In responses, a
+single known cosm retains its UUID and display name. Several cosms are exposed through the
+existing `cosm` object with `id = null` and alphabetically sorted display names joined by
+comma-space. Unknown slugs remain visible as raw values.
+
+The existing `unlockingPerk` response field also retains its type. One assignment remains
+one slug; several assignments are sorted and joined by comma-space. Unlike cosms, perk
+slugs are intentionally not resolved to display names.
+
+== Imported Prose Normalization
+
+Legacy imports may contain complete Python-style list literals in `additionalFeatures`,
+threat `quote`, or spell-list `notes`. The post-import Liquibase repair converts one
+statement to plain text and several statements to a source-ordered Markdown list.
+Malformed values, partial lists, and ordinary prose containing brackets remain unchanged.
+The resulting Markdown continues through the normal rendering and censoring pipeline.
+
 == Custom Markup Language
 
 The `text` fields use standard Markdown enriched with four custom markup constructs:

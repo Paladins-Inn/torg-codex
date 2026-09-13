@@ -5,6 +5,23 @@ spring:
     # noinspection SpringBootApplicationYaml
     description: "@project.description@"
 
+  datasource:
+    hikari:
+      minimum-idle: 1
+      maximum-pool-size: 4
+      validation-timeout: 30000
+      connection-test-query: "SELECT 1"
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+  jackson:
+    datatype:
+      enum:
+        write-enums-using-to-string: true
+        read-enums-using-to-string: true
+
 gg:
   jte:
     development-mode: true
@@ -14,3 +31,48 @@ logging:
     root: info
     de.paladinsinn: debug
     de.paladinsinn.torg.codex: trace
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
+
+management:
+  endpoint:
+    health:
+      group:
+        liveness:
+          include:
+          - livenessState
+          show-details: always
+        readiness:
+          include:
+          - readinessState
+          - db
+          - mail
+          show-details: always
+      probes:
+        enabled: true
+      show-details: always
+      validate-group-membership: false
+      cache:
+        time-to-live: 5s
+    info:
+      cache:
+        time-to-live: 5s
+    metrics:
+      cache:
+        time-to-live: 5s
+    loggers:
+      access: read_only
+  endpoints:
+    web:
+      discovery:
+        enabled: true
+      exposure:
+        include:
+          - info
+          - health
+          - metrics
+          - prometheus
+          - loggers
+          - logfile
+          - liquidbase
+          - hikari
+          - quartz

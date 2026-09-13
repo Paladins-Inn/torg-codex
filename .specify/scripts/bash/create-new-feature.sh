@@ -182,7 +182,7 @@ fit_branch_name() {
     local branch_name="${feature_num}-${branch_suffix}"
 
     if [ ${#branch_name} -gt $MAX_BRANCH_LENGTH ]; then
-        local prefix_length=$(( ${#feature_num} + 1 ))
+        local prefix_length=$((${#feature_num} + 1 ))
         local max_suffix_length=$((MAX_BRANCH_LENGTH - prefix_length))
         local truncated_suffix
         truncated_suffix=$(printf '%s' "$branch_suffix" | cut -c "1-$max_suffix_length" | sed 's/-$//')

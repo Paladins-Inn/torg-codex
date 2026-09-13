@@ -25,6 +25,7 @@
 
 package de.paladinsinn.torg.codex.data.repository;
 
+import de.paladinsinn.torg.codex.data.model.ClearanceLevel;
 import de.paladinsinn.torg.codex.data.model.Item;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public interface ItemRepository extends JpaRepository<Item, UUID> {
 
     Optional<Item> findByNameIgnoreCase(String name);
@@ -42,11 +44,13 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
 
     List<Item> findByType(String type);
 
-    List<Item> findByCosm(String cosm);
+    @Query("SELECT i FROM Item i WHERE :cosm MEMBER OF i.cosms")
+    List<Item> findByCosm(@Param("cosm") String cosm);
 
-    List<Item> findByClearanceLevel(String clearanceLevel);
+    List<Item> findByClearanceLevel(ClearanceLevel clearanceLevel);
 
-    List<Item> findByTypeAndCosm(String type, String cosm);
+    @Query("SELECT i FROM Item i WHERE i.type = :type AND :cosm MEMBER OF i.cosms")
+    List<Item> findByTypeAndCosm(@Param("type") String type, @Param("cosm") String cosm);
 
     @Query("SELECT i FROM Item i WHERE :product MEMBER OF i.products")
     List<Item> findByProduct(@Param("product") String product);

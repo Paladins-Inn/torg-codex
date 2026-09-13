@@ -52,8 +52,8 @@ public final class JpaCatalogReferenceAdapter implements CatalogReferencePersist
     }
 
     @Override
-    public Optional<CatalogReference> findCosmByName(String name) {
-        return cosmRepository.findByNameIgnoreCase(name).map(this::toReference);
+    public Optional<CatalogReference> findCosmBySlug(String slug) {
+        return cosmRepository.findBySlug(slug).map(this::toReference);
     }
 
     @Override

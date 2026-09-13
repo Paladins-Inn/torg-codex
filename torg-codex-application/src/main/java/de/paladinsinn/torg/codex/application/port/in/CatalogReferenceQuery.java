@@ -33,7 +33,13 @@ import java.util.Optional;
  */
 public interface CatalogReferenceQuery {
 
-    Optional<CatalogReference> findCosmByName(String name);
+    /**
+     * Resolves a cosm reference by its stable slug.
+     *
+     * @param slug the cosm slug used by entity references and API filters
+     * @return the reference carrying the cosm id and its display name, if found
+     */
+    Optional<CatalogReference> findCosmBySlug(String slug);
 
     Optional<CatalogReference> findPublicationByCodexId(String codexId);
 

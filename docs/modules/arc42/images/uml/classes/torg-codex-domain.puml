@@ -41,6 +41,7 @@ class Cosm {
 	{field} -id : UUID
 	{field} -name : String
 	{field} -products : Set
+	{field} -slug : String
 	{field} -text : String
 	{field} -worldLaws : String
 	{method} +axioms () : Map
@@ -50,6 +51,7 @@ class Cosm {
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +products () : Set
+	{method} +slug () : String
 	{method} +text () : String
 	{method} +toString () : String
 	{method} +worldLaws () : String
@@ -109,7 +111,7 @@ class Item {
 	{field} -axiomMagic : String
 	{field} -axiomTech : String
 	{field} -bonus : String
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -features : String
 	{field} -id : UUID
 	{field} -name : String
@@ -124,7 +126,7 @@ class Item {
 	{method} +axiomTech () : String
 	{method} +bonus () : String
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +equals ( o : Object ) : boolean
 	{method} +features () : String
 	{method} +hashCode () : int
@@ -167,7 +169,7 @@ class Miracle {
 
 
 class MiracleList {
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -disableIf : String
 	{field} -id : UUID
 	{field} -miracles : List
@@ -175,9 +177,9 @@ class MiracleList {
 	{field} -notes : String
 	{field} -products : Set
 	{field} -text : String
-	{field} -unlockingPerk : String
+	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -188,13 +190,13 @@ class MiracleList {
 	{method} +products () : Set
 	{method} +text () : String
 	{method} +toString () : String
-	{method} +unlockingPerk () : String
+	{method} +unlockingPerks () : Set
 }
 
 
 class Perk {
 	{field} -contradiction : boolean
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -group : String
 	{field} -id : UUID
 	{field} -name : String
@@ -203,7 +205,7 @@ class Perk {
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +contradiction () : boolean
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +equals ( o : Object ) : boolean
 	{method} +group () : String
 	{method} +hashCode () : int
@@ -266,7 +268,7 @@ class Power {
 
 
 class PowerList {
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -disableIf : String
 	{field} -id : UUID
 	{field} -name : String
@@ -274,9 +276,9 @@ class PowerList {
 	{field} -powers : List
 	{field} -products : Set
 	{field} -text : String
-	{field} -unlockingPerk : String
+	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -287,7 +289,7 @@ class PowerList {
 	{method} +products () : Set
 	{method} +text () : String
 	{method} +toString () : String
-	{method} +unlockingPerk () : String
+	{method} +unlockingPerks () : Set
 }
 
 
@@ -348,7 +350,7 @@ class Race {
 
 
 class Shard {
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -id : UUID
 	{field} -name : String
 	{field} -possibilities : String
@@ -359,7 +361,7 @@ class Shard {
 	{field} -tappingDifficulty : String
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -403,7 +405,7 @@ class Spell {
 
 
 class SpellList {
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -disableIf : String
 	{field} -id : UUID
 	{field} -name : String
@@ -411,9 +413,9 @@ class SpellList {
 	{field} -products : Set
 	{field} -spells : List
 	{field} -text : String
-	{field} -unlockingPerk : String
+	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -424,7 +426,7 @@ class SpellList {
 	{method} +spells () : List
 	{method} +text () : String
 	{method} +toString () : String
-	{method} +unlockingPerk () : String
+	{method} +unlockingPerks () : Set
 }
 
 
@@ -444,7 +446,7 @@ class Tag {
 
 class Threat {
 	{field} -charisma : String
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -dexterity : String
 	{field} -equipment : List
 	{field} -id : UUID
@@ -469,7 +471,7 @@ class Threat {
 	{field} -wounds : String
 	{method} +charisma () : String
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +dexterity () : String
 	{method} +equals ( o : Object ) : boolean
 	{method} +equipment () : List
@@ -500,7 +502,7 @@ class Threat {
 
 class Vehicle {
 	{field} -axiomTech : String
-	{field} -cosm : String
+	{field} -cosms : Set
 	{field} -id : UUID
 	{field} -maneuverRating : String
 	{field} -name : String
@@ -518,7 +520,7 @@ class Vehicle {
 	{field} -wounds : String
 	{method} +axiomTech () : String
 	{method} +clearanceLevel () : ClearanceLevel
-	{method} +cosm () : String
+	{method} +cosms () : Set
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID

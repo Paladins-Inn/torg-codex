@@ -35,10 +35,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = TorgMappingSupport.class)
 public interface VehicleMapper {
-    @Mapping(target = "cosm", source = "cosm")
+    @Mapping(target = "cosm", source = "cosms")
     @Mapping(target = "publications", source = "products")
     VehicleSummaryDto toSummary(Vehicle vehicle);
-    @Mapping(target = "cosm", source = "cosm")
+    @Mapping(target = "cosm", source = "cosms")
     @Mapping(target = "publications", source = "products")
     @Mapping(target = "text", qualifiedByName = "censorText")
     VehicleDetailDto toDetail(Vehicle vehicle, @Context Censor censor);
