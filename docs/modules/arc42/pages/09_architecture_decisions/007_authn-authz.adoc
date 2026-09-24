@@ -23,6 +23,7 @@ include::partial$config.adoc[]
 == Context
 We build Spring Boot (3.x) services that expose REST APIs to multiple clients (web, mobile, service-to-service).
 Requirements:
+
 - Centralized identity, SSO, and token-based access (OIDC/OAuth 2.1).
 - Coarse-grained **RBAC** (roles/groups) for default gating.
 - Fine-grained, per-record authorization with **owner-managed sharing** (ABAC-style).

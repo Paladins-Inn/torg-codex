@@ -15,7 +15,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
   jackson:
     datatype:
       enum:
@@ -34,6 +34,11 @@ logging:
     org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
 
 management:
+  tracing:
+    enabled: false
+    export:
+      otlp:
+        enabled: false
   endpoint:
     health:
       group:

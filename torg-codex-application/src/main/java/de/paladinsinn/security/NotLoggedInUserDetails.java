@@ -25,14 +25,14 @@
 
 package de.paladinsinn.security;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Represents an unauthenticated / anonymous visitor of the Torg Codex.
@@ -45,14 +45,14 @@ import org.springframework.security.core.userdetails.UserDetails;
  *
  * <ul>
  *   <li>{@link #getUsername()} → {@value #USERNAME}</li>
- *   <li>{@link #getOwnedCodexIds()} → {@code ["core-rulebook"]}</li>
+ *   <li>{@link #ownedCodexIds()} → {@code ["core-rulebook"]}</li>
  *   <li>{@link #getAuthorities()} → {@code [ROLE_core-rulebook]}</li>
  * </ul>
  *
  * <p>Use the pre-built singleton {@link #INSTANCE} wherever this principal is needed.</p>
  */
 @NullMarked
-public final class NotLoggedInUserDetails implements UserDetails {
+public final class NotLoggedInUserDetails implements UserDetails, DriveThruPublicationOwner {
 
     /** Display name shown for unauthenticated users. */
     public static final String USERNAME = "Not Logged In";
@@ -105,13 +105,8 @@ public final class NotLoggedInUserDetails implements UserDetails {
     // Torg Codex helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Returns a read-only list containing only {@value #FREE_PRODUCT_ID}.
-     *
-     * @return unmodifiable list of owned codex ids for anonymous users
-     */
-    @SuppressWarnings("unused")
-    public List<String> getOwnedCodexIds() {
+    @Override
+    public List<String> ownedCodexIds() {
         return OWNED_CODEX_IDS;
     }
 

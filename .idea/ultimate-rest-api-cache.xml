@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="UltimateRestApiCache">
+    <cachedApis>
+      <api method="GET" url="/api/cosms" className="de.paladinsinn.torg.codex.api.controller.CosmController" methodName="list" moduleName="torg-codex" />
+      <api method="GET" url="/api/cosms/{id}" className="de.paladinsinn.torg.codex.api.controller.CosmController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/items" className="de.paladinsinn.torg.codex.api.controller.ItemController" methodName="list" moduleName="torg-codex">
+        <params>
+          <param name="cosm" value="" type="QUERY" dataType="String" />
+        </params>
+      </api>
+      <api method="GET" url="/api/items/{id}" className="de.paladinsinn.torg.codex.api.controller.ItemController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/publications" className="de.paladinsinn.torg.codex.api.controller.PublicationController" methodName="list" moduleName="torg-codex" />
+      <api method="GET" url="/api/publications/{id}" className="de.paladinsinn.torg.codex.api.controller.PublicationController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/powers" className="de.paladinsinn.torg.codex.api.controller.PowerController" methodName="list" moduleName="torg-codex" />
+      <api method="GET" url="/api/powers/{id}" className="de.paladinsinn.torg.codex.api.controller.PowerController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/power-lists" className="de.paladinsinn.torg.codex.api.controller.PowerListController" methodName="list" moduleName="torg-codex">
+        <params>
+          <param name="cosm" value="" type="QUERY" dataType="String" />
+        </params>
+      </api>
+      <api method="GET" url="/api/power-lists/{id}" className="de.paladinsinn.torg.codex.api.controller.PowerListController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/perk-groups" className="de.paladinsinn.torg.codex.api.controller.PerkGroupController" methodName="list" moduleName="torg-codex" />
+      <api method="GET" url="/api/perk-groups/{id}" className="de.paladinsinn.torg.codex.api.controller.PerkGroupController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/perks" className="de.paladinsinn.torg.codex.api.controller.PerkController" methodName="list" moduleName="torg-codex">
+        <params>
+          <param name="cosm" value="" type="QUERY" dataType="String" />
+        </params>
+      </api>
+      <api method="GET" url="/api/perks/{id}" className="de.paladinsinn.torg.codex.api.controller.PerkController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/spells" className="de.paladinsinn.torg.codex.api.controller.SpellController" methodName="list" moduleName="torg-codex" />
+      <api method="GET" url="/api/spells/{id}" className="de.paladinsinn.torg.codex.api.controller.SpellController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/threats" className="de.paladinsinn.torg.codex.api.controller.ThreatController" methodName="list" moduleName="torg-codex">
+        <params>
+          <param name="cosm" value="" type="QUERY" dataType="String" />
+        </params>
+      </api>
+      <api method="GET" url="/api/threats/{id}" className="de.paladinsinn.torg.codex.api.controller.ThreatController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/vehicles" className="de.paladinsinn.torg.codex.api.controller.VehicleController" methodName="list" moduleName="torg-codex">
+        <params>
+          <param name="cosm" value="" type="QUERY" dataType="String" />
+        </params>
+      </api>
+      <api method="GET" url="/api/vehicles/{id}" className="de.paladinsinn.torg.codex.api.controller.VehicleController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/shards" className="de.paladinsinn.torg.codex.api.controller.ShardController" methodName="list" moduleName="torg-codex">
+        <params>
+          <param name="cosm" value="" type="QUERY" dataType="String" />
+        </params>
+      </api>
+      <api method="GET" url="/api/shards/{id}" className="de.paladinsinn.torg.codex.api.controller.ShardController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/tags" className="de.paladinsinn.torg.codex.api.controller.TagController" methodName="list" moduleName="torg-codex" />
+      <api method="GET" url="/api/tags/{id}" className="de.paladinsinn.torg.codex.api.controller.TagController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/articles" className="de.paladinsinn.torg.codex.api.controller.ArticleController" methodName="list" moduleName="torg-codex" />
+      <api method="GET" url="/api/articles/{id}" className="de.paladinsinn.torg.codex.api.controller.ArticleController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/spell-lists" className="de.paladinsinn.torg.codex.api.controller.SpellListController" methodName="list" moduleName="torg-codex">
+        <params>
+          <param name="cosm" value="" type="QUERY" dataType="String" />
+        </params>
+      </api>
+      <api method="GET" url="/api/spell-lists/{id}" className="de.paladinsinn.torg.codex.api.controller.SpellListController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/miracle-lists" className="de.paladinsinn.torg.codex.api.controller.MiracleListController" methodName="list" moduleName="torg-codex">
+        <params>
+          <param name="cosm" value="" type="QUERY" dataType="String" />
+        </params>
+      </api>
+      <api method="GET" url="/api/miracle-lists/{id}" className="de.paladinsinn.torg.codex.api.controller.MiracleListController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/miracles" className="de.paladinsinn.torg.codex.api.controller.MiracleController" methodName="list" moduleName="torg-codex" />
+      <api method="GET" url="/api/miracles/{id}" className="de.paladinsinn.torg.codex.api.controller.MiracleController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+      <api method="GET" url="/api/races" className="de.paladinsinn.torg.codex.api.controller.RaceController" methodName="list" moduleName="torg-codex" />
+      <api method="GET" url="/api/races/{id}" className="de.paladinsinn.torg.codex.api.controller.RaceController" methodName="getById" moduleName="torg-codex">
+        <params>
+          <param name="id" value="1" type="PATH" dataType="UUID" />
+        </params>
+      </api>
+    </cachedApis>
+  </component>
+</project>

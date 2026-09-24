@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="UltimateRestHistory">
+    <items>
+      <historyItem>
+        <option name="timestamp" value="1789303266069" />
+        <request url="http://localhost:8080/api/races/e9c72e4a-1bf1-48ee-ad61-c3b4a3c26ad8" />
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1789303230212" />
+        <request url="http://localhost:8080/api/races" />
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1789302403420" />
+        <request url="http://localhost:8080/api/articles/b3a08d46-d21c-48f4-a733-db747f9051f3" />
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1789302359788" />
+        <request url="http://localhost:8080/api/articles" />
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1789302287113" />
+        <request url="http://localhost:8080/api/cosms" />
+      </historyItem>
+    </items>
+  </component>
+</project>

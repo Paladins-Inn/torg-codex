@@ -55,7 +55,7 @@ import java.util.List;
  *                      product ID in the {@code torg_publication} table.</p>
  */
 public record DriveThruUserDetails(@ToString.Include DrivethruToken token,
-                                   List<String> ownedCodexIds) implements UserDetails {
+                                   List<String> ownedCodexIds) implements UserDetails, DriveThruPublicationOwner {
 
     private static final GrantedAuthority ROLE_USER =
             new SimpleGrantedAuthority("ROLE_DRIVETHRU_USER");
