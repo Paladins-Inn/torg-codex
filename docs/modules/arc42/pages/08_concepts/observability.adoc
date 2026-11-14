@@ -9,31 +9,36 @@ Logging captures structured or unstructured information about system events. In 
 
 === Technology: Spring Boot + JSON Logging
 
-* Use a logging framework such as `Logback` or `Log4j2` with a JSON encoder.
-* Example configuration using `Logback` in `logback-spring.xml`:
+Use Spring Boot native structured JSON logging, with Logback supplied by the
+standard Boot logging starter. A separate Logstash encoder dependency or custom
+encoder configuration must not be used. This replaces the former LogstashEncoder
+prescription; see xref:09_architecture_decisions/017_spring-boot-structured-logging.adoc[ADR-017].
 
-[source,xml]
-----
-<configuration>
-  <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
-  </appender>
+Production console configuration in `application.yml`:
 
-  <root level="INFO">
-    <appender-ref ref="JSON_CONSOLE" />
-  </root>
-</configuration>
+[source,yaml]
 ----
+logging:
+  structured:
+    format:
+      console: ecs
+----
+
+If file logging is enabled, also set `logging.structured.format.file: ecs`.
+Application logging continues to use Lombok `@Slf4j`. Fields supplied through
+`log.atWarn().addKeyValue(...)` must appear in emitted JSON. Verify serialized
+output under production logging configuration; capturing a Logback event alone
+does not prove that the configured output preserves structured fields.
 
 * Example log output:
 [source,json]
 ----
 {
-  "timestamp": "2025-04-13T12:34:56.789Z",
-  "level": "INFO",
-  "logger": "com.example.MyService",
+  "@timestamp": "2026-11-14T22:00:00Z",
+  "log.level": "INFO",
+  "log.logger": "com.example.MyService",
   "message": "User successfully created",
-  "userId": "12345"
+  "event.action": "user-created"
 }
 ----
 
@@ -104,7 +109,7 @@ The observability setup is composed of the following components:
 [cols="1,2",options="header"]
 |===
 | Component  | Technology
-| Logging    | Spring Boot + Logback + JSON
+| Logging    | Spring Boot native structured logging + Logback + ECS JSON
 | Monitoring | Spring Boot Actuator + Micrometer + Prometheus
 | Alerting   | Prometheus Alert Rules + Alertmanager
 |===

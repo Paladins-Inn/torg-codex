@@ -4,7 +4,7 @@
 :adr-expires: ./.
 :adr-author: klenkes74
 :adr-body: klenkes74
-:adr-seq: 012
+:adr-seq: 011
 :adr-short: ADR-{adr-seq}
 = {adr-short} -- {adr-title}
 include::partial$config.adoc[]
@@ -91,4 +91,3 @@ xref:08_concepts/db-migrations.adoc[Concept: Zero-Downtime Database Migrations].
 * The `db-updater` job must succeed before the new application version can be deployed, adding a hard dependency to the pipeline.
 
 <<<
-

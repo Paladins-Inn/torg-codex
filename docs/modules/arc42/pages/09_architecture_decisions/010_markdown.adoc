@@ -4,7 +4,7 @@
 :adr-expires: ./.
 :adr-author: klenkes74
 :adr-body: klenkes74
-:adr-seq: 011
+:adr-seq: 010
 :adr-short: ADR-{adr-seq}
 = {adr-short} -- {adr-title}
 include::partial$config.adoc[]

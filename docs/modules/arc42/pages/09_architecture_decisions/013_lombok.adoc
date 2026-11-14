@@ -4,7 +4,7 @@
 :adr-expires: ./.
 :adr-author: klenkes74
 :adr-body: klenkes74
-:adr-seq: 014
+:adr-seq: 013
 :adr-short: ADR-{adr-seq}
 = {adr-short} -- {adr-title}
 include::partial$config.adoc[]
@@ -87,7 +87,7 @@ We mandate the following usage:
 == Further Reading
 
 * xref:09_architecture_decisions/005_hexagonal-architecture.adoc[]
-* xref:09_architecture_decisions/015_mapstruct.adoc[]
+* xref:09_architecture_decisions/014_mapstruct.adoc[]
 * https://projectlombok.org/features/[Project Lombok Features]
 
 <<<

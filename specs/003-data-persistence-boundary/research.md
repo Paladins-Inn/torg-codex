@@ -8,7 +8,7 @@ Context are resolved here. No NEEDS CLARIFICATION items remain.
 
 ---
 
-## Decision 1 — ADR-016 physical code move status
+## Decision 1 — ADR-015 physical code move status
 
 **Question**: Has the physical relocation of `de.paladinsinn.security.*` and
 `de.paladinsinn.drivethru.*` from `torg-codex-data` to `torg-codex-application` already been
@@ -19,8 +19,8 @@ completed, or is it still pending?
 **Rationale**: Direct source scan of
 `torg-codex-data/src/main/java` contains zero files under `de/paladinsinn/security` or
 `de/paladinsinn/drivethru`. All 26 classes (10 in `de.paladinsinn.security`, 16 in
-`de.paladinsinn.drivethru`) are present in `torg-codex-application/src/main/java`. ADR-016
-(`docs/modules/arc42/pages/09_architecture_decisions/016_application-integration-boundaries.adoc`)
+`de.paladinsinn.drivethru`) are present in `torg-codex-application/src/main/java`. ADR-015
+(`docs/modules/arc42/pages/09_architecture_decisions/015_application-integration-boundaries.adoc`)
 is marked `Accepted` as of 2026-08-16.
 
 **Alternatives considered**: None — state-of-the-codebase determination, not a design choice.
@@ -119,7 +119,7 @@ No Spring bean from the Security or DriveThruRPG integration is wired by `@Enabl
 correct replacement assertions?
 
 **Decision**: Two tests are stale and must be replaced with assertions against the
-ADR-016-established package locations.
+ADR-015-established package locations.
 
 **Rationale**:
 
@@ -144,7 +144,7 @@ current codebase without any production code change.
 - *Suppress via FreezeList*: Rejected per FR-011. The stale assertion is a defect in the
   test, not in the code; it must be corrected at source.
 - *Rename test methods*: After replacement the old names no longer describe the assertion
-  accurately. The replacement methods use updated names that reflect the ADR-016 locations.
+  accurately. The replacement methods use updated names that reflect the ADR-015 locations.
 
 ---
 
@@ -381,7 +381,7 @@ dependency go?
   below." Adding `commonmark` is permitted — it is neither Spring nor JPA.
 - `torg-codex-domain` currently has no external library dependency beyond `jakarta.validation-api`
   and Lombok; adding `commonmark` is a minimal footprint increase.
-- Pre-existing discrepancy: ADR-011 specifies `flexmark-java` but the current codebase uses
+- Pre-existing discrepancy: ADR-010 specifies `flexmark-java` but the current codebase uses
   `commonmark`. This feature does NOT resolve the discrepancy (out of scope per spec 002
   Assumptions); the library travels with the class unchanged.
 

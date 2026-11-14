@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Verifies that {@link MarkupConfiguration} wires the framework-free
  * {@code de.paladinsinn.torg.codex.domain.markup} pipeline into a Spring context,
  * exposing the five processors and the aggregating {@link TorgMarkupService} as
- * injectable beans (ADR-017 framework-binding adapter pattern).
+ * injectable beans (ADR-016 framework-binding adapter pattern).
  */
 @SpringJUnitConfig(MarkupConfiguration.class)
 class MarkupConfigurationTest {

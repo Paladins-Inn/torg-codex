@@ -262,6 +262,6 @@ as a 5th unchanged method in `AdapterConventionArchitectureTest`).
 - Research findings (extended): [`research.md`](./research.md)
 - Feature 003 spec: [`spec.md`](./spec.md)
 - Feature 002 spec (consolidated reference): [`../002-markup-to-domain/spec.md`](../002-markup-to-domain/spec.md)
-- ADR-016: `docs/modules/arc42/pages/09_architecture_decisions/016_application-integration-boundaries.adoc`
-- ADR-011: `docs/modules/arc42/pages/09_architecture_decisions/011_markdown.adoc`
+- ADR-015: `docs/modules/arc42/pages/09_architecture_decisions/015_application-integration-boundaries.adoc`
+- ADR-010: `docs/modules/arc42/pages/09_architecture_decisions/010_markdown.adoc`
 - Freeze list: `specs/architecture-migration/freeze-list.md`

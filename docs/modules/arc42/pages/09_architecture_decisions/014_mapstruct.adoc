@@ -4,7 +4,7 @@
 :adr-expires: ./.
 :adr-author: klenkes74
 :adr-body: klenkes74
-:adr-seq: 015
+:adr-seq: 014
 :adr-short: ADR-{adr-seq}
 = {adr-short} -- {adr-title}
 include::partial$config.adoc[]
@@ -61,7 +61,7 @@ We mandate the following usage:
 
 * **Compile-Time Verified:** Mapping methods are generated and type-checked at build time; renamed or removed fields surface as compile errors instead of silent runtime bugs.
 * **Performance:** Generated mapping code is plain Java method calls with no reflection at runtime, unlike reflection-based mappers.
-* **Clean Layer Separation:** Keeps conversion logic in the adapters where it belongs, letting the domain module stay framework- and persistence-agnostic (ADR-005, ADR-014).
+* **Clean Layer Separation:** Keeps conversion logic in the adapters where it belongs, letting the domain module stay framework- and persistence-agnostic (ADR-005, ADR-013).
 * **Consistency:** Shared mapping configuration (`TorgMappingSupport`) avoids duplicated, drifting conversion rules across mappers.
 * **Low Maintenance:** Adding a field to a domain model or DTO typically requires no mapper code changes when property names match; MapStruct infers direct mappings automatically.
 
@@ -69,7 +69,7 @@ We mandate the following usage:
 
 * **Generated Code Location:** Generated mapper implementations are build artifacts (`target/generated-sources`); reviewers must inspect the mapper *interface* and its annotations, not hand-edit generated code.
 * **Explicit Mapping for Renames:** Fields with different names or nested/derived values require explicit `@Mapping` annotations, which must be kept up to date as models evolve.
-* **Build Tooling:** Requires the MapStruct annotation processor (and its interaction with Lombok's own annotation processor, see ADR-014) to be correctly ordered in the Maven build.
+* **Build Tooling:** Requires the MapStruct annotation processor (and its interaction with Lombok's own annotation processor, see ADR-013) to be correctly ordered in the Maven build.
 
 == Options
 
@@ -85,7 +85,7 @@ We mandate the following usage:
 == Further Reading
 
 * xref:09_architecture_decisions/005_hexagonal-architecture.adoc[]
-* xref:09_architecture_decisions/014_lombok.adoc[]
+* xref:09_architecture_decisions/013_lombok.adoc[]
 * https://mapstruct.org/documentation/stable/reference/html/[MapStruct Reference Guide]
 
 <<<

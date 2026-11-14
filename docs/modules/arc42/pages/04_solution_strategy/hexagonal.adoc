@@ -75,7 +75,7 @@ note right of torgapp
   de.paladinsinn.torg.codex.application..
   DriveThruRPG and API-key security are
   explicit framework-dependent integration
-  packages (ADR-016).
+  packages (ADR-015).
   No @Transactional in this module
   (TransactionBoundaryArchitectureTest).
 end note

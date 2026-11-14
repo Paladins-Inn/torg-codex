@@ -4,7 +4,7 @@ include::partial$config.adoc[]
 `torg-codex-data` ist die Datenschicht des {system}-Systems.
 Sie kapselt die Persistenz, die Daten- und Event-Adapter sowie die
 Markup-Verarbeitung. Die DriveThruRPG- und API-Key-Integration gehört gemäß
-ADR-016 zum `torg-codex-application`-Modul.
+ADR-015 zum `torg-codex-application`-Modul.
 
 == Übersichtsdiagramm
 

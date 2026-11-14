@@ -16,7 +16,7 @@ description: "Task list for 003-data-persistence-boundary (consolidates feature 
 - `[US1]`/`[US2]`/`[US3]` = maps to user story from spec.md
 
 **Critical starting-state invariants** *(do not undo concurrent/user worktree changes)*:
-- ADR-016 code move is **complete**: `de.paladinsinn.security.*` and `de.paladinsinn.drivethru.*` live exclusively in `torg-codex-application`.
+- ADR-015 code move is **complete**: `de.paladinsinn.security.*` and `de.paladinsinn.drivethru.*` live exclusively in `torg-codex-application`.
 - `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/markup/` **still exists** — Phase A (markup relocation) is pending.
 - `torg-codex-domain` has **no** `markup` package — Phase A is pending.
 - `DataPersistenceBoundaryArchitectureTest` **does not exist** — Phase B is pending.
@@ -88,9 +88,9 @@ The FR-010 markup carve-out in spec 003 becomes unnecessary only after this phas
 
 ---
 
-## Phase 4: User Story 2 — Architecture Tests Correctly Reflect ADR-016 Boundary (Priority: P1)
+## Phase 4: User Story 2 — Architecture Tests Correctly Reflect ADR-015 Boundary (Priority: P1)
 
-**Goal**: Replace the 2 stale `AdapterConventionArchitectureTest` methods that assert pre-ADR-016 package locations with accurate assertions matching the current `de.paladinsinn.drivethru.*` locations (FR-003; spec acceptance scenarios 1-3).
+**Goal**: Replace the 2 stale `AdapterConventionArchitectureTest` methods that assert pre-ADR-015 package locations with accurate assertions matching the current `de.paladinsinn.drivethru.*` locations (FR-003; spec acceptance scenarios 1-3).
 
 **Independent Test**: `./mvnw test -pl torg-codex -Dtest="AdapterConventionArchitectureTest"` — 5 methods, 0 failures (SC-004).
 
@@ -127,13 +127,13 @@ The FR-010 markup carve-out in spec 003 becomes unnecessary only after this phas
 **Purpose**: Record the markup-to-domain ownership decision via ADR and amend the constitution.
 These are governance commitments from plan Task A8 — they are **mandatory**, not optional.
 
-- [X] T020 Create ADR-017 at `docs/modules/arc42/pages/09_architecture_decisions/017_markup-domain-service.adoc` following the AsciiDoc structure and status keywords of existing ADRs (use `016_application-integration-boundaries.adoc` as template); status: `Accepted`; date: today; record: (a) markup-to-domain ownership decision supersedes Constitution v2.0.0 Principle I and Principle VI regarding markup assignment; (b) framework-binding adapter pattern — pure domain classes in `de.paladinsinn.torg.codex.domain.markup`, Spring `@Configuration` wiring at `de.paladinsinn.torg.codex.markup.spring.MarkupConfiguration` in `torg-codex-application`, following the same pattern as `de.paladinsinn.drivethru.*` and `de.paladinsinn.security.*`; (c) references specs/002-markup-to-domain/spec.md and specs/003-data-persistence-boundary/spec.md as motivation; (d) records that `commonmark:0.24.0` moves to `torg-codex-domain` — `docs/modules/arc42/pages/09_architecture_decisions/017_markup-domain-service.adoc` (new file)
+- [X] T020 Create ADR-016 at `docs/modules/arc42/pages/09_architecture_decisions/016_markup-domain-service.adoc` following the AsciiDoc structure and status keywords of existing ADRs (use `015_application-integration-boundaries.adoc` as template); status: `Accepted`; date: today; record: (a) markup-to-domain ownership decision supersedes Constitution v2.0.0 Principle I and Principle VI regarding markup assignment; (b) framework-binding adapter pattern — pure domain classes in `de.paladinsinn.torg.codex.domain.markup`, Spring `@Configuration` wiring at `de.paladinsinn.torg.codex.markup.spring.MarkupConfiguration` in `torg-codex-application`, following the same pattern as `de.paladinsinn.drivethru.*` and `de.paladinsinn.security.*`; (c) references specs/002-markup-to-domain/spec.md and specs/003-data-persistence-boundary/spec.md as motivation; (d) records that `commonmark:0.24.0` moves to `torg-codex-domain` — `docs/modules/arc42/pages/09_architecture_decisions/016_markup-domain-service.adoc` (new file)
 
-- [X] T021 Register ADR-017 in `docs/modules/arc42/pages/09_architecture_decisions/_include.adoc` (add include entry) and `_nav.adoc` (add nav entry) following the existing pattern for ADR-016 — `docs/modules/arc42/pages/09_architecture_decisions/_include.adoc`, `_nav.adoc` (2 files modified)
+- [X] T021 Register ADR-016 in `docs/modules/arc42/pages/09_architecture_decisions/_include.adoc` (add include entry) and `_nav.adoc` (add nav entry) following the existing pattern for ADR-015 — `docs/modules/arc42/pages/09_architecture_decisions/_include.adoc`, `_nav.adoc` (2 files modified)
 
 - [X] T022 Amend `.specify/memory/constitution.md` from v2.0.0 to v2.1.0 (MINOR — markup ownership redefined; no principle removed): (1) prepend a new Sync Impact Report comment block above the existing ones documenting the v2.0.0→v2.1.0 change (markup processing moves to `torg-codex-domain`); (2) in Principle I, update `torg-codex-data` must-not list and `torg-codex-application` ownership table — markup processing is now owned by `torg-codex-domain`, not `torg-codex-application`; (3) update Principle VI first sentence to say the markup pipeline is owned by `torg-codex-domain` (framework-free) with Spring bean wiring provided by `MarkupConfiguration` in `torg-codex-application`; (4) update the version footer from `2.0.0` to `2.1.0` and set Last Amended to today — `.specify/memory/constitution.md` (amended)
 
-**Checkpoint**: ADR-017 recorded and registered. Constitution at v2.1.0 reflecting markup ownership in `torg-codex-domain`. Governance deliverables complete.
+**Checkpoint**: ADR-016 recorded and registered. Constitution at v2.1.0 reflecting markup ownership in `torg-codex-domain`. Governance deliverables complete.
 
 ---
 
@@ -205,7 +205,7 @@ must be sequential as documented above.
 
 ### Within Phase 6 (Governance A8)
 
-1. T020 (create ADR-017) → T021 (register in _include and _nav) → T022 (amend constitution)
+1. T020 (create ADR-016) → T021 (register in _include and _nav) → T022 (amend constitution)
    (T020 can be done in parallel with Phase 3-5 user story work since it touches different files)
 
 ---
@@ -246,7 +246,7 @@ T017-T019 (US3: POM boundary verification)
 
 ```
 # Governance tasks touch docs and constitution only — no source code conflicts:
-T020-T022 (ADR-017 + constitution v2.1.0)  ||  T012-T019 (US1+US2+US3 phases)
+T020-T022 (ADR-016 + constitution v2.1.0)  ||  T012-T019 (US1+US2+US3 phases)
 ```
 
 ---
@@ -274,7 +274,7 @@ Phase 4 (US2) → Architecture test suite trustworthy (stale tests removed)
   ↓
 Phase 5 (US3) → POM boundary documented and verified
   ↓
-Phase 6 (Governance) → ADR-017 recorded, constitution v2.1.0 ratified
+Phase 6 (Governance) → ADR-016 recorded, constitution v2.1.0 ratified
   ↓
 Phase 7 → Full build verified clean (./mvnw clean verify GREEN)
 ```
@@ -297,7 +297,7 @@ Phase 7 → Full build verified clean (./mvnw clean verify GREEN)
 | **US2 (P1)**: Stale adapter location tests corrected | T015–T016 | 5 methods (2 corrected) | `./mvnw test -pl torg-codex -Dtest="AdapterConventionArchitectureTest"` |
 | **US3 (P2)**: POM boundary verifiable and clean | T017–T019 | n/a (dependency tree inspection) | `./mvnw dependency:tree -pl torg-codex-data \| grep -i security` |
 | **Foundational (Phase A)**: Markup relocation | T002–T011 | 6 unit tests moved; 1 new MarkupConfigurationTest | `./mvnw test -pl torg-codex-domain` |
-| **Governance (A8)**: ADR + constitution | T020–T022 | n/a (docs) | ADR-017 reviewed; constitution v2.1.0 ratified |
+| **Governance (A8)**: ADR + constitution | T020–T022 | n/a (docs) | ADR-016 reviewed; constitution v2.1.0 ratified |
 
 **Total tasks**: 25 (T001–T025)
 **Net new test files**: 2 (`DataPersistenceBoundaryArchitectureTest.java`, `MarkupConfigurationTest.java`)

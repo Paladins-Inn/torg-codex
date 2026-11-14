@@ -1,0 +1,65 @@
+:adr-title: Spring Boot Native Structured Logging
+:adr-state: Accepted
+:adr-date: 2026-11-14
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 017
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+Constitution v2.1.0 Principle VII prescribes structured JSON logging through
+`LogstashEncoder`. Spring Boot provides native structured logging, so a separate
+Logstash encoder dependency is unnecessary. The domain-level DRM feature needs
+warnings whose structured fields survive serialization into production logs.
+
+On 2026-11-14 the decision body explicitly approved Spring Boot native structured
+JSON logging, removal of Logstash-specific dependencies, and the corresponding
+constitution amendment. ADR-018 is reserved for multi-valued references;
+ADR-019 is reserved for domain-level DRM.
+
+== Decision
+
+Use Spring Boot native structured JSON logging with the built-in ECS format for
+production console output, configured through `logging.structured.format.console=ecs`.
+If file logging is enabled, configure its structured format through
+`logging.structured.format.file=ecs` as well.
+
+Continue using Lombok `@Slf4j` and the SLF4J fluent key-value API. Structured
+application fields must be present in emitted JSON, not only in in-memory log
+events. Logs must not disclose credentials or caller ownership data.
+
+Remove any Logstash-specific encoder dependencies and custom encoder configuration
+when implementing this decision; do not introduce them where absent. No external
+Logstash encoder is required to send the resulting JSON to an ingestion pipeline.
+
+This decision replaces the LogstashEncoder prescription in Principle VII.
+Constitution v3.0.0 records the incompatible change in required logging technology;
+the structured JSON requirement, monitoring, and alerting remain unchanged.
+
+== Consequences
+
+* Logging format configuration is owned by Spring Boot rather than a separate encoder.
+* Production JSON-output tests must verify required structured fields and exclusion
+  of sensitive caller data.
+* Existing ingestion pipelines must accept the ECS field names; the application
+  must not assume the former encoder's output schema.
+* The domain DRM implementation plan includes configuration, dependency inspection,
+  and emitted-output verification. Acceptance of this ADR does not assert that
+  runtime logging has already been configured.
+
+<<<

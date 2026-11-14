@@ -64,7 +64,7 @@ treatment, combining two `MEMBER OF` predicates.
 
 ---
 
-## R3: Migration strategy under ADR-012 (Expand / Migrate / Contract)
+## R3: Migration strategy under ADR-011 (Expand / Migrate / Contract)
 
 **Decision**: This feature ships **Expand + Migrate + Contract in a single deployment**, ordered in
 the consolidated changelog `data-fix-lists.yaml`. The legacy
@@ -194,7 +194,7 @@ MapStruct entity mappers map it by name; the web mappers call the updated `toCos
   the real cardinality; leaving `String cosm` in the domain would push the multi-value concern
   back into the adapters.
 - Domain modules stay free of Spring and JPA — a `Set<String>` introduces no dependency.
-- MapStruct handles `Set<String>` ↔ `Set<String>` without custom code (Principle I, ADR-015).
+- MapStruct handles `Set<String>` ↔ `Set<String>` without custom code (Principle I, ADR-014).
 
 **Alternatives considered**:
 
@@ -215,7 +215,7 @@ cosm and unlocking-perk references, the retained-field contract semantics, and t
 architecture-level implementation is merged. Changing the persistence cardinality of two core
 references across eleven aggregates, fixing the externally visible contract semantics of two fields,
 and introducing the first Java-backed changeset in the repository are all architecture-level.
-ADR-017 is the current highest number.
+ADR-016 is the current highest number.
 
 ---
 
@@ -305,7 +305,7 @@ break on the three mixed-quoting values. Getting this wrong silently rewrites pr
 and the damage is invisible in a diff of 97 rows. A real tokenizer that tracks the opening quote
 character and scans to its matching close is short, obvious, and unit-testable in isolation.
 
-This stays fully within ADR-012 and Principle IV: a `customChange` **is** a Liquibase changeset,
+This stays fully within ADR-011 and Principle IV: a `customChange` **is** a Liquibase changeset,
 tracked in `DATABASECHANGELOG` with a checksum like any other, and it runs inside the same
 `db-updater` execution.
 
@@ -366,7 +366,7 @@ verbatim, with no list marker. Zero statements become an empty value.
 - The single-statement case is the majority (44 of 93 item values) and a one-item bullet list reads
   as a formatting accident, which is why the user chose plain text for it.
 - Statement text is copied verbatim, so embedded markup and `<entity:...>` references keep working;
-  the markup pipeline resolves references *before* CommonMark runs (ADR-011), and a bullet list is
+  the markup pipeline resolves references *before* CommonMark runs (ADR-010), and a bullet list is
   ordinary CommonMark that the pipeline already renders.
 - The original order is preserved rather than sorted. Unlike cosm slugs, these are authored prose
   statements whose sequence carries meaning — a threat's two quotes are not interchangeable.

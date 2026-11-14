@@ -103,7 +103,7 @@ single statement. Unknown additional volume in the proprietary data set.
   The contract changeset MUST run after all migrate
   changesets within the same changelog so a failed backfill aborts before any column is dropped
   (FR-015). The prose repair is a `customChange` rather than SQL, but a `customChange` is still a
-  checksummed Liquibase changeset recorded in `DATABASECHANGELOG`, so ADR-012 is satisfied
+  checksummed Liquibase changeset recorded in `DATABASECHANGELOG`, so ADR-011 is satisfied
   (research R10).
 - **Principle V**: Product-ownership authorities, `ProductOwnershipResolver`, and
   `CurrentUserCensorFactory` are untouched. FR-012 makes it explicit that the number of assigned

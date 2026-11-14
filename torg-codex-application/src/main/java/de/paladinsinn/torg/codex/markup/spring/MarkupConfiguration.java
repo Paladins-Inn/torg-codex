@@ -36,7 +36,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Spring framework-binding adapter for the framework-free markup pipeline owned by
- * {@code de.paladinsinn.torg.codex.domain.markup} (ADR-017).
+ * {@code de.paladinsinn.torg.codex.domain.markup} (ADR-016).
  *
  * <p>The domain markup classes are pure POJOs with no Spring annotations. This
  * configuration wires them into the application context as beans, following the same

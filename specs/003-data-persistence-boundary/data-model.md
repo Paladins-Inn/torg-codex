@@ -76,8 +76,8 @@ source (`DomainPurityArchitectureTest` enforces this).
 
 | Prohibited pattern | Reason | Enforcing rule |
 |---|---|---|
-| `de.paladinsinn.security.*` | Security integration — owned by `torg-codex-application` (ADR-016) | `dataMustNotReferenceSecurityIntegrationClasses` |
-| `de.paladinsinn.drivethru.*` | DriveThruRPG integration — owned by `torg-codex-application` (ADR-016) | `dataMustNotReferenceDriveThruRpgIntegrationClasses` |
+| `de.paladinsinn.security.*` | Security integration — owned by `torg-codex-application` (ADR-015) | `dataMustNotReferenceSecurityIntegrationClasses` |
+| `de.paladinsinn.drivethru.*` | DriveThruRPG integration — owned by `torg-codex-application` (ADR-015) | `dataMustNotReferenceDriveThruRpgIntegrationClasses` |
 | `org.springframework.security.*` | Spring Security framework classes | `dataMustNotImportSpringSecurityFrameworkClasses` |
 
 **Note**: The `markup` package is no longer permitted or present after Phase A. No carve-out
@@ -85,7 +85,7 @@ source (`DomainPurityArchitectureTest` enforces this).
 
 ---
 
-### Adapter Location Model (post-ADR-016, unchanged by this feature)
+### Adapter Location Model (post-ADR-015, unchanged by this feature)
 
 | Class | Module | Package | Enforcing test |
 |---|---|---|---|

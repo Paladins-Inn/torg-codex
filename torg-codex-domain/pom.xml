@@ -72,7 +72,7 @@
       <artifactId>jakarta.validation-api</artifactId>
     </dependency>
 
-    <!-- Markup pipeline (relocated from torg-codex-data per ADR-017): the domain markup
+    <!-- Markup pipeline (relocated from torg-codex-data per ADR-016): the domain markup
          classes use commonmark for Markdown-to-HTML rendering. Production (compile) scope. -->
     <dependency>
       <groupId>org.commonmark</groupId>

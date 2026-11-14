@@ -1,6 +1,27 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 2.1.0 -> 3.0.0 (MAJOR: required logging technology replaced)
+
+Modified principles:
+- VII. Production Observability & Quality Standards
+  - Replace LogstashEncoder with Spring Boot native structured JSON logging.
+  - Remove Logstash-specific encoder dependencies and configuration.
+  - Preserve structured application fields in emitted JSON.
+
+Added sections: none
+Removed sections: none
+
+Authority: Explicit user approval on 2026-11-14, recorded in accepted ADR-017.
+The observability concept is synchronized with ADR-017. Runtime configuration,
+dependency inspection/removal where needed, and JSON-output tests are implementation
+work tracked in specs/005-domain-drm-enforcement/tasks.md.
+Follow-up TODOs: none.
+-->
+
+<!--
+Sync Impact Report
+==================
 Version change: 2.0.0 -> 2.1.0 (MINOR: markup ownership redefined; no principle removed)
 
 Modified principles:
@@ -24,7 +45,7 @@ specs/003-data-persistence-boundary as Phase A) the pipeline is relocated to
 recreated by a framework-binding `@Configuration` in `torg-codex-application`, following the
 same pattern as the `de.paladinsinn.drivethru.*` and `de.paladinsinn.security.*`
 integrations. This supersedes the markup assignment in v2.0.0 Principle I and VI without
-removing or redefining any principle, so a MINOR bump applies. See ADR-017.
+removing or redefining any principle, so a MINOR bump applies. See ADR-016.
 
 Follow-up TODOs: none
 -->
@@ -123,7 +144,7 @@ Removed sections:
 
 Rationale: The concrete `de.paladinsinn.drivethru` and `de.paladinsinn.security`
 packages were moved from `torg-codex-data` to `torg-codex-application` while preserving
-their fully qualified names and public APIs. ADR-016 records the boundary decision.
+their fully qualified names and public APIs. ADR-015 records the boundary decision.
 -->
 
 # TORG-CODEX Constitution
@@ -133,7 +154,7 @@ their fully qualified names and public APIs. ADR-016 records the boundary decisi
 ### I. Hexagonal Architecture & Clean Ports
 Business and domain logic MUST remain at the center of the system, decoupled from framework, database, and transport concerns (ADR-005, concept: hexagonal-architecture).
 - Domain modules MUST NOT depend on the Spring Framework or JPA.
-- Domain objects SHOULD use Lombok (including Lombok constructors like `@AllArgsConstructor`, `@Builder`, etc.), `@Slf4j` for logging, and `@EqualsAndHashCode`/`@ToString`/`@Getter` to minimize boilerplate (ADR-014). JPA entities MUST restrict `@EqualsAndHashCode` to the identity field only (`onlyExplicitlyIncluded = true`).
+- Domain objects SHOULD use Lombok (including Lombok constructors like `@AllArgsConstructor`, `@Builder`, etc.), `@Slf4j` for logging, and `@EqualsAndHashCode`/`@ToString`/`@Getter` to minimize boilerplate (ADR-013). JPA entities MUST restrict `@EqualsAndHashCode` to the identity field only (`onlyExplicitlyIncluded = true`).
 - Bean validation MUST be used outside of constructors (e.g., in domain services, use cases, or dedicated factory methods) rather than directly in the domain constructors.
 - Separate models MUST be used for persistence (JPA entities) and the Domain core.
 - Application services expose use cases through ports (interfaces).
@@ -141,7 +162,7 @@ Business and domain logic MUST remain at the center of the system, decoupled fro
 - Adapters translate between external protocols and domain ports. REST controllers are inbound adapters; Persistence implementations are outbound adapters.
 - Dependencies MUST always point inward toward the domain/application core.
 - Module boundaries MUST be enforceable through automated architecture tests.
-- Mapping between layers (Domain <-> DTOs, Domain <-> JPA Entities) MUST be done using MapStruct (`componentModel = "spring"`), placed in the adapter package that performs the conversion, never inside domain modules (ADR-015).
+- Mapping between layers (Domain <-> DTOs, Domain <-> JPA Entities) MUST be done using MapStruct (`componentModel = "spring"`), placed in the adapter package that performs the conversion, never inside domain modules (ADR-014).
 - `torg-codex-data` MUST contain persistence concerns only: JPA entities and repositories, Liquibase migrations, and persistence adapters. It MUST NOT contain markup, security, or DriveThruRPG integration. Markup processing MUST be housed in `torg-codex-domain` (framework-free); security and DriveThruRPG integration MUST be housed in `torg-codex-application`.
 
 ### II. Self-Contained Systems & Asynchronous Integration
@@ -157,31 +178,36 @@ All synchronous APIs exposed by the application MUST be implemented as classic R
 - API versioning MUST follow media-type content negotiation in HTTP headers using IANA PEN `33132` (`application/vnd.1.3.6.1.4.1.33132.1.v<version>+<format>`); URLs remain clean (ADR-008).
 
 ### IV. Zero-Downtime Evolutionary Database Migrations
-Database schema changes MUST follow the Parallel Change / Expand-and-Contract pattern to ensure non-disruptive rolling updates and canary deployments (ADR-004, ADR-012, concept: db-migrations).
+Database schema changes MUST follow the Parallel Change / Expand-and-Contract pattern to ensure non-disruptive rolling updates and canary deployments (ADR-004, ADR-011, concept: db-migrations).
 - Breaking schema changes MUST be split across separate deployments: Phase 1 (Expand with nullable/default fields) -> Phase 2 (Migrate/backfill) -> Phase 3 (Contract/drop old structures).
 - Migrations MUST be defined as Liquibase changesets under `torg-codex-data/src/main/resources/db` with naming format `<ISO-date>-<sequence>-<phase>` (e.g., `2024-06-01-001-expand`).
 - Applied Liquibase changesets MUST NEVER be altered.
 - Application runtime runs with `ddl-auto: validate`; schema modifications are executed exclusively by `db-updater` prior to application rollouts.
 
 ### V. Multi-Tier Security, DRM Censorship & Data Protection
-Security combines centralized identity, role-based access, fine-grained attribute control, and DRM content censorship (ADR-007, ADR-010, concepts: rbac, abac, data-protection).
+Security combines centralized identity, role-based access, fine-grained attribute control, and DRM content censorship (ADR-007, ADR-009, concepts: rbac, abac, data-protection).
 - Identity management uses Keycloak OIDC (JWT); coarse gating is handled via Spring Security RBAC roles (`Player`, `GM`, `Third Party Systems`, `Orga`, `Judge`, `Admin`).
 - Fine-grained object permissions and DRM use ABAC / UMA 2.0 scope-based permissions per resource type.
 - Security integration and content rendering MUST be housed in `torg-codex-application`. Content rendering MUST be censored based on product ownership authorities (`ROLE_<codex-id>`) present as Spring Security `GrantedAuthority` entries in the current `SecurityContext`. Repository queries, entities, controllers, and mappers MUST NOT bypass censoring.
 - There MUST be exactly one authorization mechanism that derives product ownership for censoring/gated-content rendering across the entire application. This mechanism MUST resolve ownership from `ROLE_<codex-id>` `GrantedAuthority` entries in the current `SecurityContext`, independent of the authentication method or principal type (API key, OIDC, or any other) used to establish that context. Deriving ownership from a principal-type-specific lookup (e.g., a single authentication-provider's user-details object) instead of, or in addition to, the shared `ROLE_<codex-id>`-authority mechanism is prohibited. Parallel or duplicate censoring/ownership-resolution implementations (e.g., two unrelated services each deciding product ownership differently) MUST NOT coexist; any newly discovered duplicate MUST be consolidated into the single authorized mechanism as a priority fix, not left as parallel dead or partially-wired code.
 - Automated tests verifying censored/gated content MUST assert on an actual difference in rendered output between at least two distinct ownership states (e.g., anonymous vs. an authenticated owner of the relevant product) for content that is known to contain product-gated markup. Tests that only assert byte-for-byte equality between such variants without ever exercising a case where the two states are expected to differ MUST NOT be treated as proof that role-based censoring functions correctly.
-- Sensitive fields at rest MUST be encrypted application-side using JPA `AttributeConverter` (ADR-010).
+- Sensitive fields at rest MUST be encrypted application-side using JPA `AttributeConverter` (ADR-009).
 - Data privacy rules MUST be strictly enforced: external IdP identity tuples map to UUIDs, 3-year account retention post-closure, and audit trails preserved for account lifetimes.
 
 ### VI. Deterministic Markdown Pipeline & Template Safety
-Content is authored and stored as Markdown and rendered server-side by the `torg-codex-domain` markup pipeline (framework-free), with Spring bean wiring provided by `MarkupConfiguration` (`de.paladinsinn.torg.codex.markup.spring`) in `torg-codex-application`, with strict sanitization and order (ADR-011, ADR-017, concept: jte-with-markdown).
+Content is authored and stored as Markdown and rendered server-side by the `torg-codex-domain` markup pipeline (framework-free), with Spring bean wiring provided by `MarkupConfiguration` (`de.paladinsinn.torg.codex.markup.spring`) in `torg-codex-application`, with strict sanitization and order (ADR-010, ADR-016, concept: jte-with-markdown).
 - Parsing and rendering MUST use `flexmark-java` followed by OWASP Java HTML Sanitizer before caching.
 - Templates (JTE) receive pre-sanitized safe HTML attributes. Raw unsanitized HTML input from users MUST NEVER be rendered unescaped.
 - Markup rendering order MUST be maintained: conditional product blocks -> entity references -> raw HTML -> game tokens -> CommonMark.
 
 ### VII. Production Observability & Quality Standards
 Production systems MUST expose standard observability hooks across three pillars: Logging, Monitoring, and Alerting (concept: observability).
-- Logging: Structured JSON logs using LogstashEncoder for automated ingestion.
+- Logging: Production logs MUST use Spring Boot native structured JSON logging for
+  automated ingestion (ADR-017), with ECS console output configured through
+  `logging.structured.format.console=ecs`. Enabled file logging MUST also use the
+  native structured format. SLF4J structured application fields MUST be preserved
+  in emitted JSON. Logstash-specific encoder dependencies and configuration MUST
+  be removed rather than added or retained.
 - Monitoring: Spring Boot Actuator with Micrometer publishing metrics to `/actuator/prometheus`.
 - Alerting: Metric-based thresholds via Prometheus alerting rules and Alertmanager.
 
@@ -189,7 +215,7 @@ Production systems MUST expose standard observability hooks across three pillars
 All new features, schema updates, external integrations, and bug fixes MUST include automated test coverage (JUnit 5, AssertJ, Mockito).
 - Unit tests run with `./mvnw test`.
 - Integration tests (`*IT`) MUST run against real PostgreSQL instances via Testcontainers under Failsafe (`./mvnw clean verify`).
-- External HTTP service testing (such as DriveThruRPG client and remote APIs) MUST use **WireMock**, supporting both **annotation-based configuration** (`@AutoConfigureWireMock`, `@WireMockTest`) and **file-based configuration** (declarative stub mappings in `src/test/resources/mappings` and body fixtures in `src/test/resources/__files`) (ADR-013, concept: wiremock).
+- External HTTP service testing (such as DriveThruRPG client and remote APIs) MUST use **WireMock**, supporting both **annotation-based configuration** (`@AutoConfigureWireMock`, `@WireMockTest`) and **file-based configuration** (declarative stub mappings in `src/test/resources/mappings` and body fixtures in `src/test/resources/__files`) (ADR-012, concept: wiremock).
 - Git sign-off is required for all contributions in accordance with `CONTRIBUTING.md`.
 
 ## Additional Constraints & Architecture Decisions
@@ -222,4 +248,4 @@ All new features, schema updates, external integrations, and bug fixes MUST incl
 - Amendments require an approved Architecture Decision Record (ADR) and updates to `docs/modules/arc42`.
 - All PRs, code reviews, and AI-generated plans MUST verify compliance with this constitution.
 
-**Version**: 2.1.0 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-08-16
+**Version**: 3.0.0 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-11-14

@@ -81,9 +81,9 @@ required — Eclipse Temurin 25.0.3 used locally, confirmed by plan/001 research
 | **III. Standardized REST APIs & OpenAPI Contracts** | **PASS** | Zero API behavior changes. All 17 catalog endpoint responses identical before and after: `render()` pipeline order preserved (conditional blocks → entity refs → raw HTML → game tokens → CommonMark); `Censor.apply()` logic unchanged; `CurrentUserCensorFactory.create()` behavior unchanged. |
 | **IV. Zero-Downtime Evolutionary DB Migrations** | **N/A** | No schema, JPA entity field, repository, or Liquibase changeset changes. |
 | **V. Multi-Tier Security, DRM Censorship & Data Protection** | **PASS** | The `CurrentUserCensorFactory` → `ProductOwnershipResolver` → `Censor` censoring chain is preserved exactly. Import paths change (`data.markup` → `domain.markup`) but no behavioral change. `CensoringSingleMechanismArchitectureTest` (all 4 tests) continues to pass: `CurrentUserCensorFactory` is still the sole dependency on `ProductOwnershipResolver`; `GrantedAuthority` derivation remains confined to `api.security`. Censoring behavior for product-gated content (`<IF:id>`, `<IF:!id>`) unchanged. Security and DriveThruRPG remain in `torg-codex-application`. |
-| **VI. Deterministic Markdown Pipeline & Template Safety** | **PASS (with noted amendment)** | Pipeline order preserved exactly. Constitution v2.0.0 Principle VI says pipeline belongs in `torg-codex-application`; user authority moves it to `torg-codex-domain`. Constitution amendment is a Task A8 deliverable. Pre-existing acknowledged gaps (OWASP HTML Sanitizer absent; `commonmark` instead of `flexmark-java` per ADR-011) are out of scope for this feature, unchanged, and carry no FreezeList entry. |
+| **VI. Deterministic Markdown Pipeline & Template Safety** | **PASS (with noted amendment)** | Pipeline order preserved exactly. Constitution v2.0.0 Principle VI says pipeline belongs in `torg-codex-application`; user authority moves it to `torg-codex-domain`. Constitution amendment is a Task A8 deliverable. Pre-existing acknowledged gaps (OWASP HTML Sanitizer absent; `commonmark` instead of `flexmark-java` per ADR-010) are out of scope for this feature, unchanged, and carry no FreezeList entry. |
 | **VII. Production Observability & Quality Standards** | **N/A** | No new operational surface. |
-| **VIII. Test-First & Integration Verification (NON-NEGOTIABLE)** | **PASS** | All 6 markup unit tests migrate to `torg-codex-domain` and remain Spring-context-free. New `DataPersistenceBoundaryArchitectureTest` enforces the data boundary. Two corrected `AdapterConventionArchitectureTest` methods guard ADR-016 locations. `./mvnw clean verify` must pass at every incremental phase boundary. |
+| **VIII. Test-First & Integration Verification (NON-NEGOTIABLE)** | **PASS** | All 6 markup unit tests migrate to `torg-codex-domain` and remain Spring-context-free. New `DataPersistenceBoundaryArchitectureTest` enforces the data boundary. Two corrected `AdapterConventionArchitectureTest` methods guard ADR-015 locations. `./mvnw clean verify` must pass at every incremental phase boundary. |
 
 **Post-Phase-1 re-check**: PASS — all architecture tests pass on the redesigned package layout:
 - `DomainPurityArchitectureTest.domainContainsNoSpringOrJpaImports` passes because Spring annotations (`@Service`, `@Component`) are stripped from relocated markup classes; `commonmark` has no Spring or JPA coupling.
@@ -317,7 +317,7 @@ Expected: all GREEN. Any failure at this step must be resolved before proceeding
 The following are named tasks for the implementation phase (`tasks.md`) — they are governance
 commitments, not optional:
 
-1. **New ADR** (ADR-017 or next available number): records the markup-to-domain ownership
+1. **New ADR** (ADR-016 or next available number): records the markup-to-domain ownership
    decision; states this supersedes constitution v2.0.0 Principle I and Principle VI markup
    assignments; specifies the framework-binding adapter pattern (`MarkupConfiguration` in
    `torg-codex-application`); references both spec 002 and spec 003 as motivation.

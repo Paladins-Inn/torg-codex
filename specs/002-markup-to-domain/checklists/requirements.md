@@ -35,6 +35,6 @@
 ## Notes
 
 - FR-009 references the `commonmark` library by name because it is an existing fact about the codebase (the library is already in use), not an implementation prescription — it records that the library moves with the class, not that a specific library must be chosen anew.
-- The spec deliberately defers two pre-existing gaps (ADR-011 library discrepancy; absent OWASP sanitizer step) as out of scope; both are recorded in the Assumptions section to prevent them from being silently forgotten.
+- The spec deliberately defers two pre-existing gaps (ADR-010 library discrepancy; absent OWASP sanitizer step) as out of scope; both are recorded in the Assumptions section to prevent them from being silently forgotten.
 - FR-012 and FR-013 capture the governance deliverables (new ADR + constitution amendment) required because this feature corrects the constitution v2.0.0 module ownership assignment for markup; these are spec-level requirements, not implementation details.
 - Items marked incomplete require spec updates before `/speckit.clarify` or `/speckit.plan`.

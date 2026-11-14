@@ -5,7 +5,7 @@
 
 This contract defines the invariants enforced by the architecture test classes introduced or
 updated by this feature. It is the machine-verifiable expression of constitution Principle I's
-module ownership rule and ADR-016's accepted module boundary, extended to cover the markup
+module ownership rule and ADR-015's accepted module boundary, extended to cover the markup
 relocation required by the feature 002 consolidation.
 
 ---
@@ -100,8 +100,8 @@ DriveThruRpgProductAdapter must exist under drivethru.adapter.out.http
 as the outbound HTTP adapter for the DriveThruRPG product catalog
 ```
 
-**Pre-ADR-016 (stale)**: `de.paladinsinn.torg.codex.data.adapter.out.http`
-**Post-ADR-016 (correct)**: `de.paladinsinn.drivethru.adapter.out.http`
+**Pre-ADR-015 (stale)**: `de.paladinsinn.torg.codex.data.adapter.out.http`
+**Post-ADR-015 (correct)**: `de.paladinsinn.drivethru.adapter.out.http`
 
 **Test host**: `AdapterConventionArchitectureTest`
 **Test method**: `driveThruRpgOutboundAdapterLivesUnderDriveThruAdapterOutHttp`
@@ -117,8 +117,8 @@ SpringDomainEventPublisherAdapter must exist under drivethru.adapter.out.event
 as the outbound bridge from torg-codex-domain events to Spring's ApplicationEventPublisher
 ```
 
-**Pre-ADR-016 (stale)**: `de.paladinsinn.torg.codex.data.adapter.out.event`
-**Post-ADR-016 (correct)**: `de.paladinsinn.drivethru.adapter.out.event`
+**Pre-ADR-015 (stale)**: `de.paladinsinn.torg.codex.data.adapter.out.event`
+**Post-ADR-015 (correct)**: `de.paladinsinn.drivethru.adapter.out.event`
 
 **Test host**: `AdapterConventionArchitectureTest`
 **Test method**: `domainEventBridgeOutboundAdapterLivesUnderDriveThruAdapterOutEvent`

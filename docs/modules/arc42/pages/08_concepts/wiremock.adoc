@@ -5,7 +5,7 @@ include::partial$config.adoc[]
 ====
 Testing integrations with external HTTP services (e.g., DriveThruRPG API, third-party authentication or REST providers) requires deterministic, isolated, and fast test execution.
 Kaiserpfalz EDV-Service uses WireMock by default for all HTTP mocking ({co002}).
-Our {adr-013} documents our decision to adopt WireMock using both annotation-based and file-based configuration modes.
+Our {adr-012} documents our decision to adopt WireMock using both annotation-based and file-based configuration modes.
 ====
 
 *WireMock* is an HTTP mock server and API test library for Java and other languages. It allows developers to simulate HTTP-based APIs by defining request matching rules and stubbing corresponding responses.
@@ -141,4 +141,4 @@ WireMock tests run seamlessly alongside JUnit 5 and Testcontainers during `./mvn
 
 * https://wiremock.org/docs/[WireMock Official Documentation]
 * https://docs.spring.io/spring-cloud-contract/docs/current/reference/html/project-features.html#features-wiremock[Spring Cloud Contract WireMock]
-* {adr-013}
+* {adr-012}
