@@ -72,4 +72,9 @@ public record Threat(
     public EntityType entityType() {
         return EntityType.THREAT;
     }
+
+    @Override
+    public Set<String> cosmSlugs() {
+        return CatalogEntry.normalizeSlugs(cosms);
+    }
 }

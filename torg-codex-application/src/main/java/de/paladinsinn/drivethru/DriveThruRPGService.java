@@ -36,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -76,12 +77,19 @@ public class DriveThruRPGService {
      */
     @Cacheable("drivethru.token")
     public DrivethruToken getToken(final String apiKey) throws NoValidTokenException {
-        log.trace("Loading access token. apiKey='{}'", apiKey);
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new NoValidTokenException();
+        }
+        log.trace("Loading DriveThruRPG access token.");
 
-        final LinkedHashMap<String, String> response =
-            client.getToken("Bearer " + apiKey)
+        final LinkedHashMap<String, String> response;
+        try {
+            response = client.getToken("Bearer " + apiKey)
                     .getData()
-                    .orElseThrow(() -> new NoValidTokenException(apiKey));
+                    .orElseThrow(NoValidTokenException::new);
+        } catch (final HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
+            throw new NoValidTokenException();
+        }
 
         final LocalDateTime serverTime = parse(response.get("server_time"));
         final LocalDateTime expireTime = parse(response.get("expires"));
@@ -155,8 +163,8 @@ public class DriveThruRPGService {
     public List<OwnedProduct> getOwnedProducts(
             final String apiKey, final int page, final int pageSize, final int archived)
             throws NoValidTokenException {
-        log.trace("Retrieving owned products. apiKey={}, page={}, pageSize={}, archived={}",
-                apiKey, page, pageSize, archived);
+        log.trace("Retrieving owned products. page={}, pageSize={}, archived={}",
+                page, pageSize, archived);
         //noinspection SpringCacheableMethodCallsInspection
         final DrivethruToken token = getToken(apiKey);
         return getOwnedProducts(token, page, pageSize, archived);

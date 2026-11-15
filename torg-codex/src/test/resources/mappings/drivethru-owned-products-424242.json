@@ -1,0 +1,29 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v1/customers/424242/products",
+    "headers": {
+      "Authorization": {
+        "equalTo": "Bearer wiremock-jwt-bearer-token-777"
+      }
+    },
+    "queryParameters": {
+      "page": {
+        "equalTo": "1"
+      },
+      "page_size": {
+        "equalTo": "1000"
+      },
+      "include_archived": {
+        "equalTo": "0"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "bodyFileName": "drivethru/owned-products-424242-response.json"
+  }
+}

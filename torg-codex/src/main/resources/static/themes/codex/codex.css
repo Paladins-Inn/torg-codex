@@ -1,0 +1,72 @@
+/*
+ * Torg Codex Reader Theme (ADR-020, feature 006-codex-web-ui)
+ * Scoped exclusively to the reader-facing codex UI (codex/layout/page.jte).
+ */
+:root {
+    --codex-brand-bg: #1b2432;
+    --codex-brand-accent: #c99a3e;
+    --codex-surface-subtle: #f7f8fa;
+}
+
+body.codex-reader-theme {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--codex-surface-subtle);
+}
+
+.codex-navbar {
+    background-color: var(--codex-brand-bg);
+    border-bottom: 3px solid var(--codex-brand-accent);
+}
+
+.codex-main {
+    flex: 1 0 auto;
+}
+
+/* Clearance level Greek symbol badge */
+.clearance-badge {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+    min-width: 1.75rem;
+    display: inline-block;
+    text-align: center;
+}
+
+/* Torg Eternity Cosm badges */
+.badge-cosm {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+.badge-cosm-aysle { background-color: #2b5b84; color: #ffffff; }
+.badge-cosm-core-earth { background-color: #2e6f40; color: #ffffff; }
+.badge-cosm-cyberpapacy { background-color: #6f2da8; color: #ffffff; }
+.badge-cosm-living-land { background-color: #4f772d; color: #ffffff; }
+.badge-cosm-nile-empire { background-color: #b5830e; color: #111111; }
+.badge-cosm-orrorsh { background-color: #6b1d1d; color: #ffffff; }
+.badge-cosm-pan-pacifica { background-color: #0d7377; color: #ffffff; }
+.badge-cosm-tharkold { background-color: #3d3d3d; color: #f5b700; }
+.badge-cosm-universal { background-color: #495057; color: #ffffff; }
+.badge-cosm-unknown { background-color: #6c757d; color: #ffffff; }
+
+/* In-text entity cross-reference links */
+a.entity-ref {
+    font-weight: 500;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.18em;
+}
+
+/* htmx loading indicator */
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 150ms ease-in;
+}
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    opacity: 1;
+}
+
+/* Dense reference table readability */
+.codex-table th {
+    white-space: nowrap;
+}

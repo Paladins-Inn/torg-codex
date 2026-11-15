@@ -25,7 +25,7 @@ logging:
 ----
 
 If file logging is enabled, also set `logging.structured.format.file: ecs`.
-Application logging continues to use Lombok `@Slf4j`. Fields supplied through
+Application logging continues to use Lombok `@Slf4j` and follows the operational audience and severity rules defined in xref:08_concepts/logging-policy.adoc[Logging Policy for Operations and Support] ({adr-022}). Fields supplied through
 `log.atWarn().addKeyValue(...)` must appear in emitted JSON. Verify serialized
 output under production logging configuration; capturing a Logback event alone
 does not prove that the configured output preserves structured fields.
@@ -101,6 +101,28 @@ Every encounter of a catalog entry without product assignment increments the cou
 `torg_codex_catalog_entries_without_products_total`). Its only tag is `area` (one of the 14 catalog area tags),
 keeping the cardinality bounded; entry ids, names and caller data are never used as tags. The counter is
 monotonic per application instance: use its increase over time, not its absolute value, to detect current data gaps.
+
+=== Catalog Usage & Roll-Up Counters
+
+Channel-agnostic catalog usage across both the Web UI and `/api/*` REST endpoints is reported by the core query
+services through `CatalogUsageObserver` and exported by `CatalogUsageObservabilityAdapter` without recording
+caller identity, credentials, or `ROLE_<codex-id>` authorities:
+
+* **Granular counters (4 meter families)**:
+- `torg.codex.catalog.usage.category\{category}` — per-category reads across all 17 `CatalogArea` slugs.
+- `torg.codex.catalog.usage.cosm\{cosm}` — accesses and validated cosm filters per known cosm slug.
+- `torg.codex.catalog.usage.grouping\{dimension,group}` — accesses and validated facet filters across known Perk Groups, Spell/Miracle/Power Lists, Tags, Item/Vehicle Types, Clearances, and Races.
+- `torg.codex.catalog.usage.detail\{category,entry,outcome}` — single-entry lookups by canonical slug across `drm-granted`, `public-reference`, `teaser`, and `not-found` (using the bounded sentinel `entry="_not_found_"` so unknown URLs never create unbounded time series).
+* **Outcome roll-up counters (4 untagged totals)**:
+  - `torg.codex.catalog.usage.outcome.drm.granted`
+  - `torg.codex.catalog.usage.outcome.public.reference`
+  - `torg.codex.catalog.usage.outcome.teaser`
+  - `torg.codex.catalog.usage.outcome.not.found`
+* **Metric-family roll-up counters (4 untagged totals)**:
+  - `torg.codex.catalog.usage.family.category`
+  - `torg.codex.catalog.usage.family.cosm`
+  - `torg.codex.catalog.usage.family.grouping`
+  - `torg.codex.catalog.usage.family.detail`
 
 == 🚨 Alerting
 

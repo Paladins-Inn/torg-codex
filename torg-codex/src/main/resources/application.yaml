@@ -24,27 +24,25 @@ spring:
 
 gg:
   jte:
-    development-mode: true
+    use-precompiled-templates: true
+    development-mode: false
 
 logging:
-  # Spring Boot native structured JSON logging in ECS format (ADR-017, constitution Principle VII).
-  # No Logstash-specific encoder is used. File logging is not enabled; if it ever is, also set
-  # logging.structured.format.file: ecs.
+  # Spring Boot native structured JSON logging in ECS format (ADR-017, ADR-022, constitution Principle VII).
+  # No Logstash-specific encoder is used. Production defaults to INFO (ADR-022); enable DEBUG/TRACE
+  # selectively via the dev profile or runtime configuration during 2nd/3rd-level support diagnostics.
   structured:
     format:
       console: ecs
   level:
     root: info
-    de.paladinsinn: debug
-    de.paladinsinn.torg.codex: trace
-    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
 
 management:
   tracing:
-    enabled: false
     export:
       otlp:
         enabled: false
+      enabled: false
   endpoint:
     health:
       group:

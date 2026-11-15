@@ -25,7 +25,16 @@
 
 package de.paladinsinn.torg.codex.api.observability;
 
+import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseQuery;
+import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult;
+import de.paladinsinn.torg.codex.application.port.in.CatalogDetailResult;
+import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria;
+import de.paladinsinn.torg.codex.domain.access.EntryAccess;
+import de.paladinsinn.torg.codex.domain.catalog.CatalogArea;
 import de.paladinsinn.torg.codex.domain.markup.EntityType;
+import de.paladinsinn.torg.codex.web.codex.CodexAuthController;
+import de.paladinsinn.torg.codex.web.codex.CodexCatalogController;
+import de.paladinsinn.torg.codex.web.codex.mapper.CodexViewMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -40,16 +49,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.ui.ConcurrentModel;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 /**
  * Verifies the production logging configuration (ADR-017, constitution Principle VII): the
@@ -111,6 +128,74 @@ class StructuredLoggingTest {
         assertThat(value(record, "entryName")).contains("Orphan Group");
         for (String sentinel : List.of(SENTINEL_PRINCIPAL, SENTINEL_API_KEY, SENTINEL_PRODUCT)) {
             assertThat(line).doesNotContain(sentinel);
+        }
+    }
+
+    @Test
+    void domainOutcomesInUiControllersEmitInfoEcsJsonWithoutCredentialsOrOwnership(final CapturedOutput output) {
+        AuthenticationManager rejectingAuth = authentication -> {
+            throw new BadCredentialsException("invalid");
+        };
+        CodexViewMapper viewMapper = new CodexViewMapper(mock(de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory.class));
+        CodexAuthController authController = new CodexAuthController(rejectingAuth, viewMapper);
+
+        UsernamePasswordAuthenticationToken callerAuth = UsernamePasswordAuthenticationToken.authenticated(
+                SENTINEL_PRINCIPAL, SENTINEL_API_KEY, List.of(new SimpleGrantedAuthority("ROLE_" + SENTINEL_PRODUCT)));
+        SecurityContextHolder.getContext().setAuthentication(callerAuth);
+
+        authController.performLogin(
+                SENTINEL_API_KEY,
+                callerAuth,
+                new MockHttpServletRequest(),
+                new MockHttpServletResponse(),
+                new ConcurrentModel());
+
+        CatalogBrowseQuery stubBrowse = new CatalogBrowseQuery() {
+            @Override
+            public CatalogBrowseResult browse(final CatalogArea area, final CatalogFilterCriteria criteria) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public CatalogDetailResult findDetail(final CatalogArea area, final String slugOrId) {
+                if ("locked-spell".equals(slugOrId)) {
+                    var teaser = new EntryAccess.Teaser<>(
+                            UUID.randomUUID(), "Locked Spell", EntityType.SPELL, new TreeSet<>(Set.of("sourcebook-aysle")));
+                    return new CatalogDetailResult.RestrictedTeaser(area, teaser, List.of());
+                }
+                return new CatalogDetailResult.Absent(area);
+            }
+        };
+        CodexCatalogController catalogController = new CodexCatalogController(stubBrowse, viewMapper);
+        catalogController.viewEntryDetail("spells", "locked-spell", callerAuth, new MockHttpServletResponse(), new ConcurrentModel());
+        catalogController.viewEntryDetail("spells", "missing-spell", callerAuth, new MockHttpServletResponse(), new ConcurrentModel());
+
+        List<Map<String, Object>> loginLines = output.getOut().lines()
+                .filter(line -> line.contains("user-login-rejected"))
+                .map(StructuredLoggingTest::parse)
+                .toList();
+        assertThat(loginLines).isNotEmpty();
+        assertThat(value(loginLines.getLast(), "log.level")).contains("INFO");
+        assertThat(value(loginLines.getLast(), "reason")).contains("invalid-credentials");
+
+        List<Map<String, Object>> teaserLines = output.getOut().lines()
+                .filter(line -> line.contains("Restricted codex entry teaser served"))
+                .map(StructuredLoggingTest::parse)
+                .toList();
+        assertThat(teaserLines).isNotEmpty();
+        assertThat(value(teaserLines.getLast(), "log.level")).contains("INFO");
+        assertThat(value(teaserLines.getLast(), "outcome")).contains("teaser");
+
+        List<Map<String, Object>> notFoundLines = output.getOut().lines()
+                .filter(line -> line.contains("Catalog entry not found"))
+                .map(StructuredLoggingTest::parse)
+                .toList();
+        assertThat(notFoundLines).isNotEmpty();
+        assertThat(value(notFoundLines.getLast(), "log.level")).contains("INFO");
+        assertThat(value(notFoundLines.getLast(), "outcome")).contains("not-found");
+
+        for (String sentinel : List.of(SENTINEL_PRINCIPAL, SENTINEL_API_KEY, SENTINEL_PRODUCT)) {
+            assertThat(output.getOut()).doesNotContain(sentinel);
         }
     }
 

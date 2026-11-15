@@ -1,0 +1,106 @@
+= Logging Policy for Operations and Support
+include::partial$config.adoc[]
+
+== Introduction
+
+Logging in {system} is governed as an explicit non-functional requirement rather than left to individual developer preference.
+Following Roland T. Lichti's logging guidelines (https://www.lichti.de/Software/2017-01-03-logging-in-java.html[_Logging in Java_, 2017] and https://www.lichti.de/Software/2021-05-24-logging-in-java-ii.html[_Logging in Java II_, 2021]) and {adr-022}, **log files belong to Operations, not to developers**.
+
+During software development and bug reproduction, developers use the IDE debugger and automated tests.
+Once software runs in staging or production, Operations, 2nd-level support, 3rd-level/vendor support, and—where explicitly required—governance or business stakeholders rely on deterministic, low-noise, machine-parseable log streams across services.
+
+== Core Rules
+
+1. **Operations-First Ownership**: Every log statement must be written for an operator or support engineer who did not write the code and needs to assess system health or trace an incident in production. Remove temporary developer-oriented printouts before committing.
+2. **SLF4J Facade via Lombok `@Slf4j` ({adr-013})**: All application logging uses `org.slf4j.Logger` injected via Lombok's `@Slf4j` annotation. Direct usage of `java.util.logging`, `System.out`/`System.err`, or concrete Logback classes in production business/adapter code is prohibited.
+3. **Structured ECS JSON Output ({adr-017})**: Production console (and optional file) output uses Spring Boot native structured logging (`logging.structured.format.console=ecs`). Context values are attached via the SLF4J 2 fluent API (`log.atInfo().addKeyValue(...)`) so central log aggregation can filter and correlate events without regex parsing.
+4. **Domain Outcomes Are Never `WARN` or `ERROR`**: Expected domain/business outcomes (*fachliche Fehler*)—such as invalid credentials on `/login`, unowned-product `403` purchase teasers ({adr-019}), or `404` requests for unknown slugs/UUIDs—must **never** be logged at `WARN` or `ERROR`. They are logged at `INFO` (or `DEBUG` on high-frequency endpoints).
+5. **Volume Control on `INFO`**: Keep `INFO` volume minimal so real transactions stand out. Where call frequency permits, start and end of a use case or external call may be logged; when call frequency is high (such as interactive table filtering), log at most the **completion** (or defer routine read acknowledgements to `DEBUG` while metrics record the volume).
+6. **Strict Data Protection ({adr-007}, {adr-019})**: Logs at *any* level (including `DEBUG` and `TRACE`) must never contain API keys, bearer/OIDC tokens, passwords, session secrets, or a caller's owned-product set (`ROLE_<codex-id>`).
+
+== Log Levels and 24/7 Operational Impact
+
+Every log statement in {system} must select its severity strictly by its operational consequence:
+
+[cols="1,4,4", options="header"]
+|===
+| Level | Technical & Domain Meaning | Impact on 24/7 Operations
+
+| `ERROR`
+| **A technical error occurred.** The system or a critical integration may be persistently impaired (e.g., database unreachable, broken cryptographic configuration, unhandled runtime failure).
+| **Immediate on-call incident (*Bereitschaftsfall*).** Paging/alerting wakes or notifies an administrator to intervene immediately.
+
+| `WARN`
+| **A technical error or data anomaly occurred.** A single call, batch, or record was disrupted while the service as a whole continues operating (e.g., transient DriveThruRPG upstream failure, or a catalog entry missing product assignments hidden fail-closed per {adr-019}).
+| **Business-hours review.** No immediate night/weekend reaction required; an administrator inspects and resolves the cause during normal working hours.
+
+| `INFO`
+| **Normal processing of a request, command, or batch — including domain/business errors (*fachliche Fehler*).** Examples: application startup milestones, authentication failure due to an invalid API key, DRM teaser served, or completed administrative/import batch. When call frequency is high, only completion is logged.
+| **No error.** Minimal log volume showing business transactions and lifecycle state without triggering operational alerts.
+
+| `DEBUG`
+| **Execution flow visibility within a request or batch.** Logs at least service/use-case entry in addition to completion so 2nd-level support can reconstruct system state when investigating suspected misbehavior.
+| **2nd-Level Support diagnostics.** Disabled by default in production; enabled selectively per package/logger during troubleshooting. Significantly higher log volume.
+
+| `TRACE`
+| **Detailed step-by-step execution trace.** Records fine-grained branching, markup/filter evaluation steps, and adapter payload metadata (excluding secrets/PII).
+| **3rd-Level / Vendor deep analysis.** Massive log volume; enabled only temporarily in isolated diagnostics.
+|===
+
+== Concrete Classification in {system}
+
+[cols="3,1,3", options="header"]
+|===
+| Event in {system} | Level | Rationale
+
+| Unhandled exception in web/API adapter or database connection pool exhaustion
+| `ERROR`
+| Technical failure threatening service availability; requires immediate operator attention.
+
+| Catalog entry without any assigned product encountered during DRM check ({adr-019})
+| `WARN`
+| Technical catalog data defect affecting single entries; operator/maintainer fixes data during working hours.
+
+| Upstream DriveThruRPG API timeout or `5xx` during token/library lookup
+| `WARN`
+| Single authentication request disrupted by external dependency; review during working hours unless sustained (`ERROR`).
+
+| User submits invalid DriveThruRPG API key on `/login`, requests unowned entry (`Teaser`), or requests unknown slug/UUID (`NotFound`)
+| `INFO`
+| Domain/business outcome (*fachlicher Fehler*), not a system malfunction; must never wake on-call or pollute `WARN` dashboards.
+
+| Entering `RestrictedCatalogQueryService` / UI filter resolution parameters
+| `DEBUG`
+| Helps 2nd-level support inspect query/filter flow when diagnosing an issue.
+
+| Individual token/block steps inside markup rendering or per-row descriptor mapping
+| `TRACE`
+| Granular 3rd-level diagnostic detail.
+|===
+
+== Dedicated Business Logger (`business`)
+
+When explicit domain, governance, or audit-style business events must be retained or routed separately from technical operational logs, code uses a dedicated named SLF4J logger rather than mixing governance records into class-level technical loggers:
+
+[source,java]
+----
+private static final Logger BUSINESS_LOG = LoggerFactory.getLogger("business");
+----
+
+Conventions for the `business` logger:
+
+* Emits low-volume, high-value domain lifecycle events (for example, successful account/library synchronization or administrative catalog updates).
+* Uses only **`ERROR`**, **`INFO`**, and **`DEBUG`** severities.
+* Uses the same Spring Boot native ECS JSON structured output ({adr-017}) and obeys the same credential/privacy exclusions.
+
+== References
+
+* {adr-013} -- Reducing boilerplate with Lombok (`@Slf4j`)
+* {adr-017} -- Spring Boot Native Structured Logging (ECS JSON)
+* {adr-019} -- Domain-Level Product-Ownership DRM
+* {adr-022} -- Operational Logging Policy and Severity Semantics
+* xref:08_concepts/observability.adoc[Observability Concept]
+* Roland T. Lichti: https://www.lichti.de/Software/2017-01-03-logging-in-java.html[Logging in Java (2017)]
+* Roland T. Lichti: https://www.lichti.de/Software/2021-05-24-logging-in-java-ii.html[Logging in Java II (2021)]
+
+<<<

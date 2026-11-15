@@ -1,0 +1,112 @@
+:adr-title: UI Styling and Iconography with Bootstrap 5 and Bootstrap Icons
+:adr-state: Accepted
+:adr-date: 2026-11-15
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 020
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+The {system} application is built as a Self-Contained System ({scs}) on Spring Boot ({adr-002}) following Hexagonal Architecture ({adr-005}) and server-side template rendering with JTE ({adr-010}).
+To replace the legacy `https://torg-codex.com` web application, `torg-codex` requires a cohesive, responsive browser UI shipped directly inside the `torg-codex` web module.
+
+The codex UI has specific presentation requirements shaped by tabletop reference usage:
+
+* **Multi-category global navigation**: Grouped dropdown menus and mobile-collapsible navigation across 14 product-bound catalog categories ({adr-019}) plus public reference sections (Publications and Articles) and dedicated Login/Logout pages.
+* **Dense tabular views**: Sortable, filterable tables displaying game statistics (Clearance symbols, Cosm badges, Axiom ratings, Difficulty Numbers, prices, prerequisites, and notes) legibly on both desktop and mobile viewports.
+* **Structured detail and teaser views**: Multi-column detail layouts combining rendered Markdown prose ({adr-010}, {adr-016}), stat blocks, sidebars, publication cards, and clear purchase teaser alerts when an entry requires an unowned publication ({adr-019}).
+* **Consistent iconography**: Clean visual indicators for navigation categories, filter controls, sort directions, lock/teaser states, external purchase links, and clearance/book metadata without maintaining bespoke SVG files.
+* **Build simplicity**: A single Java/Maven reactor (`./mvnw clean verify`) without introducing a mandatory Node.js/PostCSS/bundler build pipeline just to compile CSS.
+
+Notably, the legacy `torg-codex.com` frontend used an early pre-release of Bootstrap (`5.0.0-alpha2`) mixed with Bootstrap 4 data attributes and ad-hoc custom SVG icons.
+
+== Decision
+
+We adopt **Bootstrap 5** as the CSS and UI component framework, paired with **Bootstrap Icons** as the standard icon library for the {system} web UI:
+
+1. **Bootstrap 5 (CSS + Vanilla JS Bundle)** provides the responsive grid, typography, navigation bar (`navbar`, `dropdown`, `collapse`), tabular layouts (`table`, `table-striped`, `table-hover`, `table-responsive`), form controls, cards, alerts, badges, and tooltips.
+2. **Bootstrap Icons** provides all UI iconography (via webfont CSS or inline/sprite SVGs), replacing ad-hoc Unicode glyphs and custom icon assets.
+3. **Static Delivery & Multi-Theme Separation inside `torg-codex`**: Assets are packaged and served directly by the Spring Boot application (via Maven WebJars or versioned static resources under `torg-codex/src/main/resources/static`). Theme stylesheets and JTE layout shells are explicitly separated by UI surface—a **reader theme** (`codex` reader layout + CSS custom properties `--bs-*` for Torg cosm badges and clearance typography) versus a dedicated **admin theme** and layout shell reserved for the future `/admin` catalog-maintenance interface in the same application.
+4. **No jQuery and No Mandatory Node Build**: Only Bootstrap 5's native vanilla JavaScript bundle is used, keeping full compatibility with server-rendered JTE templates ({adr-010}) and hypermedia fragment updates ({adr-021}).
+
+== Benefits for {system}
+
+* **First-Class Tabular and Reference Components**: Bootstrap 5 ships production-tested, accessible styles for responsive data tables, multi-column filter panels, badges, cards, and collapsible navigation—matching the exact UI primitives needed for a tabletop rules codex.
+* **Zero Frontend Toolchain Overhead**: Prebuilt CSS, JS, and icon fonts work directly inside the Maven/Spring Boot build (`./mvnw clean verify`) without requiring Node.js, npm, Vite, or PostCSS compilation steps during Java builds or CI.
+* **Cohesive Native Iconography**: Bootstrap Icons is designed alongside Bootstrap 5 with matching baseline alignment, sizing, and `currentColor` inheritance, covering lock icons (DRM teasers), book/publication references, search/filter controls, sort arrows, and login/logout indicators out of the box.
+* **Clean Pairing with JTE and htmx ({adr-010}, {adr-021})**: Semantic class names keep JTE templates concise and readable compared to long utility-class strings, and Bootstrap 5's removal of jQuery eliminates DOM lifecycle conflicts when htmx swaps HTML fragments.
+* **Easy Domain Theming via CSS Variables**: Bootstrap 5 exposes runtime CSS custom properties (`--bs-*`) and built-in color modes (`data-bs-theme="light|dark"`), allowing Torg Eternity cosm badges and table density tweaks in a tiny supplemental CSS file without recompiling Sass.
+* **Continuity from Legacy `torg-codex.com`**: Modernizes the legacy pre-release Bootstrap layout into stable Bootstrap 5 semantics while preserving familiar navigation and card/table ergonomics for existing Torg players and GMs.
+
+== Consequences and Challenges
+
+* **Payload Size**: The full Bootstrap 5 CSS and Bootstrap Icons stylesheet are larger than minimal classless CSS frameworks; mitigated via HTTP compression, fingerprinted static asset caching, and serving assets locally from the application.
+* **Recognizable Default Styling**: Uncustomized Bootstrap looks generic; mitigated through custom CSS variables, Torg cosm color tokens, and clean typography.
+* **JS Re-initialization on Partial Swaps**: Interactive Bootstrap JS plugins (such as `Tooltip` or `Popover`) inside htmx-swapped fragments require initialization on the `htmx:afterSwap` / `htmx:load` event when used.
+
+== Evaluated Options
+
+=== Option 1: Bootstrap 5 + Bootstrap Icons (Selected)
+
+* **Summary**: Mature component-and-utility CSS framework with vanilla JS interactivity and an official companion icon library.
+* **Pros**: Complete set of table, navbar, dropdown, card, badge, and form components; zero JS build step required in Maven; accessible ARIA patterns built in; official cohesive icon set; jQuery-free.
+* **Cons**: Larger CSS footprint than minimal frameworks; requires small JS hook if tooltips are used in dynamically swapped fragments.
+
+=== Option 2: Tailwind CSS (+ Heroicons / Lucide)
+
+* **Summary**: Utility-first CSS framework generating minimal CSS by scanning templates at build time.
+* **Pros**: Very small purged CSS bundle; fine-grained visual customization without writing custom CSS selectors.
+* **Cons**: Requires a CLI/Node/PostCSS build step wired into the Maven lifecycle (`frontend-maven-plugin` or standalone binary), adding build complexity; clutters JTE templates with long utility-class chains on every `<table>`, `<tr>`, and `<td>`; includes **no** interactive components out of the box (dropdowns, mobile nav collapse, modals, and tooltips would have to be built manually or paired with extra libraries).
+
+=== Option 3: Classless / Minimal CSS Frameworks (Pico CSS, Bulma, Pure.css)
+
+* **Summary**: Lightweight CSS-only stylesheets focusing on clean defaults for semantic HTML (note: the early placeholder `login.jte` used Pico CSS via CDN).
+* **Pros**: Tiny download size; minimal classes needed for simple forms (like a standalone login card); zero JavaScript.
+* **Cons**: Too limited for the full codex replacement. Pico CSS and Pure.css lack rich multi-level navbar dropdowns, dense responsive table variants, badge systems, card grids, and tooltips; Bulma lacks official JavaScript behaviors (requiring custom JS for mobile nav toggles, dropdowns, and collapses) and has no first-party icon set.
+
+=== Option 4: Web-Component / SPA Component Libraries (Shoelace, Material UI, Prime)
+
+* **Summary**: Encapsulated custom-element libraries (Shadow DOM) or SPA-bound widget suites.
+* **Pros**: Rich encapsulated widgets; Shadow DOM style isolation.
+* **Cons**: Poor fit for server-rendered JTE tables and sanitized Markdown HTML ({adr-010}): Shadow DOM boundaries complicate styling rendered CommonMark/game-token HTML (`<span class="entity-ref">`, tables inside prose), and SPA widget libraries require React/Vue/Angular runtimes that contradict our server-driven architecture ({scs}, {adr-021}).
+
+=== Comparison Matrix
+
+[cols="2,2,2,2,2", options="header"]
+|===
+| Criterion | Bootstrap 5 + Icons (Selected) | Tailwind CSS | Pico CSS / Bulma | Web Component / SPA Kits
+
+| Maven-only build (no Node/CLI) | Yes (WebJars / static) | No (requires build step) | Yes | Partial / No
+| Dense tabular & navbar primitives | Comprehensive | Manual utility composition | Minimal / incomplete | Heavy / custom elements
+| Built-in vanilla JS behaviors | Yes (dropdown, collapse, tooltip) | None built-in | None built-in | Framework-coupled
+| Cohesive first-party icon set | Yes (Bootstrap Icons) | Separate library | Separate library | Varies
+| JTE + sanitized Markdown fit | Native HTML & CSS classes | Verbose template markup | Good for simple pages only | Shadow DOM friction
+|===
+
+== Further Reading
+
+* {adr-002}
+* {adr-005}
+* {adr-010}
+* {adr-019}
+* {adr-021}
+* {scs}
+* https://getbootstrap.com/docs/5.3/[Bootstrap 5 Documentation]
+* https://icons.getbootstrap.com/[Bootstrap Icons]
+
+<<<

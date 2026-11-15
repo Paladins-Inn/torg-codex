@@ -68,4 +68,9 @@ public record SpellList(
     public SpellList withReferencedEntries(List<UUID> referencedEntries) {
         return new SpellList(id, name, clearanceLevel, products, cosms, unlockingPerks, referencedEntries, text, notes, disableIf);
     }
+
+    @Override
+    public Set<String> cosmSlugs() {
+        return CatalogEntry.normalizeSlugs(cosms);
+    }
 }

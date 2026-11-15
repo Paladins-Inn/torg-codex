@@ -62,4 +62,9 @@ public record Vehicle(
     public EntityType entityType() {
         return EntityType.VEHICLE;
     }
+
+    @Override
+    public Set<String> cosmSlugs() {
+        return CatalogEntry.normalizeSlugs(cosms);
+    }
 }

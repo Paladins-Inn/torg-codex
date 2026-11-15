@@ -26,6 +26,7 @@
 package de.paladinsinn.torg.codex.application.port.in;
 
 import de.paladinsinn.torg.codex.domain.access.EntryAccess;
+import de.paladinsinn.torg.codex.domain.catalog.CatalogSlugs;
 import de.paladinsinn.torg.codex.domain.model.ProductBoundEntry;
 
 import java.util.List;
@@ -40,8 +41,8 @@ import java.util.UUID;
  *   <li>G1: the caller's effective ownership is resolved at most once per invocation;</li>
  *   <li>G2: every entry without products encountered during an invocation, top-level or
  *       referenced, is reported exactly once to the {@code CatalogAccessObserver};</li>
- *   <li>G3: {@link #findAll()} and {@link #findByCosm(String)} return only granted entries;</li>
- *   <li>G4: {@link #findById(UUID)} returns a teaser only for entries the caller does not own,
+ *   <li>G3: {@link #findAll()}, {@link #peekAll()} and {@link #findByCosm(String)} return only granted entries;</li>
+ *   <li>G4: {@link #findById(UUID)} and {@link #findByIdentifier(String)} return a teaser only for entries the caller does not own,
  *       and the absent result for both missing and unassigned entries;</li>
  *   <li>G5: embedded references of returned entries contain only granted ids, in their original
  *       order, resolved with one batched lookup per invocation;</li>
@@ -53,11 +54,21 @@ import java.util.UUID;
 public interface RestrictedCatalogQuery<T extends ProductBoundEntry> {
 
     /**
-     * Lists the entries the caller may read.
+     * Lists the entries the caller may read and records a category usage event.
      *
      * @return the accessible entries; never contains teasers
      */
     List<T> findAll();
+
+    /**
+     * Lists the entries the caller may read with identical DRM enforcement, without recording
+     * a top-level category navigation event (used for overview counts and auxiliary facet lookups).
+     *
+     * @return the accessible entries; never contains teasers
+     */
+    default List<T> peekAll() {
+        return findAll();
+    }
 
     /**
      * Lists the entries of a cosm the caller may read.
@@ -68,10 +79,22 @@ public interface RestrictedCatalogQuery<T extends ProductBoundEntry> {
     List<T> findByCosm(String cosm);
 
     /**
-     * Reads a single entry.
+     * Reads a single entry by UUID.
      *
      * @param id the entry id
      * @return the entry, its purchase teaser, or the absent result
      */
     EntryAccess<T> findById(UUID id);
+
+    /**
+     * Reads a single entry by canonical human-readable slug or UUID string.
+     *
+     * @param slugOrId canonical slug or UUID string
+     * @return the entry, its purchase teaser, or the absent result
+     */
+    default EntryAccess<T> findByIdentifier(String slugOrId) {
+        return CatalogSlugs.tryParseUuid(slugOrId)
+                .map(this::findById)
+                .orElseGet(EntryAccess::absent);
+    }
 }

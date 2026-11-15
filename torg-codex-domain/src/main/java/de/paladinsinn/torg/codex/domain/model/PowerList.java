@@ -68,4 +68,9 @@ public record PowerList(
     public PowerList withReferencedEntries(List<UUID> referencedEntries) {
         return new PowerList(id, name, clearanceLevel, products, cosms, unlockingPerks, referencedEntries, text, notes, disableIf);
     }
+
+    @Override
+    public Set<String> cosmSlugs() {
+        return CatalogEntry.normalizeSlugs(cosms);
+    }
 }

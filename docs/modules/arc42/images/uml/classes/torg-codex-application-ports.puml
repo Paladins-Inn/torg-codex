@@ -1,5 +1,27 @@
 @startuml
 
+class Absent {
+	{field} -area : CatalogArea
+	{method} +area () : CatalogArea
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+interface AreaSource {
+	{method}  {abstract} +area () : CatalogArea
+	{method}  {static} +articles ( query : CatalogQuery ) : AreaSource
+	{method}  {abstract} +findAllWithUsage () : List
+	{method}  {abstract} +findByIdentifier ( slugOrId : String ) : RawLookupResult
+	{method}  {abstract} +peekAll () : List
+	{method}  {static} -publicSource ( area : CatalogArea , findAll : Supplier , peekAll : Supplier , findByIdentifier : Function ) : AreaSource
+	{method}  {static} +publications ( query : CatalogQuery ) : AreaSource
+	{method}  {static} +restricted ( area : CatalogArea , query : RestrictedCatalogQuery ) : AreaSource
+	{method}  {static} +tags ( query : CatalogQuery ) : AreaSource
+}
+
+
 interface CallerProductsPort {
 	{method}  {abstract} +current () : OwnedProducts
 }
@@ -7,6 +29,59 @@ interface CallerProductsPort {
 
 interface CatalogAccessObserver {
 	{method}  {abstract} +entryWithoutProducts ( area : EntityType , id : UUID , name : String ) : void
+}
+
+
+interface CatalogBrowseQuery {
+	{method}  {abstract} +browse ( area : CatalogArea , criteria : CatalogFilterCriteria ) : CatalogBrowseResult
+	{method}  {abstract} +findDetail ( area : CatalogArea , slugOrId : String ) : CatalogDetailResult
+}
+
+
+class CatalogBrowseResult {
+	{field} -area : CatalogArea
+	{field} -availableFacets : Map
+	{field} -descriptor : CatalogCategoryDescriptor
+	{field} -totalAccessibleInCategory : int
+	{method} +appliedCriteria () : CatalogFilterCriteria
+	{method} +area () : CatalogArea
+	{method} +availableCosms () : List
+	{method} +availableFacets () : Map
+	{method} +descriptor () : CatalogCategoryDescriptor
+	{method} +entries () : List
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+	{method} +totalAccessibleInCategory () : int
+}
+
+
+class CatalogBrowseService {
+	{method} +browse ( area : CatalogArea , rawCriteria : CatalogFilterCriteria ) : CatalogBrowseResult
+	{method} -buildCosmFacetOptions ( descriptor : CatalogCategoryDescriptor , knownCosms : Map , selectedCosms : Set ) : List
+	{method} -buildDirectFacetContext ( descriptor : CatalogCategoryDescriptor , accessible : List , dim : GroupingDimension , active : Set ) : FacetContext
+	{method} -buildFacetContexts ( rawDescriptor : CatalogCategoryDescriptor , accessible : List , criteria : CatalogFilterCriteria ) : Map
+	{method} -buildKnownCosmLabels ( currentEntries : List ) : Map
+	{method} -buildPerkGroupFacetContext ( descriptor : CatalogCategoryDescriptor , accessible : List , active : Set ) : FacetContext
+	{method} -buildPerkRaceFacetContext ( active : Set ) : FacetContext
+	{method} -buildReverseListFacetContext ( listArea : CatalogArea , active : Set ) : FacetContext
+	{method}  {static} -compareNatural ( a : String , b : String ) : int
+	{method} -createFacetContext ( descriptor : CatalogCategoryDescriptor , accessible : List , dim : GroupingDimension , active : Set ) : FacetContext
+	{method} +findDetail ( area : CatalogArea , slugOrId : String ) : CatalogDetailResult
+	{method} -matchesCriteria ( entry : CatalogEntry , rawDescriptor : CatalogCategoryDescriptor , criteria : CatalogFilterCriteria , facetContexts : Map ) : boolean
+	{method}  {static} -nullSafeSortValue ( value : String ) : String
+	{method} -publicationsByCodexId () : Map
+	{method} -requireSource ( area : CatalogArea ) : AreaSource
+	{method} -resolveEmbeddedReferences ( rawDescriptor : CatalogCategoryDescriptor , entry : CatalogEntry ) : Map
+	{method} -resolvePublications ( codexIds : Set ) : List
+	{method} -resolveSingleCanonicalSlug ( source : AreaSource , entry : CatalogEntry ) : String
+	{method} -sortEntries ( entries : List , rawDescriptor : CatalogCategoryDescriptor , sortKey : String , direction : SortDirection ) : List
+	{method} ~sources () : Map
+}
+
+
+interface CatalogDetailResult {
+	{method}  {abstract} +area () : CatalogArea
 }
 
 
@@ -20,6 +95,25 @@ class CatalogEntryReference {
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +products () : Set
+	{method} +toString () : String
+}
+
+
+class CatalogFilterCriteria {
+	{field} -cosms : Set
+	{field} -groupings : Map
+	{field} -query : String
+	{field} -sortKey : String
+	{method} +cosms () : Set
+	{method} +direction () : SortDirection
+	{method}  {static} +empty () : CatalogFilterCriteria
+	{method} +equals ( o : Object ) : boolean
+	{method} +groupings () : Map
+	{method} +hasActiveFilters () : boolean
+	{method} +hashCode () : int
+	{method}  {static} -normalizeSet ( values : Collection ) : Set
+	{method} +query () : String
+	{method} +sortKey () : String
 	{method} +toString () : String
 }
 
@@ -49,13 +143,20 @@ interface CatalogQuery {
 	{method}  {abstract} +findAll () : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findById ( id : UUID ) : Optional
+	{method} +findByIdentifier ( slugOrId : String ) : Optional
+	{method} +peekAll () : List
 }
 
 
 class CatalogQueryService {
+	{field} -area : CatalogArea
+	{method} -extractSlug ( entry : Object ) : String
 	{method} +findAll () : List
 	{method} +findByCosm ( cosm : String ) : List
 	{method} +findById ( id : UUID ) : Optional
+	{method} +findByIdentifier ( slugOrId : String ) : Optional
+	{method} +peekAll () : List
+	{method} -recordPublicDetailAccess ( entry : Object , slug : String ) : void
 }
 
 
@@ -93,8 +194,149 @@ class CatalogReferenceQueryService {
 }
 
 
+interface CatalogUsageObserver {
+	{method}  {abstract} +categoryAccessed ( area : CatalogArea ) : void
+	{method}  {abstract} +cosmAccessed ( cosmSlug : String ) : void
+	{method}  {abstract} +detailAccessed ( area : CatalogArea , entrySlug : String , outcome : DetailAccessOutcome ) : void
+	{method}  {abstract} +detailNotFound ( area : CatalogArea ) : void
+	{method}  {abstract} +groupingAccessed ( dimension : GroupingDimension , groupKey : String ) : void
+}
+
+
+class CategorySummary {
+	{field} -accessibleCount : int
+	{field} -area : CatalogArea
+	{method} +accessibleCount () : int
+	{method} +area () : CatalogArea
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class CodexHomeOverview {
+	{field} -missingPublications : List
+	{field} -ownedPublications : List
+	{field} -unlockedPercentage : double
+	{method} +categories () : List
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +missingPublications () : List
+	{method} +ownedPublications () : List
+	{method} +toString () : String
+	{method} +unlockedPercentage () : double
+}
+
+
+interface CodexOverviewQuery {
+	{method}  {abstract} +loadOverview () : CodexHomeOverview
+}
+
+
+class CodexOverviewService {
+	{field} {static} -FULL_PERCENTAGE : double
+	{method} +loadOverview () : CodexHomeOverview
+}
+
+
 interface DriveThruRpgProductPort {
 	{method}  {abstract} +findProduct ( productId : String ) : Optional
+}
+
+
+class FacetOption {
+	{field} -key : String
+	{field} -label : String
+	{field} -selected : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +key () : String
+	{method} +label () : String
+	{method} +selected () : boolean
+	{method} +toString () : String
+}
+
+
+class GrantedProduct {
+	{field} -entry : ProductBoundEntry
+	{method} +entry () : ProductBoundEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class GrantedProductEntry {
+	{field} -area : CatalogArea
+	{field} -canonicalSlug : String
+	{field} -cosmLabels : Map
+	{field} -descriptor : CatalogCategoryDescriptor
+	{field} -embeddedReferences : Map
+	{field} -entry : ProductBoundEntry
+	{field} -publications : List
+	{method} +area () : CatalogArea
+	{method} +canonicalSlug () : String
+	{method} +cosmLabels () : Map
+	{method} +descriptor () : CatalogCategoryDescriptor
+	{method} +embeddedReferences () : Map
+	{method} +entry () : ProductBoundEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class LinkedEntryRef {
+	{field} -canonicalSlug : String
+	{field} -id : UUID
+	{field} -name : String
+	{field} -targetArea : CatalogArea
+	{method} +canonicalSlug () : String
+	{method} +detailPath () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +targetArea () : CatalogArea
+	{method} +toString () : String
+}
+
+
+class NotFound {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class PublicEntry {
+	{field} -entry : CatalogEntry
+	{method} +entry () : CatalogEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class PublicReferenceEntry {
+	{field} -area : CatalogArea
+	{field} -canonicalSlug : String
+	{field} -descriptor : CatalogCategoryDescriptor
+	{field} -embeddedReferences : Map
+	{field} -entry : CatalogEntry
+	{method} +area () : CatalogArea
+	{method} +canonicalSlug () : String
+	{method} +descriptor () : CatalogCategoryDescriptor
+	{method} +embeddedReferences () : Map
+	{method} +entry () : CatalogEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+interface RawLookupResult {
 }
 
 
@@ -105,10 +347,34 @@ class ReferencedEntryResolver {
 }
 
 
+class RequiredProductRef {
+	{field} -codexId : String
+	{field} -publication : Optional
+	{method} +codexId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +publication () : Optional
+	{method} +toString () : String
+}
+
+
+class ResolvedEntry {
+	{field} -canonicalSlug : String
+	{field} -entry : CatalogEntry
+	{method} +canonicalSlug () : String
+	{method} +entry () : CatalogEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
 interface RestrictedCatalogQuery {
 	{method}  {abstract} +findAll () : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findById ( id : UUID ) : EntryAccess
+	{method} +findByIdentifier ( slugOrId : String ) : EntryAccess
+	{method} +peekAll () : List
 }
 
 
@@ -116,29 +382,83 @@ class RestrictedCatalogQueryService {
 	{field} -area : EntityType
 	{field} -policy : CatalogAccessPolicy
 	{field} -references : ReferenceFilter
-	{method} -access ( entry : ProductBoundEntry , owned : OwnedProducts ) : EntryAccess
+	{method} -access ( entry : ProductBoundEntry , owned : OwnedProducts , canonicalSlug : String ) : EntryAccess
+	{method} -catalogArea () : CatalogArea
 	{method} -decide ( entry : ProductBoundEntry , owned : OwnedProducts ) : AccessDecision
 	{method} +findAll () : List
 	{method} +findByCosm ( cosm : String ) : List
 	{method} +findById ( id : UUID ) : EntryAccess
+	{method} +findByIdentifier ( slugOrId : String ) : EntryAccess
 	{method} -granted ( candidates : List , owned : OwnedProducts ) : List
+	{method} +peekAll () : List
 	{method}  {static} +withReferences ( area : EntityType , persistence : CatalogPersistencePort , callerProducts : CallerProductsPort , observer : CatalogAccessObserver , policy : CatalogAccessPolicy , resolver : ReferencedEntryResolver ) : RestrictedCatalogQueryService
+	{method}  {static} +withReferences ( area : EntityType , persistence : CatalogPersistencePort , callerProducts : CallerProductsPort , observer : CatalogAccessObserver , policy : CatalogAccessPolicy , resolver : ReferencedEntryResolver , usageObserver : CatalogUsageObserver ) : RestrictedCatalogQueryService
+}
+
+
+class RestrictedTeaser {
+	{field} -area : CatalogArea
+	{field} -teaser : Teaser
+	{method} +area () : CatalogArea
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +requiredProducts () : List
+	{method} +teaser () : Teaser
+	{method} +toString () : String
+}
+
+
+enum SortDirection {
+	{field} +ASC
+	{field} +DESC
+}
+
+
+class Teaser {
+	{field} -teaser : Teaser
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +teaser () : Teaser
+	{method} +toString () : String
 }
 
 
 
 
+Absent ..|>  CatalogDetailResult
+CatalogBrowseResult "1" o-- "0..*"  FacetOption : availableCosms
+CatalogBrowseResult "1" o-- "0..*"  ResolvedEntry : entries
+CatalogBrowseResult *--  CatalogFilterCriteria : appliedCriteria
+CatalogBrowseService "1" o-- "0..*"  AreaSource : sources
+CatalogBrowseService *--  CatalogUsageObserver : usageObserver
+CatalogBrowseService ..|>  CatalogBrowseQuery
+CatalogFilterCriteria *--  SortDirection : direction
 CatalogQueryService *--  CatalogPersistencePort : persistence
+CatalogQueryService *--  CatalogUsageObserver : usageObserver
 CatalogQueryService ..|>  CatalogQuery
 CatalogReferenceQueryService *--  CatalogAccessObserver : observer
 CatalogReferenceQueryService *--  CatalogReferencePersistencePort : persistence
 CatalogReferenceQueryService ..|>  CatalogReferenceQuery
+CatalogUsageObserver *--  CatalogUsageObserver : NO_OP
+CodexHomeOverview "1" o-- "0..*"  CategorySummary : categories
+CodexOverviewService "1" o-- "0..*"  AreaSource : sources
+CodexOverviewService *--  CallerProductsPort : callerProducts
+CodexOverviewService ..|>  CodexOverviewQuery
+GrantedProduct ..|>  RawLookupResult
+GrantedProductEntry ..|>  CatalogDetailResult
+NotFound ..|>  RawLookupResult
+PublicEntry ..|>  RawLookupResult
+PublicReferenceEntry ..|>  CatalogDetailResult
 ReferencedEntryResolver *--  CatalogAccessObserver : observer
 ReferencedEntryResolver *--  CatalogPersistencePort : referenced
 RestrictedCatalogQueryService *--  CallerProductsPort : callerProducts
 RestrictedCatalogQueryService *--  CatalogAccessObserver : observer
 RestrictedCatalogQueryService *--  CatalogPersistencePort : persistence
+RestrictedCatalogQueryService *--  CatalogUsageObserver : usageObserver
 RestrictedCatalogQueryService ..|>  RestrictedCatalogQuery
+RestrictedTeaser "1" o-- "0..*"  RequiredProductRef : requiredProducts
+RestrictedTeaser ..|>  CatalogDetailResult
+Teaser ..|>  RawLookupResult
 
 hide methods
 

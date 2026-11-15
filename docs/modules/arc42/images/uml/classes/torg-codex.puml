@@ -7,10 +7,31 @@ class Absent {
 }
 
 
+class Absent {
+	{method} +area () : CatalogArea
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
 enum AccessDecision {
 	{field} +GRANTED
 	{field} +TEASER
 	{field} +UNASSIGNED
+}
+
+
+interface AreaSource {
+	{method}  {abstract} +area () : CatalogArea
+	{method}  {static} +articles ( query : CatalogQuery ) : AreaSource
+	{method}  {abstract} +findAllWithUsage () : List
+	{method}  {abstract} +findByIdentifier ( slugOrId : String ) : RawLookupResult
+	{method}  {abstract} +peekAll () : List
+	{method}  {static} -publicSource ( area : CatalogArea , findAll : Supplier , peekAll : Supplier , findByIdentifier : Function ) : AreaSource
+	{method}  {static} +publications ( query : CatalogQuery ) : AreaSource
+	{method}  {static} +restricted ( area : CatalogArea , query : RestrictedCatalogQuery ) : AreaSource
+	{method}  {static} +tags ( query : CatalogQuery ) : AreaSource
 }
 
 
@@ -24,6 +45,8 @@ class Article {
 	{field} -id : UUID
 	{field} -name : String
 	{field} -text : String
+	{method} +catalogArea () : CatalogArea
+	{method} +clearance () : Optional
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -99,6 +122,65 @@ class ArticleSummaryDto {
 }
 
 
+class AttributeField {
+	{field} -label : String
+	{field} -renderAsMarkup : boolean
+	{field} -valueExtractor : Function
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +label () : String
+	{method}  {static} +markup ( label : String , extractor : Function ) : AttributeField
+	{method}  {static} +plain ( label : String , extractor : Function ) : AttributeField
+	{method} +renderAsMarkup () : boolean
+	{method} +toString () : String
+	{method} +valueExtractor () : Function
+}
+
+
+class AttributeGroupViewModel {
+	{field} -title : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +items () : List
+	{method} +title () : String
+	{method} +toString () : String
+}
+
+
+class AttributeItem {
+	{field} -label : String
+	{field} -plainValue : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +label () : String
+	{method} +markupValue () : SanitizedHtml
+	{method} +plainValue () : String
+	{method} +toString () : String
+}
+
+
+class Attributes {
+	{field} -title : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +fields () : List
+	{method} +hashCode () : int
+	{method} +title () : String
+	{method} +toString () : String
+}
+
+
+class AuthPageViewModel {
+	{field} -errorMessage : String
+	{field} -signedOutBanner : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +errorMessage () : String
+	{method} +hashCode () : int
+	{method} +nav () : NavContextViewModel
+	{method} +signedOutBanner () : boolean
+	{method} +toString () : String
+}
+
+
 interface CallerProductsPort {
 	{method}  {abstract} +current () : OwnedProducts
 }
@@ -126,6 +208,166 @@ class CatalogAccessResponses {
 }
 
 
+enum CatalogArea {
+	{field} +ARTICLE
+	{field} +COSM
+	{field} +ITEM
+	{field} +MIRACLE
+	{field} +MIRACLE_LIST
+	{field} +PERK
+	{field} +PERK_GROUP
+	{field} +POWER
+	{field} +POWER_LIST
+	{field} +PUBLICATION
+	{field} +RACE
+	{field} +SHARD
+	{field} +SPELL
+	{field} +SPELL_LIST
+	{field} +TAG
+	{field} +THREAT
+	{field} +VEHICLE
+}
+
+
+class CatalogBrowseConfiguration {
+	{method} ~articleAreaSource ( query : CatalogQuery ) : AreaSource
+	{method} ~catalogBrowseQuery ( sources : List , usageObserver : CatalogUsageObserver ) : CatalogBrowseQuery
+	{method} ~codexOverviewQuery ( sources : List , callerProducts : CallerProductsPort ) : CodexOverviewQuery
+	{method} ~cosmAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~itemAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~miracleAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~miracleListAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~perkAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~perkGroupAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~powerAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~powerListAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~publicationAreaSource ( query : CatalogQuery ) : AreaSource
+	{method} ~raceAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~shardAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~spellAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~spellListAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~tagAreaSource ( query : CatalogQuery ) : AreaSource
+	{method} ~threatAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+	{method} ~vehicleAreaSource ( query : RestrictedCatalogQuery ) : AreaSource
+}
+
+
+interface CatalogBrowseQuery {
+	{method}  {abstract} +browse ( area : CatalogArea , criteria : CatalogFilterCriteria ) : CatalogBrowseResult
+	{method}  {abstract} +findDetail ( area : CatalogArea , slugOrId : String ) : CatalogDetailResult
+}
+
+
+class CatalogBrowseResult {
+	{field} -totalAccessibleInCategory : int
+	{method} +appliedCriteria () : CatalogFilterCriteria
+	{method} +area () : CatalogArea
+	{method} +availableCosms () : List
+	{method} +availableFacets () : Map
+	{method} +descriptor () : CatalogCategoryDescriptor
+	{method} +entries () : List
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+	{method} +totalAccessibleInCategory () : int
+}
+
+
+class CatalogBrowseService {
+	{method} +browse ( area : CatalogArea , rawCriteria : CatalogFilterCriteria ) : CatalogBrowseResult
+	{method} -buildCosmFacetOptions ( descriptor : CatalogCategoryDescriptor , knownCosms : Map , selectedCosms : Set ) : List
+	{method} -buildDirectFacetContext ( descriptor : CatalogCategoryDescriptor , accessible : List , dim : GroupingDimension , active : Set ) : FacetContext
+	{method} -buildFacetContexts ( rawDescriptor : CatalogCategoryDescriptor , accessible : List , criteria : CatalogFilterCriteria ) : Map
+	{method} -buildKnownCosmLabels ( currentEntries : List ) : Map
+	{method} -buildPerkGroupFacetContext ( descriptor : CatalogCategoryDescriptor , accessible : List , active : Set ) : FacetContext
+	{method} -buildPerkRaceFacetContext ( active : Set ) : FacetContext
+	{method} -buildReverseListFacetContext ( listArea : CatalogArea , active : Set ) : FacetContext
+	{method}  {static} -compareNatural ( a : String , b : String ) : int
+	{method} -createFacetContext ( descriptor : CatalogCategoryDescriptor , accessible : List , dim : GroupingDimension , active : Set ) : FacetContext
+	{method} +findDetail ( area : CatalogArea , slugOrId : String ) : CatalogDetailResult
+	{method} -matchesCriteria ( entry : CatalogEntry , rawDescriptor : CatalogCategoryDescriptor , criteria : CatalogFilterCriteria , facetContexts : Map ) : boolean
+	{method}  {static} -nullSafeSortValue ( value : String ) : String
+	{method} -publicationsByCodexId () : Map
+	{method} -requireSource ( area : CatalogArea ) : AreaSource
+	{method} -resolveEmbeddedReferences ( rawDescriptor : CatalogCategoryDescriptor , entry : CatalogEntry ) : Map
+	{method} -resolvePublications ( codexIds : Set ) : List
+	{method} -resolveSingleCanonicalSlug ( source : AreaSource , entry : CatalogEntry ) : String
+	{method} -sortEntries ( entries : List , rawDescriptor : CatalogCategoryDescriptor , sortKey : String , direction : SortDirection ) : List
+	{method} ~sources () : Map
+}
+
+
+class CatalogCategoryDescriptor {
+	{field} -directGroupingExtractor : BiFunction
+	{field} -entryClass : Class
+	{method} +area () : CatalogArea
+	{method} +columns () : List
+	{method} +detailSections () : List
+	{method} +directGroupingExtractor () : BiFunction
+	{method} +entryClass () : Class
+	{method} +equals ( o : Object ) : boolean
+	{method} +extractDirectGroupingKeys ( entry : CatalogEntry , dimension : GroupingDimension ) : Set
+	{method} +facets () : List
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class CatalogCategoryRegistry {
+	{method}  {static} +all () : Collection
+	{method}  {static} -appendLabeled ( sb : StringBuilder , label : String , value : String ) : void
+	{method}  {static} -articleDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -cosmDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -dashIfBlank ( value : String ) : String
+	{method}  {static} -displaySlug ( raw : String ) : String
+	{method}  {static} -extractVehicleWeaponIds ( vehicle : Vehicle ) : List
+	{method}  {static} +forArea ( area : CatalogArea ) : CatalogCategoryDescriptor
+	{method}  {static} +forArea ( area : CatalogArea , entryClass : Class ) : CatalogCategoryDescriptor
+	{method}  {static} -formatDn ( dn : DifficultyNumber ) : String
+	{method}  {static} -formatIntMap ( values : Map ) : String
+	{method}  {static} -formatItemAxioms ( item : Item ) : String
+	{method}  {static} -formatSlugs ( slugs : Set ) : String
+	{method}  {static} -formatStringMap ( values : Map ) : String
+	{method}  {static} -itemDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -joinLabeled ( l1 : String , v1 : String , l2 : String , v2 : String , l3 : String , v3 : String ) : String
+	{method}  {static} -joinList ( items : List ) : String
+	{method}  {static} -joinNonBlank ( delimiter : String , first : String , second : String ) : String
+	{method}  {static} -miracleDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -miracleListDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -perkDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -perkGroupDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -powerDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -powerListDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -publicationDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -raceDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -register ( target : Map , descriptor : CatalogCategoryDescriptor ) : void
+	{method}  {static} -shardDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -singleSlug ( raw : String ) : Set
+	{method}  {static} -spellDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -spellListDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -tagDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -threatDescriptor () : CatalogCategoryDescriptor
+	{method}  {static} -vehicleDescriptor () : CatalogCategoryDescriptor
+}
+
+
+interface CatalogDetailResult {
+	{method}  {abstract} +area () : CatalogArea
+}
+
+
+interface CatalogEntry {
+	{method}  {abstract} +catalogArea () : CatalogArea
+	{method} +clearance () : Optional
+	{method} +cosmSlugs () : Set
+	{method}  {abstract} +id () : UUID
+	{method}  {abstract} +name () : String
+	{method}  {static} +normalizeSlugs ( raw : Collection ) : Set
+	{method} +productCodexIds () : Set
+	{method} +slug () : String
+}
+
+
 class CatalogEntryReference {
 	{field} -id : UUID
 	{field} -name : String
@@ -136,6 +378,24 @@ class CatalogEntryReference {
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +products () : Set
+	{method} +toString () : String
+}
+
+
+class CatalogFilterCriteria {
+	{field} -cosms : Set
+	{field} -query : String
+	{field} -sortKey : String
+	{method} +cosms () : Set
+	{method} +direction () : SortDirection
+	{method}  {static} +empty () : CatalogFilterCriteria
+	{method} +equals ( o : Object ) : boolean
+	{method} +groupings () : Map
+	{method} +hasActiveFilters () : boolean
+	{method} +hashCode () : int
+	{method}  {static} -normalizeSet ( values : Collection ) : Set
+	{method} +query () : String
+	{method} +sortKey () : String
 	{method} +toString () : String
 }
 
@@ -178,6 +438,8 @@ interface CatalogQuery {
 	{method}  {abstract} +findAll () : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findById ( id : UUID ) : Optional
+	{method} +findByIdentifier ( slugOrId : String ) : Optional
+	{method} +peekAll () : List
 }
 
 
@@ -205,9 +467,13 @@ class CatalogQueryConfiguration {
 
 
 class CatalogQueryService {
+	{method} -extractSlug ( entry : Object ) : String
 	{method} +findAll () : List
 	{method} +findByCosm ( cosm : String ) : List
 	{method} +findById ( id : UUID ) : Optional
+	{method} +findByIdentifier ( slugOrId : String ) : Optional
+	{method} +peekAll () : List
+	{method} -recordPublicDetailAccess ( entry : Object , slug : String ) : void
 }
 
 
@@ -254,6 +520,86 @@ class CatalogReferenceQueryService {
 }
 
 
+class CatalogSlugs {
+	{field} {static} -CANONICAL_UUID : Pattern
+	{field} {static} -COMBINING_MARKS : Pattern
+	{field} {static} -EDGE_HYPHENS : Pattern
+	{field} {static} -NON_ALPHANUMERIC : Pattern
+	{field} {static} -SHORT_UUID_PREFIX_LENGTH : int
+	{method}  {static} +isUuid ( candidate : String ) : boolean
+	{method}  {static} +normalize ( input : String ) : String
+	{method}  {static} +resolveCanonicalSlugs ( entries : Collection , idExtractor : Function , baseSlugExtractor : Function ) : Map
+	{method}  {static} +tryParseUuid ( candidate : String ) : Optional
+}
+
+
+class CatalogUsageObservabilityAdapter {
+	{field} {static} +CATEGORY_COUNTER : String
+	{field} {static} +COSM_COUNTER : String
+	{field} {static} +DETAIL_COUNTER : String
+	{field} {static} +FAMILY_CATEGORY_COUNTER : String
+	{field} {static} +FAMILY_COSM_COUNTER : String
+	{field} {static} +FAMILY_DETAIL_COUNTER : String
+	{field} {static} +FAMILY_GROUPING_COUNTER : String
+	{field} {static} +GROUPING_COUNTER : String
+	{field} {static} +NOT_FOUND_ENTRY_SENTINEL : String
+	{field} {static} +OUTCOME_DRM_GRANTED_COUNTER : String
+	{field} {static} +OUTCOME_NOT_FOUND_COUNTER : String
+	{field} {static} +OUTCOME_PUBLIC_REF_COUNTER : String
+	{field} {static} +OUTCOME_TEASER_COUNTER : String
+	{field} -familyCategoryTotal : Counter
+	{field} -familyCosmTotal : Counter
+	{field} -familyDetailTotal : Counter
+	{field} -familyGroupingTotal : Counter
+	{field} -registry : MeterRegistry
+	{method} +categoryAccessed ( area : CatalogArea ) : void
+	{method} +cosmAccessed ( cosmSlug : String ) : void
+	{method} +detailAccessed ( area : CatalogArea , entrySlug : String , outcome : DetailAccessOutcome ) : void
+	{method} +detailNotFound ( area : CatalogArea ) : void
+	{method} +groupingAccessed ( dimension : GroupingDimension , groupKey : String ) : void
+}
+
+
+interface CatalogUsageObserver {
+	{method}  {abstract} +categoryAccessed ( area : CatalogArea ) : void
+	{method}  {abstract} +cosmAccessed ( cosmSlug : String ) : void
+	{method}  {abstract} +detailAccessed ( area : CatalogArea , entrySlug : String , outcome : DetailAccessOutcome ) : void
+	{method}  {abstract} +detailNotFound ( area : CatalogArea ) : void
+	{method}  {abstract} +groupingAccessed ( dimension : GroupingDimension , groupKey : String ) : void
+}
+
+
+class CategoryCard {
+	{field} -accessibleCount : int
+	{method} +accessibleCount () : int
+	{method} +area () : CatalogArea
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class CategorySummary {
+	{field} -accessibleCount : int
+	{method} +accessibleCount () : int
+	{method} +area () : CatalogArea
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+enum CellKind {
+	{field} +BOOLEAN_FLAG
+	{field} +CLEARANCE_BADGE
+	{field} +COSM_BADGES
+	{field} +EXTERNAL_LINK
+	{field} +GROUP_BADGE
+	{field} +PRIMARY_LINK
+	{field} +TEXT
+}
+
+
 class Censor {
 	{field} -ownedProducts : Set
 	{method} +apply ( rawText : String ) : String
@@ -286,6 +632,127 @@ class ClearanceLevelConverter {
 }
 
 
+class CodexAuthController {
+	{field} {static} -INVALID_KEY_MESSAGE : String
+	{field} -authenticationManager : AuthenticationManager
+	{field} {static} -log : Logger
+	{method} +login ( logoutParam : String , authentication : Authentication , response : HttpServletResponse , model : Model ) : String
+	{method} +logoutPage ( authentication : Authentication , response : HttpServletResponse , model : Model ) : String
+	{method} +performLogin ( apiKey : String , currentAuthentication : Authentication , request : HttpServletRequest , response : HttpServletResponse , model : Model ) : String
+}
+
+
+class CodexCatalogController {
+	{field} {static} -CATALOG_RESULTS_TARGET : String
+	{field} {static} -log : Logger
+	{method} +browseCategory ( categorySegment : String , queryParams : MultiValueMap , authentication : Authentication , request : HttpServletRequest , response : HttpServletResponse , model : Model ) : String
+	{method}  {static} -firstOrEmpty ( params : MultiValueMap , key : String ) : String
+	{method} -isPartialResultsRequest ( request : HttpServletRequest ) : boolean
+	{method}  {static} -nonBlankValues ( raw : List ) : Set
+	{method} -parseCriteria ( area : CatalogArea , params : MultiValueMap ) : CatalogFilterCriteria
+	{method} -renderNotFound ( activeArea : CatalogArea , authentication : Authentication , response : HttpServletResponse , model : Model , message : String ) : String
+	{method} +viewEntryDetail ( categorySegment : String , identifier : String , authentication : Authentication , response : HttpServletResponse , model : Model ) : String
+}
+
+
+class CodexExceptionAdvice {
+	{field} {static} -log : Logger
+	{method} +handleUnexpectedException ( exception : Exception , request : HttpServletRequest , response : HttpServletResponse , authentication : Authentication , model : Model ) : String
+}
+
+
+class CodexHomeController {
+	{method} +home ( authentication : Authentication , response : HttpServletResponse , model : Model ) : String
+}
+
+
+class CodexHomeOverview {
+	{field} -unlockedPercentage : double
+	{method} +categories () : List
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +missingPublications () : List
+	{method} +ownedPublications () : List
+	{method} +toString () : String
+	{method} +unlockedPercentage () : double
+}
+
+
+interface CodexOverviewQuery {
+	{method}  {abstract} +loadOverview () : CodexHomeOverview
+}
+
+
+class CodexOverviewService {
+	{field} {static} -FULL_PERCENTAGE : double
+	{method} +loadOverview () : CodexHomeOverview
+}
+
+
+class CodexViewMapper {
+	{method} -buildDetailViewModel ( nav : NavContextViewModel , rawDescriptor : CatalogCategoryDescriptor , entry : CatalogEntry , canonicalSlug : String , cosmLabels : Map , embeddedReferences : Map , publications : List ) : DetailViewModel
+	{method} -buildSortUrl ( basePath : String , criteria : CatalogFilterCriteria , nextSortKey : String , nextDir : SortDirection ) : String
+	{method} +isSignedIn ( authentication : Authentication ) : boolean
+	{method} -mapPublications ( codexIds : Set , resolvedPublications : List ) : List
+	{method} -toCell ( col : ColumnDescriptor , entry : CatalogEntry , detailPath : String , cosmLabels : Map ) : TableCellViewModel
+	{method} -toColumnHeader ( area : CatalogArea , col : ColumnDescriptor , criteria : CatalogFilterCriteria ) : ColumnHeaderViewModel
+	{method} +toDetailViewModel ( granted : GrantedProductEntry , authentication : Authentication ) : DetailViewModel
+	{method} +toDetailViewModel ( pubRef : PublicReferenceEntry , authentication : Authentication ) : DetailViewModel
+	{method} +toHomeViewModel ( overview : CodexHomeOverview , authentication : Authentication ) : HomeViewModel
+	{method} +toNavContext ( activeArea : CatalogArea , authentication : Authentication ) : NavContextViewModel
+	{method} +toNotFoundViewModel ( activeArea : CatalogArea , title : String , message : String , authentication : Authentication ) : NotFoundViewModel
+	{method} -toPublicationCard ( pub : Publication ) : PublicationCard
+	{method} -toTableRow ( area : CatalogArea , descriptor : CatalogCategoryDescriptor , resolved : ResolvedEntry , cosmLabels : Map ) : TableRowViewModel
+	{method} +toTableViewModel ( result : CatalogBrowseResult , authentication : Authentication ) : TableViewModel
+	{method} +toTeaserViewModel ( teaserResult : RestrictedTeaser , authentication : Authentication ) : TeaserViewModel
+}
+
+
+class ColumnDescriptor {
+	{field} -header : String
+	{field} -key : String
+	{field} -listExtractor : Function
+	{field} -sortable : boolean
+	{field} -textExtractor : Function
+	{method}  {static} +clearance () : ColumnDescriptor
+	{method}  {static} +cosms () : ColumnDescriptor
+	{method} +equals ( o : Object ) : boolean
+	{method}  {static} +externalLink ( key : String , header : String , urlExtractor : Function ) : ColumnDescriptor
+	{method}  {static} +flag ( key : String , header : String , predicate : Predicate ) : ColumnDescriptor
+	{method}  {static} +groupBadge ( key : String , header : String , sortable : boolean , extractor : Function ) : ColumnDescriptor
+	{method} +hashCode () : int
+	{method} +header () : String
+	{method} +key () : String
+	{method} +kind () : CellKind
+	{method} +listExtractor () : Function
+	{method}  {static} -nullSafe ( value : String ) : String
+	{method}  {static} +primaryName () : ColumnDescriptor
+	{method} +sortable () : boolean
+	{method}  {static} +text ( key : String , header : String , sortable : boolean , extractor : Function ) : ColumnDescriptor
+	{method} +textExtractor () : Function
+	{method} +toString () : String
+}
+
+
+class ColumnHeaderViewModel {
+	{field} -activeSort : boolean
+	{field} -ascending : boolean
+	{field} -key : String
+	{field} -label : String
+	{field} -sortUrl : String
+	{field} -sortable : boolean
+	{method} +activeSort () : boolean
+	{method} +ascending () : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +key () : String
+	{method} +label () : String
+	{method} +sortUrl () : String
+	{method} +sortable () : boolean
+	{method} +toString () : String
+}
+
+
 class ConditionalBlockProcessor {
 	{field} {static} -CONTENT_GROUP : int
 	{field} {static} -IF_BLOCK : Pattern
@@ -303,6 +770,7 @@ class Cosm {
 	{field} -worldLaws : String
 	{method} +axioms () : Map
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -324,6 +792,21 @@ class Cosm {
 	{field} +worldLaws : String
 	{method} +getRawText () : String
 	{method} +getRawWorldLaws () : String
+}
+
+
+class CosmBadgeViewModel {
+	{field} {static} -KNOWN_THEMED_COSMS : Set
+	{field} -cssClass : String
+	{field} -label : String
+	{field} -slug : String
+	{method} +cssClass () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +label () : String
+	{method}  {static} +of ( rawSlug : String , explicitLabel : String ) : CosmBadgeViewModel
+	{method} +slug () : String
+	{method} +toString () : String
 }
 
 
@@ -428,6 +911,50 @@ class CurrentUserCensorFactory {
 }
 
 
+enum DetailAccessOutcome {
+	{field} +DRM_GRANTED
+	{field} +NOT_FOUND
+	{field} +PUBLIC_REFERENCE
+	{field} +TEASER
+}
+
+
+class DetailHeader {
+	{field} -canonicalPath : String
+	{field} -clearanceName : String
+	{field} -clearanceSymbol : String
+	{field} -name : String
+	{method} +canonicalPath () : String
+	{method} +clearanceName () : String
+	{method} +clearanceSymbol () : String
+	{method} +cosms () : List
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +name () : String
+	{method} +toString () : String
+}
+
+
+interface DetailSectionDescriptor {
+	{method}  {abstract} +title () : String
+}
+
+
+class DetailViewModel {
+	{field} -embeddedGroups : Map
+	{method} +area () : CatalogArea
+	{method} +attributeGroups () : List
+	{method} +embeddedGroups () : Map
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +header () : DetailHeader
+	{method} +nav () : NavContextViewModel
+	{method} +proseSections () : List
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
 class DifficultyNumber {
 	{field} -level : String
 	{field} -text : String
@@ -483,6 +1010,18 @@ class DomainModelValidator {
 
 interface DriveThruRpgProductPort {
 	{method}  {abstract} +findProduct ( productId : String ) : Optional
+}
+
+
+class EmbeddedReferences {
+	{field} -idsExtractor : Function
+	{field} -title : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +idsExtractor () : Function
+	{method} +targetArea () : CatalogArea
+	{method} +title () : String
+	{method} +toString () : String
 }
 
 
@@ -580,6 +1119,52 @@ class EntryTeaserMapperImpl {
 }
 
 
+class FacetOption {
+	{field} -key : String
+	{field} -label : String
+	{field} -selected : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +key () : String
+	{method} +label () : String
+	{method} +selected () : boolean
+	{method} +toString () : String
+}
+
+
+class FilterFacetDescriptor {
+	{field} -cosmFacet : boolean
+	{method}  {static} +cosm () : FilterFacetDescriptor
+	{method} +cosmFacet () : boolean
+	{method} +dimension () : GroupingDimension
+	{method} +equals ( o : Object ) : boolean
+	{method}  {static} +grouping ( dimension : GroupingDimension ) : FilterFacetDescriptor
+	{method} +hashCode () : int
+	{method} +label () : String
+	{method} +queryParam () : String
+	{method} +toString () : String
+}
+
+
+class FilterPanelViewModel {
+	{field} -actionPath : String
+	{field} -hasActiveFilters : boolean
+	{field} -searchQuery : String
+	{field} -sortDir : String
+	{field} -sortKey : String
+	{method} +actionPath () : String
+	{method} +cosms () : List
+	{method} +equals ( o : Object ) : boolean
+	{method} +groupingFacets () : List
+	{method} +hasActiveFilters () : boolean
+	{method} +hashCode () : int
+	{method} +searchQuery () : String
+	{method} +sortDir () : String
+	{method} +sortKey () : String
+	{method} +toString () : String
+}
+
+
 class GameTokenProcessor {
 	{field} {static} -GAME_TOKEN : Pattern
 	{method} +process ( text : String ) : String
@@ -599,6 +1184,70 @@ class Granted {
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +toString () : String
+}
+
+
+class GrantedProduct {
+	{method} +entry () : ProductBoundEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class GrantedProductEntry {
+	{field} -canonicalSlug : String
+	{field} -cosmLabels : Map
+	{field} -embeddedReferences : Map
+	{method} +area () : CatalogArea
+	{method} +canonicalSlug () : String
+	{method} +cosmLabels () : Map
+	{method} +descriptor () : CatalogCategoryDescriptor
+	{method} +embeddedReferences () : Map
+	{method} +entry () : ProductBoundEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+enum GroupingDimension {
+	{field} +CLEARANCE
+	{field} +ITEM_TYPE
+	{field} +MIRACLE_LIST
+	{field} +PERK_GROUP
+	{field} +POWER_LIST
+	{field} +RACE
+	{field} +SPELL_LIST
+	{field} +TAG
+	{field} +VEHICLE_TYPE
+}
+
+
+class GroupingFacetGroup {
+	{field} -label : String
+	{field} -queryParam : String
+	{method} +dimension () : GroupingDimension
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +label () : String
+	{method} +options () : List
+	{method} +queryParam () : String
+	{method} +toString () : String
+}
+
+
+class HomeViewModel {
+	{field} -unlockedPercent : int
+	{method} +categories () : List
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +missingPublications () : List
+	{method} +nav () : NavContextViewModel
+	{method} +ownedPublications () : List
+	{method} +toString () : String
+	{method} +unlockedPercent () : int
 }
 
 
@@ -641,6 +1290,7 @@ class Item {
 	{method} +axiomTech () : String
 	{method} +bonus () : String
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
@@ -880,10 +1530,30 @@ class JpaVehiclePersistenceAdapter {
 }
 
 
-class LoginController {
-	{field} -authenticationManager : AuthenticationManager
-	{method} +login () : String
-	{method} +performLogin ( apiKey : String , request : HttpServletRequest , model : Model ) : String
+class LinkedEntryRef {
+	{field} -canonicalSlug : String
+	{field} -id : UUID
+	{field} -name : String
+	{method} +canonicalSlug () : String
+	{method} +detailPath () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +targetArea () : CatalogArea
+	{method} +toString () : String
+}
+
+
+class LinkedEntryViewModel {
+	{field} -detailPath : String
+	{field} -name : String
+	{method} +detailPath () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +name () : String
+	{method} +targetArea () : CatalogArea
+	{method} +toString () : String
 }
 
 
@@ -1013,6 +1683,7 @@ class MiracleList {
 	{field} -text : String
 	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +entityType () : EntityType
@@ -1146,6 +1817,57 @@ class MiracleSummaryDto {
 }
 
 
+class NavContextViewModel {
+	{field} -authStatusTag : String
+	{field} -signedIn : boolean
+	{method} +activeArea () : CatalogArea
+	{method} +authStatusTag () : String
+	{method}  {static} +create ( activeArea : CatalogArea , signedIn : boolean ) : NavContextViewModel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +isSectionActive ( section : NavigationSection ) : boolean
+	{method} +sections () : List
+	{method} +signedIn () : boolean
+	{method} +toString () : String
+}
+
+
+class NavSectionGroup {
+	{method} +areas () : List
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +section () : NavigationSection
+	{method} +toString () : String
+}
+
+
+enum NavigationSection {
+	{field} +GAME_MASTER
+	{field} +GEAR_AND_VEHICLES
+	{field} +REFERENCE
+	{field} +STORM_KNIGHTS
+}
+
+
+class NotFound {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class NotFoundViewModel {
+	{field} -message : String
+	{field} -title : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +message () : String
+	{method} +nav () : NavContextViewModel
+	{method} +title () : String
+	{method} +toString () : String
+}
+
+
 class OwnedProducts {
 	{field} {static} +FREE_TIER : String
 	{field} -codexIds : Set
@@ -1183,6 +1905,7 @@ class Perk {
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +contradiction () : boolean
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
@@ -1492,6 +2215,7 @@ class PowerList {
 	{field} -text : String
 	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +entityType () : EntityType
@@ -1626,9 +2350,13 @@ class PowerSummaryDto {
 
 
 interface ProductBoundEntry {
+	{method} +catalogArea () : CatalogArea
+	{method} +clearance () : Optional
+	{method} +clearanceLevel () : ClearanceLevel
 	{method}  {abstract} +entityType () : EntityType
 	{method}  {abstract} +id () : UUID
 	{method}  {abstract} +name () : String
+	{method} +productCodexIds () : Set
 	{method}  {abstract} +products () : Set
 }
 
@@ -1637,6 +2365,17 @@ class ProductOwnershipResolver {
 	{field} {static} -ROLE_PREFIX : String
 	{method} +current () : OwnedProducts
 	{method} +resolve () : Set
+}
+
+
+class Prose {
+	{field} -rawMarkupExtractor : Function
+	{field} -title : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +rawMarkupExtractor () : Function
+	{method} +title () : String
+	{method} +toString () : String
 }
 
 
@@ -1649,6 +2388,39 @@ class ProseListToMarkdownChange {
 	{method} +setFileOpener ( resourceAccessor : ResourceAccessor ) : void
 	{method} +setUp () : void
 	{method} +validate ( database : Database ) : ValidationErrors
+}
+
+
+class ProseMap {
+	{field} -rawMarkupMapExtractor : Function
+	{field} -title : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +rawMarkupMapExtractor () : Function
+	{method} +title () : String
+	{method} +toString () : String
+}
+
+
+class PublicEntry {
+	{method} +entry () : CatalogEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class PublicReferenceEntry {
+	{field} -canonicalSlug : String
+	{field} -embeddedReferences : Map
+	{method} +area () : CatalogArea
+	{method} +canonicalSlug () : String
+	{method} +descriptor () : CatalogCategoryDescriptor
+	{method} +embeddedReferences () : Map
+	{method} +entry () : CatalogEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
 }
 
 
@@ -1666,12 +2438,14 @@ class Publication {
 
 class Publication {
 	{field} {static} -DRIVETHRURPG_COVER_BASE : String
+	{field} {static} -DRIVETHRURPG_PRODUCT_BASE : String
 	{field} -codexId : String
 	{field} -id : UUID
 	{field} -name : String
 	{field} -primaryProductId : int
 	{field} -productIds : Set
 	{field} -thirdParty : String
+	{method} +catalogArea () : CatalogArea
 	{method} +codexId () : String
 	{method} +coverURL () : String
 	{method} +equals ( o : Object ) : boolean
@@ -1679,8 +2453,30 @@ class Publication {
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +primaryProductId () : int
+	{method} +productCodexIds () : Set
 	{method} +productIds () : Set
+	{method} +productUrl () : String
+	{method} +slug () : String
 	{method} +thirdParty () : String
+	{method} +toString () : String
+}
+
+
+class PublicationCard {
+	{field} -codexId : String
+	{field} -coverUrl : String
+	{field} -detailPath : String
+	{field} -name : String
+	{field} -publisher : String
+	{field} -storeUrl : String
+	{method} +codexId () : String
+	{method} +coverUrl () : String
+	{method} +detailPath () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +name () : String
+	{method} +publisher () : String
+	{method} +storeUrl () : String
 	{method} +toString () : String
 }
 
@@ -1721,6 +2517,21 @@ interface PublicationEntityMapper {
 class PublicationEntityMapperImpl {
 	{method} +toDomain ( entity : Publication ) : Publication
 	{method} +toEntity ( model : Publication ) : Publication
+}
+
+
+class PublicationLinkViewModel {
+	{field} -codexId : String
+	{field} -detailPath : String
+	{field} -name : String
+	{field} -storeUrl : String
+	{method} +codexId () : String
+	{method} +detailPath () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +name () : String
+	{method} +storeUrl () : String
+	{method} +toString () : String
 }
 
 
@@ -1902,6 +2713,10 @@ class RawHtmlProcessor {
 }
 
 
+interface RawLookupResult {
+}
+
+
 class ReferencedEntryResolver {
 	{method} -accessibleIds ( requested : Set , owned : OwnedProducts ) : Set
 	{method} +filter ( entries : List , owned : OwnedProducts ) : List
@@ -1915,6 +2730,16 @@ interface ReferencesEntries {
 }
 
 
+class RenderedProseSection {
+	{field} -title : String
+	{method} +content () : SanitizedHtml
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +title () : String
+	{method} +toString () : String
+}
+
+
 class RequiredProductDto {
 	{field} -codexId : String
 	{method} +codexId () : String
@@ -1925,22 +2750,86 @@ class RequiredProductDto {
 }
 
 
+class RequiredProductRef {
+	{field} -codexId : String
+	{field} -publication : Optional
+	{method} +codexId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +publication () : Optional
+	{method} +toString () : String
+}
+
+
+class RequiredProductViewModel {
+	{field} -codexId : String
+	{field} -coverUrl : String
+	{field} -displayName : String
+	{field} -publicationPath : String
+	{field} -storeUrl : String
+	{method} +codexId () : String
+	{method} +coverUrl () : String
+	{method} +displayName () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +publicationPath () : String
+	{method} +storeUrl () : String
+	{method} +toString () : String
+}
+
+
+class ResolvedEntry {
+	{field} -canonicalSlug : String
+	{method} +canonicalSlug () : String
+	{method} +entry () : CatalogEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
 interface RestrictedCatalogQuery {
 	{method}  {abstract} +findAll () : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findById ( id : UUID ) : EntryAccess
+	{method} +findByIdentifier ( slugOrId : String ) : EntryAccess
+	{method} +peekAll () : List
 }
 
 
 class RestrictedCatalogQueryService {
 	{field} -references : ReferenceFilter
-	{method} -access ( entry : ProductBoundEntry , owned : OwnedProducts ) : EntryAccess
+	{method} -access ( entry : ProductBoundEntry , owned : OwnedProducts , canonicalSlug : String ) : EntryAccess
+	{method} -catalogArea () : CatalogArea
 	{method} -decide ( entry : ProductBoundEntry , owned : OwnedProducts ) : AccessDecision
 	{method} +findAll () : List
 	{method} +findByCosm ( cosm : String ) : List
 	{method} +findById ( id : UUID ) : EntryAccess
+	{method} +findByIdentifier ( slugOrId : String ) : EntryAccess
 	{method} -granted ( candidates : List , owned : OwnedProducts ) : List
+	{method} +peekAll () : List
 	{method}  {static} +withReferences ( area : EntityType , persistence : CatalogPersistencePort , callerProducts : CallerProductsPort , observer : CatalogAccessObserver , policy : CatalogAccessPolicy , resolver : ReferencedEntryResolver ) : RestrictedCatalogQueryService
+	{method}  {static} +withReferences ( area : EntityType , persistence : CatalogPersistencePort , callerProducts : CallerProductsPort , observer : CatalogAccessObserver , policy : CatalogAccessPolicy , resolver : ReferencedEntryResolver , usageObserver : CatalogUsageObserver ) : RestrictedCatalogQueryService
+}
+
+
+class RestrictedTeaser {
+	{method} +area () : CatalogArea
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +requiredProducts () : List
+	{method} +teaser () : Teaser
+	{method} +toString () : String
+}
+
+
+class SanitizedHtml {
+	{field} -html : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +html () : String
+	{method} +isEmpty () : boolean
+	{method} +toString () : String
 }
 
 
@@ -1956,6 +2845,7 @@ class Shard {
 	{field} -tappingDifficulty : String
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
@@ -2070,6 +2960,12 @@ class ShardSummaryDto {
 }
 
 
+enum SortDirection {
+	{field} +ASC
+	{field} +DESC
+}
+
+
 class Spell {
 	{field} -axiom : String
 	{field} -castingTime : String
@@ -2178,6 +3074,7 @@ class SpellList {
 	{field} -text : String
 	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +entityType () : EntityType
@@ -2311,10 +3208,51 @@ class SpellSummaryDto {
 }
 
 
+class TableCellViewModel {
+	{field} -href : String
+	{field} -text : String
+	{method} +cosmBadges () : List
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +href () : String
+	{method} +kind () : CellKind
+	{method} +text () : String
+	{method} +toString () : String
+}
+
+
+class TableRowViewModel {
+	{field} -detailPath : String
+	{method} +cells () : List
+	{method} +detailPath () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class TableViewModel {
+	{field} -matchingCount : int
+	{field} -totalAccessibleCount : int
+	{method} +area () : CatalogArea
+	{method} +equals ( o : Object ) : boolean
+	{method} +filterPanel () : FilterPanelViewModel
+	{method} +hashCode () : int
+	{method} +headers () : List
+	{method} +matchingCount () : int
+	{method} +nav () : NavContextViewModel
+	{method} +rows () : List
+	{method} +toString () : String
+	{method} +totalAccessibleCount () : int
+}
+
+
 class Tag {
 	{field} -id : UUID
 	{field} -name : String
 	{field} -parent : UUID
+	{method} +catalogArea () : CatalogArea
+	{method} +clearance () : Optional
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -2397,6 +3335,14 @@ class TagSummaryDto {
 
 
 class Teaser {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +teaser () : Teaser
+	{method} +toString () : String
+}
+
+
+class Teaser {
 	{field} -id : UUID
 	{field} -name : String
 	{field} -requiredProducts : SortedSet
@@ -2407,6 +3353,18 @@ class Teaser {
 	{method} +requiredProducts () : SortedSet
 	{method} +toString () : String
 	{method} +type () : EntityType
+}
+
+
+class TeaserViewModel {
+	{field} -entryName : String
+	{method} +area () : CatalogArea
+	{method} +entryName () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +nav () : NavContextViewModel
+	{method} +requiredProducts () : List
+	{method} +toString () : String
 }
 
 
@@ -2466,6 +3424,7 @@ class Threat {
 	{field} -wounds : String
 	{method} +charisma () : String
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +dexterity () : String
 	{method} +entityType () : EntityType
@@ -2712,6 +3671,7 @@ class Vehicle {
 	{field} -wounds : String
 	{method} +axiomTech () : String
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
@@ -2875,9 +3835,12 @@ class VehicleWeaponDto {
 
 
 
+Absent *--  CatalogArea : area
+Absent ..|>  CatalogDetailResult
 Absent ..|>  EntryAccess
 Article *--  ClearanceLevel : clearanceLevel
 Article --|>  TorgEntity
+Article ..|>  CatalogEntry
 ArticleController *--  ArticleMapper : mapper
 ArticleController *--  CatalogQuery : catalogQuery
 ArticleController *--  CurrentUserCensorFactory : censorFactory
@@ -2889,21 +3852,69 @@ ArticleMapperImpl -->  TorgMappingSupport : torgMappingSupport
 ArticleMapperImpl ..|>  ArticleMapper
 ArticleSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 ArticleSummaryDto *--  ClearanceLevel : clearanceLevel
+AttributeGroupViewModel "1" o-- "0..*"  AttributeItem : items
+AttributeItem *--  SanitizedHtml : markupValue
+Attributes "1" o-- "0..*"  AttributeField : fields
+Attributes ..|>  DetailSectionDescriptor
+AuthPageViewModel *--  NavContextViewModel : nav
 CatalogAccessObservabilityAdapter "1" o-- "0..*"  EntityType : counters
 CatalogAccessObservabilityAdapter ..|>  CatalogAccessObserver
 CatalogAccessResponses *--  EntryTeaserMapper : teaserMapper
+CatalogBrowseResult "1" o-- "0..*"  FacetOption : availableCosms
+CatalogBrowseResult "1" o-- "0..*"  GroupingDimension : availableFacets
+CatalogBrowseResult "1" o-- "0..*"  ResolvedEntry : entries
+CatalogBrowseResult *--  CatalogArea : area
+CatalogBrowseResult *--  CatalogCategoryDescriptor : descriptor
+CatalogBrowseResult *--  CatalogFilterCriteria : appliedCriteria
+CatalogBrowseService "1" o-- "0..*"  AreaSource : sources
+CatalogBrowseService "1" o-- "0..*"  CatalogArea : sources
+CatalogBrowseService *--  CatalogUsageObserver : usageObserver
+CatalogBrowseService ..|>  CatalogBrowseQuery
+CatalogCategoryDescriptor "1" o-- "0..*"  ColumnDescriptor : columns
+CatalogCategoryDescriptor "1" o-- "0..*"  DetailSectionDescriptor : detailSections
+CatalogCategoryDescriptor "1" o-- "0..*"  FilterFacetDescriptor : facets
+CatalogCategoryDescriptor *--  CatalogArea : area
+CatalogCategoryRegistry "1" o-- "0..*"  CatalogArea : DESCRIPTORS
+CatalogCategoryRegistry "1" o-- "0..*"  CatalogCategoryDescriptor : DESCRIPTORS
 CatalogEntryReference ..|>  ProductBoundEntry
+CatalogFilterCriteria "1" o-- "0..*"  GroupingDimension : groupings
+CatalogFilterCriteria *--  SortDirection : direction
 CatalogQueryConfiguration *--  CallerProductsPort : callerProducts
 CatalogQueryConfiguration *--  CatalogAccessObserver : observer
 CatalogQueryConfiguration *--  CatalogAccessPolicy : policy
+CatalogQueryConfiguration *--  CatalogUsageObserver : usageObserver
+CatalogQueryService *--  CatalogArea : area
 CatalogQueryService *--  CatalogPersistencePort : persistence
+CatalogQueryService *--  CatalogUsageObserver : usageObserver
 CatalogQueryService ..|>  CatalogQuery
 CatalogReferenceEntityMapperImpl ..|>  CatalogReferenceEntityMapper
 CatalogReferenceQueryService *--  CatalogAccessObserver : observer
 CatalogReferenceQueryService *--  CatalogAccessPolicy : policy
 CatalogReferenceQueryService *--  CatalogReferencePersistencePort : persistence
 CatalogReferenceQueryService ..|>  CatalogReferenceQuery
+CatalogUsageObservabilityAdapter "1" o-- "0..*"  CatalogArea : categoryCounters
+CatalogUsageObservabilityAdapter "1" o-- "0..*"  CatalogArea : notFoundDetailCounters
+CatalogUsageObservabilityAdapter "1" o-- "0..*"  DetailAccessOutcome : outcomeRollups
+CatalogUsageObservabilityAdapter ..|>  CatalogUsageObserver
+CatalogUsageObserver *--  CatalogUsageObserver : NO_OP
+CategoryCard *--  CatalogArea : area
+CategorySummary *--  CatalogArea : area
 Censor *--  TorgMarkupService : markupService
+CodexAuthController *--  CodexViewMapper : viewMapper
+CodexCatalogController *--  CatalogBrowseQuery : browseQuery
+CodexCatalogController *--  CodexViewMapper : viewMapper
+CodexExceptionAdvice *--  CodexViewMapper : viewMapper
+CodexHomeController *--  CodexOverviewQuery : overviewQuery
+CodexHomeController *--  CodexViewMapper : viewMapper
+CodexHomeOverview "1" o-- "0..*"  CategorySummary : categories
+CodexHomeOverview "1" o-- "0..*"  Publication : missingPublications
+CodexHomeOverview "1" o-- "0..*"  Publication : ownedPublications
+CodexOverviewService "1" o-- "0..*"  AreaSource : sources
+CodexOverviewService "1" o-- "0..*"  CatalogArea : sources
+CodexOverviewService *--  CallerProductsPort : callerProducts
+CodexOverviewService ..|>  CodexOverviewQuery
+CodexViewMapper *--  CurrentUserCensorFactory : censorFactory
+ColumnDescriptor *--  CellKind : kind
 Cosm *--  ClearanceLevel : clearanceLevel
 Cosm --|>  TorgEntity
 Cosm ..|>  ProductBoundEntry
@@ -2923,6 +3934,15 @@ CosmSummaryDto *--  ClearanceLevel : clearanceLevel
 CosmSummaryDto *--  CosmRefDto : cosm
 CurrentUserCensorFactory *--  ProductOwnershipResolver : ownershipResolver
 CurrentUserCensorFactory *--  TorgMarkupService : markupService
+DetailHeader "1" o-- "0..*"  CosmBadgeViewModel : cosms
+DetailViewModel "1" o-- "0..*"  AttributeGroupViewModel : attributeGroups
+DetailViewModel "1" o-- "0..*"  PublicationLinkViewModel : publications
+DetailViewModel "1" o-- "0..*"  RenderedProseSection : proseSections
+DetailViewModel *--  CatalogArea : area
+DetailViewModel *--  DetailHeader : header
+DetailViewModel *--  NavContextViewModel : nav
+EmbeddedReferences *--  CatalogArea : targetArea
+EmbeddedReferences ..|>  DetailSectionDescriptor
 EntityDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 EntityDetailDto *--  ClearanceLevel : clearanceLevel
 EntityDetailDto *--  CosmRefDto : cosm
@@ -2932,8 +3952,24 @@ EntitySummaryDto *--  CosmRefDto : cosm
 EntryTeaserDto "1" o-- "0..*"  RequiredProductDto : requiredProducts
 EntryTeaserMapperImpl *--  TorgMappingSupport : torgMappingSupport
 EntryTeaserMapperImpl ..|>  EntryTeaserMapper
+FilterFacetDescriptor *--  GroupingDimension : dimension
+FilterPanelViewModel "1" o-- "0..*"  FacetOption : cosms
+FilterPanelViewModel "1" o-- "0..*"  GroupingFacetGroup : groupingFacets
 Granted *--  ProductBoundEntry : entry
 Granted ..|>  EntryAccess
+GrantedProduct *--  ProductBoundEntry : entry
+GrantedProduct ..|>  RawLookupResult
+GrantedProductEntry "1" o-- "0..*"  Publication : publications
+GrantedProductEntry *--  CatalogArea : area
+GrantedProductEntry *--  CatalogCategoryDescriptor : descriptor
+GrantedProductEntry *--  ProductBoundEntry : entry
+GrantedProductEntry ..|>  CatalogDetailResult
+GroupingFacetGroup "1" o-- "0..*"  FacetOption : options
+GroupingFacetGroup *--  GroupingDimension : dimension
+HomeViewModel "1" o-- "0..*"  CategoryCard : categories
+HomeViewModel "1" o-- "0..*"  PublicationCard : missingPublications
+HomeViewModel "1" o-- "0..*"  PublicationCard : ownedPublications
+HomeViewModel *--  NavContextViewModel : nav
 Item *--  ClearanceLevel : clearanceLevel
 Item --|>  TorgEntity
 Item ..|>  ProductBoundEntry
@@ -3006,6 +4042,8 @@ JpaThreatPersistenceAdapter ..|>  CatalogPersistencePort
 JpaVehiclePersistenceAdapter *--  VehicleEntityMapper : mapper
 JpaVehiclePersistenceAdapter *--  VehicleRepository : repository
 JpaVehiclePersistenceAdapter ..|>  CatalogPersistencePort
+LinkedEntryRef *--  CatalogArea : targetArea
+LinkedEntryViewModel *--  CatalogArea : targetArea
 Miracle *--  ClearanceLevel : clearanceLevel
 Miracle *--  DifficultyNumber : dn
 Miracle -->  DifficultyNumber : dn
@@ -3042,6 +4080,12 @@ MiracleMapperImpl -->  TorgMappingSupport : torgMappingSupport
 MiracleMapperImpl ..|>  MiracleMapper
 MiracleSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 MiracleSummaryDto *--  ClearanceLevel : clearanceLevel
+NavContextViewModel "1" o-- "0..*"  NavSectionGroup : sections
+NavContextViewModel *--  CatalogArea : activeArea
+NavSectionGroup "1" o-- "0..*"  CatalogArea : areas
+NavSectionGroup *--  NavigationSection : section
+NotFound ..|>  RawLookupResult
+NotFoundViewModel *--  NavContextViewModel : nav
 OwnedProducts *--  OwnedProducts : ANONYMOUS
 Perk *--  ClearanceLevel : clearanceLevel
 Perk --|>  TorgEntity
@@ -3111,7 +4155,17 @@ PowerMapperImpl -->  TorgMappingSupport : torgMappingSupport
 PowerMapperImpl ..|>  PowerMapper
 PowerSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 PowerSummaryDto *--  ClearanceLevel : clearanceLevel
+ProductBoundEntry ..|>  CatalogEntry
 ProductOwnershipResolver ..|>  CallerProductsPort
+Prose ..|>  DetailSectionDescriptor
+ProseMap ..|>  DetailSectionDescriptor
+PublicEntry *--  CatalogEntry : entry
+PublicEntry ..|>  RawLookupResult
+PublicReferenceEntry *--  CatalogArea : area
+PublicReferenceEntry *--  CatalogCategoryDescriptor : descriptor
+PublicReferenceEntry *--  CatalogEntry : entry
+PublicReferenceEntry ..|>  CatalogDetailResult
+Publication ..|>  CatalogEntry
 PublicationController *--  CatalogQuery : catalogQuery
 PublicationController *--  PublicationMapper : mapper
 PublicationEntityMapperImpl ..|>  PublicationEntityMapper
@@ -3134,13 +4188,20 @@ RaceSummaryDto *--  ClearanceLevel : clearanceLevel
 ReferencedEntryResolver *--  CatalogAccessObserver : observer
 ReferencedEntryResolver *--  CatalogAccessPolicy : policy
 ReferencedEntryResolver *--  CatalogPersistencePort : referenced
+RenderedProseSection *--  SanitizedHtml : content
 RequiredProductDto *--  PublicationRefDto : publication
+ResolvedEntry *--  CatalogEntry : entry
 RestrictedCatalogQueryService *--  CallerProductsPort : callerProducts
 RestrictedCatalogQueryService *--  CatalogAccessObserver : observer
 RestrictedCatalogQueryService *--  CatalogAccessPolicy : policy
 RestrictedCatalogQueryService *--  CatalogPersistencePort : persistence
+RestrictedCatalogQueryService *--  CatalogUsageObserver : usageObserver
 RestrictedCatalogQueryService *--  EntityType : area
 RestrictedCatalogQueryService ..|>  RestrictedCatalogQuery
+RestrictedTeaser "1" o-- "0..*"  RequiredProductRef : requiredProducts
+RestrictedTeaser *--  CatalogArea : area
+RestrictedTeaser *--  Teaser : teaser
+RestrictedTeaser ..|>  CatalogDetailResult
 Shard *--  ClearanceLevel : clearanceLevel
 Shard --|>  TorgEntity
 Shard ..|>  ProductBoundEntry
@@ -3194,8 +4255,17 @@ SpellMapperImpl -->  TorgMappingSupport : torgMappingSupport
 SpellMapperImpl ..|>  SpellMapper
 SpellSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 SpellSummaryDto *--  ClearanceLevel : clearanceLevel
+TableCellViewModel "1" o-- "0..*"  CosmBadgeViewModel : cosmBadges
+TableCellViewModel *--  CellKind : kind
+TableRowViewModel "1" o-- "0..*"  TableCellViewModel : cells
+TableViewModel "1" o-- "0..*"  ColumnHeaderViewModel : headers
+TableViewModel "1" o-- "0..*"  TableRowViewModel : rows
+TableViewModel *--  CatalogArea : area
+TableViewModel *--  FilterPanelViewModel : filterPanel
+TableViewModel *--  NavContextViewModel : nav
 Tag *--  ClearanceLevel : clearanceLevel
 Tag --|>  TorgEntity
+Tag ..|>  CatalogEntry
 TagController *--  CatalogQuery : catalogQuery
 TagController *--  TagMapper : mapper
 TagDetailDto "1" o-- "0..*"  PublicationRefDto : publications
@@ -3206,7 +4276,12 @@ TagMapperImpl ..|>  TagMapper
 TagSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 TagSummaryDto *--  ClearanceLevel : clearanceLevel
 Teaser *--  EntityType : type
+Teaser *--  Teaser : teaser
 Teaser ..|>  EntryAccess
+Teaser ..|>  RawLookupResult
+TeaserViewModel "1" o-- "0..*"  RequiredProductViewModel : requiredProducts
+TeaserViewModel *--  CatalogArea : area
+TeaserViewModel *--  NavContextViewModel : nav
 Threat *--  ClearanceLevel : clearanceLevel
 Threat --|>  TorgEntity
 Threat ..|>  ProductBoundEntry

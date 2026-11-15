@@ -46,12 +46,23 @@ class AdapterConventionArchitectureTest {
             "VehicleController");
 
     @Test
-    void controllersRemainInInboundAdapterPackage() {
+    void restControllersRemainInApiControllerPackage() {
+        ArchitectureTestSupport.assertNoUnfrozenViolations(classes()
+                .that().areAnnotatedWith(RestController.class)
+                .should().resideInAnyPackage("de.paladinsinn.torg.codex.api.controller..")
+                .as("@RestController classes must live under api.controller (W1)"));
+    }
+
+    @Test
+    void webUiControllersResideInWebSurfacePackages() {
         ArchitectureTestSupport.assertNoUnfrozenViolations(classes()
                 .that().areAnnotatedWith(Controller.class)
-                .or().areAnnotatedWith(RestController.class)
-                .should().resideInAnyPackage("de.paladinsinn.torg.codex.api.controller..")
-                .as("REST controllers must live under api.controller"));
+                .and().areNotAnnotatedWith(RestController.class)
+                .should().resideInAnyPackage(
+                        "de.paladinsinn.torg.codex.web.codex..",
+                        "de.paladinsinn.torg.codex.web.admin..")
+                .as("MVC @Controller classes must live under web.codex or web.admin (W1)")
+                .allowEmptyShould(true));
     }
 
     @Test

@@ -1,0 +1,17 @@
+/*
+ * Torg Codex Reserved Admin Theme (ADR-020, FR-019)
+ * Separate visual identity and layout variables for /admin/** maintenance screens.
+ */
+:root {
+    --admin-header-bg: #102a43;
+    --admin-header-border: #38bdf8;
+}
+
+body.codex-admin-theme {
+    min-height: 100vh;
+}
+
+.codex-admin-navbar {
+    background-color: var(--admin-header-bg);
+    border-bottom: 3px solid var(--admin-header-border);
+}

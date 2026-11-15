@@ -51,4 +51,9 @@ public record Perk(
     public EntityType entityType() {
         return EntityType.PERK;
     }
+
+    @Override
+    public Set<String> cosmSlugs() {
+        return CatalogEntry.normalizeSlugs(cosms);
+    }
 }

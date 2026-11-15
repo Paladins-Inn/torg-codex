@@ -69,7 +69,10 @@ public class DriveThruAuthenticationProvider implements AuthenticationProvider {
                     userDetails.getCustomerId(), ownedCodexIds.size());
             return ApiKeyAuthenticationToken.authenticated(userDetails);
         } catch (final NoValidTokenException e) {
-            log.warn("DriveThruRPG authentication failed: invalid API key.");
+            log.atInfo()
+                    .addKeyValue("event.action", "drivethru-auth-rejected")
+                    .addKeyValue("reason", "invalid-api-key")
+                    .log("DriveThruRPG authentication failed: invalid API key.");
             throw new BadCredentialsException("Invalid DriveThruRPG API key.", e);
         }
     }

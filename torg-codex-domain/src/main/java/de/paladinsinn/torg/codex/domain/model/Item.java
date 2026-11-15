@@ -57,4 +57,9 @@ public record Item(
     public EntityType entityType() {
         return EntityType.ITEM;
     }
+
+    @Override
+    public Set<String> cosmSlugs() {
+        return CatalogEntry.normalizeSlugs(cosms);
+    }
 }

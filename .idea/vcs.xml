@@ -8,7 +8,6 @@
     </profile>
   </component>
   <component name="VcsDirectoryMappings">
-    <mapping directory="$PROJECT_DIR$/../kp-rpg-drivethru" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../torg-codex/torg-codex" vcs="Git" />
   </component>

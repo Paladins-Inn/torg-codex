@@ -1,4 +1,7 @@
 *** xref:09_architecture_decisions/index.adoc[]
+**** xref:09_architecture_decisions/022_logging-policy.adoc[]
+**** xref:09_architecture_decisions/021_htmx-hypermedia-interactivity.adoc[]
+**** xref:09_architecture_decisions/020_bootstrap-ui-framework.adoc[]
 **** xref:09_architecture_decisions/019_domain-level-drm.adoc[]
 **** xref:09_architecture_decisions/018_multi-valued-references-and-encoded-list-repair.adoc[]
 **** xref:09_architecture_decisions/017_spring-boot-structured-logging.adoc[]

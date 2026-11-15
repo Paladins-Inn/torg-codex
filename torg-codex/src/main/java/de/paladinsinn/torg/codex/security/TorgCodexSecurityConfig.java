@@ -106,12 +106,19 @@ public class TorgCodexSecurityConfig {
             .anonymous(anon -> anon
                 .principal(NotLoggedInUserDetails.INSTANCE)
                 .authorities("ROLE_" + NotLoggedInUserDetails.FREE_PRODUCT_ID))
-            .formLogin(form -> form
-                .loginPage("/login")
-                .permitAll())
+            // Non-admin reader login (/login) is handled explicitly by CodexAuthController using
+            // DriveThruRPG API keys rather than UsernamePasswordAuthenticationFilter (FR-014, D7).
+            // Role-based OIDC authentication (ADR-007) is reserved for a separate /admin/** chain (FR-019).
             .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/")
+                .logoutRequestMatcher(request ->
+                    "POST".equalsIgnoreCase(request.getMethod())
+                        && "/logout".equals(request.getRequestURI()))
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    log.atInfo()
+                        .addKeyValue("event.action", "user-logout")
+                        .log("DriveThruRPG session signed out");
+                    response.sendRedirect("/login?logout");
+                })
                 .permitAll())
             .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth

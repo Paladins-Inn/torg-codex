@@ -25,8 +25,10 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.catalog.CatalogArea;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -41,5 +43,15 @@ public record Article(
     @NotNull String name,
     ClearanceLevel clearanceLevel,
     String text
-) {
+) implements CatalogEntry {
+
+    @Override
+    public CatalogArea catalogArea() {
+        return CatalogArea.ARTICLE;
+    }
+
+    @Override
+    public Optional<ClearanceLevel> clearance() {
+        return Optional.ofNullable(clearanceLevel);
+    }
 }

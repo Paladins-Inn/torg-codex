@@ -1,0 +1,118 @@
+:adr-title: Server-Driven UI Interactivity with htmx
+:adr-state: Accepted
+:adr-date: 2026-11-15
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 021
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+Replacing `https://torg-codex.com` requires an interactive browser UI for exploring 14 DRM-protected catalog categories and public reference content ({adr-019}).
+Users expect immediate, fluid interactions when searching by name, toggling multi-faceted filters (Cosm, Clearance, Perk Group, Race, Item Type), sorting tabular columns, expanding inline previews, and navigating between tabular lists and element detail views.
+
+At the same time, {system} operates under strict architectural invariants:
+
+1. **Domain-Level DRM & Markup Censoring ({adr-010}, {adr-016}, {adr-019})**: Product ownership (`ROLE_<codex-id>`) and `<IF:…>` passage censoring are enforced on the server in `torg-codex-domain` / `torg-codex-application`. Unowned entries and gated prose must never reach unauthorized browsers—not even hidden in DOM `data-*` attributes or client-side JSON stores.
+2. **Server-Side Markdown & Game Token Pipeline ({adr-010}, {adr-016})**: Entry prose is converted through conditional product blocks, entity references, raw HTML handling, Torg game tokens, CommonMark (`flexmark-java`), and HTML sanitization on the server before injection into **JTE** templates.
+3. **Self-Contained System & Hexagonal Boundaries ({scs}, {adr-005})**: The UI belongs inside the `torg-codex` deployable as a thin inbound adapter alongside the REST controllers, consuming `RestrictedCatalogQuery` and `CatalogQuery` directly in-process rather than maintaining a separate frontend service making synchronous cross-service calls.
+
+In the legacy `torg-codex.com` implementation, interactive filtering worked by rendering all accessible entries into the initial HTML with `data-cosms`, `data-power`, `data-group`, and `data-race` attributes and toggling visibility via bespoke imperative JavaScript (`search.js`, `autocomplete.js`). As a user's owned library grows across dozens of sourcebooks, shipping and mutating large DOM trees via custom scripts becomes brittle, duplicates filtering logic on the client, and breaks clean bookmarkable filter URLs.
+
+== Decision
+
+We adopt **htmx** as the hypermedia-driven interactivity library for the {system} web UI, paired with server-side **JTE** full-page and fragment templates ({adr-010}) and styled with **Bootstrap 5** ({adr-020}):
+
+1. **Hypermedia Over the Wire**: Interactive UI controls (search inputs, filter checkboxes/selects, sort headers, pagination, and inline detail previews) use declarative `hx-*` attributes (`hx-get`, `hx-target`, `hx-swap`, `hx-trigger`, `hx-push-url`, `hx-indicator`) to request pre-rendered HTML fragments from Spring MVC web controllers in `torg-codex`.
+2. **Dual Full-Page & Fragment Rendering in JTE**: Web controllers inspect the `HX-Request` header. Standard browser navigation (bookmarks, initial page loads, refreshes) renders the complete JTE page layout; htmx partial requests render only the targeted JTE fragment (e.g., the filtered `<tbody>` and result counter) from the exact same controller logic and query parameters.
+3. **URL & History Synchronization**: Filter and navigation interactions synchronize query parameters with the browser address bar (`hx-push-url` / `hx-replace-url`) so every filtered tabular view and element detail page remains deep-linkable, bookmarkable, and back/forward-button friendly.
+4. **Zero Client-Side DRM or Markup Logic**: All data retrieval runs exclusively through `RestrictedCatalogQuery` / `CatalogQuery` ({adr-019}) and `CurrentUserCensorFactory` ({adr-010}) on the server. No catalog filtering, permission evaluation, or Markdown rendering is duplicated in JavaScript.
+5. **Dedicated Authentication Pages**: Login and logout use standard full-page HTTP form/redirect flows (`/login`, `/logout`) so session and Spring Security context transitions cleanly refresh the entire navigation and page state.
+
+== Benefits for {system}
+
+* **Guaranteed DRM Compliance on Every Interaction**: Because every search, filter, sort, and detail view is rendered on the server through `RestrictedCatalogQuery` and `Censor`, unowned entries and censored `<IF:…>` passages never leave the server—eliminating accidental leaks via client-side JSON payloads or hidden DOM attributes.
+* **Single Rendering Pipeline with JTE ({adr-010}, {adr-016})**: Server-side JTE templates are written once and reused for both initial full-page SSR and dynamic htmx fragment updates. Torg markup, game tokens, and sanitized CommonMark HTML render identically on first load and after interactive filtering.
+* **True Self-Contained System Simplicity ({scs}, {adr-005})**: Keeps the entire UI inside the `torg-codex` Maven module as thin Spring `@Controller` inbound adapters over existing driving ports—no separate SPA repository, no CORS/BFF plumbing, and no duplicate TypeScript DTOs/mappers mirroring Java domain models.
+* **Zero JavaScript Build Pipeline**: htmx is a single, dependency-free ~14 KB (gzipped) script served via WebJars or static resources alongside Bootstrap 5 ({adr-020}). The complete application builds and tests via `./mvnw clean verify` with MockMvc / HTML integration tests.
+* **Progressive Enhancement & Bookmarkability**: Clean URLs (`/perks?cosm=aysle&clearance=beta`, `/perks/...`) work identically whether clicked dynamically via htmx or opened directly from a shared link at the gaming table.
+
+== Consequences and Challenges
+
+* **Server Round-Trip per Filter Change**: Filtering and sorting trigger lightweight HTTP requests rather than mutating an in-memory browser array. Mitigated by debounced input triggers (e.g., `hx-trigger="input changed delay:200ms, search"`), precompiled JTE templates (near-zero template overhead), and small HTML fragment payloads.
+* **Full-Page vs. Fragment Controller Discipline**: Web controllers and JTE templates must consistently handle both full-page requests and `HX-Request: true` partial updates whenever `hx-push-url` is active, so pressing browser Refresh on a filtered URL renders the full page rather than a bare `<tbody>` fragment.
+* **No Offline Mode**: Because DRM enforcement and catalog queries execute server-side per request, offline browsing is intentionally not supported.
+
+== Evaluated Options
+
+=== Option 1: htmx + Server-Side JTE Fragments (Selected)
+
+* **Summary**: Declarative HTML attributes extend standard links and forms to swap server-rendered JTE HTML fragments into targeted DOM regions.
+* **Pros**: 100% server-side DRM and markup rendering; zero JS build step; tiny runtime (~14 KB); deep-linkable URLs via `hx-push-url`; straightforward Spring MVC + JTE testing with MockMvc.
+* **Cons**: Requires server connectivity for filtering/sorting; controllers must distinguish full-page vs. `HX-Request` fragment responses on URL-pushed routes.
+
+=== Option 2: Single-Page Application (React, Vue, or Angular) over `/api/*` REST
+
+* **Summary**: Client-side JavaScript SPA fetching JSON from the existing `/api/*` endpoints and rendering views in the browser.
+* **Pros**: Rich client-side state management; decouples UI rendering from HTTP page loads once JSON is fetched.
+* **Cons**: Heavy Node.js/TypeScript/Vite build pipeline; duplicates routing, DTO models, table/detail templates, and `403` purchase-teaser handling in JavaScript; conflicts with media-type API versioning ({adr-008}) unless custom fetch wrappers are maintained everywhere; disproportionate complexity for a read-centric reference codex.
+
+=== Option 3: Vanilla JavaScript DOM Filtering (Legacy `torg-codex.com` Pattern)
+
+* **Summary**: Render every accessible entry into the page DOM with `data-*` attributes and show/hide rows using custom imperative JavaScript (`search.js`).
+* **Pros**: Instant client-side toggling once the full page is downloaded; zero external library needed.
+* **Cons**: Initial HTML payload bloats significantly when a user owns all Torg Eternity sourcebooks (hundreds of items and threats); bespoke imperative DOM scripts must be written and maintained per category filter combination; URL query synchronization and back-button state have to be hand-rolled; inline previews require shipping extra detail markup up front.
+
+=== Option 4: Hotwire (Turbo Drive + Turbo Frames + Stimulus)
+
+* **Summary**: Basecamp/37signals HTML-over-the-wire suite combining full-page interception, `<turbo-frame>` scoping, `<turbo-stream>` mutations, and Stimulus JS controllers.
+* **Pros**: Same server-rendered HTML philosophy as htmx; strong conventions for frame-scoped navigation.
+* **Cons**: Larger conceptual surface area (three distinct mechanisms: Drive, Frames, Streams plus Stimulus) tailored primarily to Ruby on Rails conventions; more invasive global link/form interception (`Turbo Drive`) than htmx's explicit opt-in attributes; less idiomatic in the Spring Boot + JTE ecosystem.
+
+=== Option 5: Alpine.js Alone
+
+* **Summary**: Lightweight (~15 KB) declarative client-side reactivity (`x-data`, `x-show`, `x-for`) embedded in HTML attributes.
+* **Pros**: Simple inline state for purely local UI toggles without a build step.
+* **Cons**: Alpine.js is an in-page state library, not a hypermedia transport—using it alone for catalog filtering either falls back to Option 3 (shipping all rows into client memory) or Option 2 (fetching JSON via `fetch()` and duplicating JTE templates inside `x-for` loops). Bootstrap 5's native JS already covers dropdowns, collapses, and modals ({adr-020}), while htmx covers server-driven data updates.
+
+=== Decision Matrix
+
+[cols="2,2,2,2,2", options="header"]
+|===
+| Criterion | htmx + JTE (Selected) | SPA (React / Vue / Angular) | Vanilla JS DOM Filtering | Hotwire (Turbo + Stimulus)
+
+| Server-only DRM & censoring | Yes (by construction) | Yes (via API, duplicated UI states) | Risk of `data-*` bloat | Yes (by construction)
+| Reuses JTE & Markdown pipeline | 100% single template path | Requires JSON + client HTML | Full-DOM preload only | Partial (requires frame wrappers)
+| Frontend build step needed | None | Node.js + bundler + TS | None (manual `.js` files) | Optional / bundler common
+| Scales to full sourcebook library | Yes (server-filtered fragments) | Yes (paginated JSON) | Poor (large initial DOM) | Yes (Turbo Frames)
+| Bookmarkable filter URLs | Built-in (`hx-push-url`) | Client router required | Manual `history.pushState` | Turbo Frame `data-turbo-action`
+| Spring Boot MVC testability | Native MockMvc HTML assertions | Separate Playwright/Jest stack | Browser/JS test runner needed | MockMvc + Turbo MIME headers
+|===
+
+== Further Reading
+
+* {adr-002}
+* {adr-005}
+* {adr-010}
+* {adr-016}
+* {adr-019}
+* {adr-020}
+* {scs}
+* https://htmx.org/docs/[htmx Documentation]
+* https://hypermedia.systems/[Hypermedia Systems]
+
+<<<

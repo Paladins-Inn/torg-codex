@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.catalog.CatalogArea;
+import de.paladinsinn.torg.codex.domain.catalog.CatalogSlugs;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Set;
@@ -43,9 +45,26 @@ public record Publication(
     int primaryProductId,
     String thirdParty,
     Set<Integer> productIds
-) {
+) implements CatalogEntry {
 
     private static final String DRIVETHRURPG_COVER_BASE = "https://www.drivethrurpg.com/images/3444/";
+    private static final String DRIVETHRURPG_PRODUCT_BASE = "https://www.drivethrurpg.com/product/";
+
+    @Override
+    public CatalogArea catalogArea() {
+        return CatalogArea.PUBLICATION;
+    }
+
+    @Override
+    public String slug() {
+        String byCodexId = CatalogSlugs.normalize(codexId);
+        return byCodexId.isEmpty() ? CatalogSlugs.normalize(name) : byCodexId;
+    }
+
+    @Override
+    public Set<String> productCodexIds() {
+        return codexId == null || codexId.isBlank() ? Set.of() : Set.of(codexId.trim());
+    }
 
     /**
      * Returns the DriveThruRPG cover-image URL for this publication, based on the
@@ -55,5 +74,14 @@ public record Publication(
      */
     public String coverURL() {
         return DRIVETHRURPG_COVER_BASE + primaryProductId + ".jpg";
+    }
+
+    /**
+     * Returns the DriveThruRPG product page URL when {@code primaryProductId > 0}.
+     *
+     * @return product URL, or {@code null} when no DriveThruRPG product id is assigned
+     */
+    public String productUrl() {
+        return primaryProductId > 0 ? DRIVETHRURPG_PRODUCT_BASE + primaryProductId : null;
     }
 }

@@ -26,6 +26,9 @@
 package de.paladinsinn.drivethru.client;
 
 import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -35,6 +38,11 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
+import de.paladinsinn.drivethru.products.OwnedProduct;
+import de.paladinsinn.drivethru.products.Product;
+import de.paladinsinn.drivethru.publishers.Publisher;
+import de.paladinsinn.drivethru.resource.DriveThruMessage;
+import de.paladinsinn.drivethru.resource.DriveThruMultiMessage;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -49,6 +57,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DriveThruRPGClientConfig {
 
+    private record CachedDelegate(String baseUrl, DriveThruRPGClient delegate) {
+    }
+
     /**
      * Creates the {@link DriveThruRPGClient} proxy backed by a {@link RestClient}.
      *
@@ -60,6 +71,49 @@ public class DriveThruRPGClientConfig {
         log.info("Configuring DriveThruRPG REST client. baseUrl={}, connectTimeout={}, readTimeout={}",
                 properties.getBaseUrl(), properties.getConnectTimeout(), properties.getReadTimeout());
 
+        final AtomicReference<CachedDelegate> cached = new AtomicReference<>(
+                new CachedDelegate(properties.getBaseUrl(), buildDelegate(properties)));
+
+        return new DriveThruRPGClient() {
+            private DriveThruRPGClient current() {
+                String activeUrl = properties.getBaseUrl();
+                CachedDelegate existing = cached.get();
+                if (Objects.equals(existing.baseUrl(), activeUrl)) {
+                    return existing.delegate();
+                }
+                CachedDelegate updated = new CachedDelegate(activeUrl, buildDelegate(properties));
+                cached.set(updated);
+                return updated.delegate();
+            }
+
+            @Override
+            public DriveThruMessage<LinkedHashMap<String, String>> getToken(final String authorization) {
+                return current().getToken(authorization);
+            }
+
+            @Override
+            public DriveThruMultiMessage<OwnedProduct> getOwnedProducts(
+                    final String bearerToken,
+                    final String customerId,
+                    final int page,
+                    final int pageSize,
+                    final int archived) {
+                return current().getOwnedProducts(bearerToken, customerId, page, pageSize, archived);
+            }
+
+            @Override
+            public DriveThruMessage<Publisher> getPublisher(final String publisherId) {
+                return current().getPublisher(publisherId);
+            }
+
+            @Override
+            public DriveThruMessage<Product> getProduct(final String productId) {
+                return current().getProduct(productId);
+            }
+        };
+    }
+
+    private DriveThruRPGClient buildDelegate(final DriveThruProperties properties) {
         final SimpleClientHttpRequestFactory requestFactory = createRequestFactory(
                 properties.getConnectTimeout(), properties.getReadTimeout());
 

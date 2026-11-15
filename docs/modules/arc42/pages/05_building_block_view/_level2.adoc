@@ -9,35 +9,36 @@ include::partial$config.adoc[]
 
 | [[bb-torg-codex-domain,torg-codex-domain]] **torg-codex-domain**
 | Framework-unabhängige Domänenschicht. Enthält die reinen Domänenmodelle (`Item`, `Spell`,
-  `Race`, `Publication`, …), Werttypen und Domain Events. Keine Spring-, JPA- oder
-  Hibernate-Abhängigkeit (weder im Maven-POM noch im Bytecode) — durchgesetzt durch
-  `DomainPurityArchitectureTest`.
+  `Race`, `Publication`, …), das gemeinsame Kernmodell (`CatalogEntry`, `CatalogArea`,
+  `CatalogSlugs`, `CatalogCategoryRegistry`), die DRM-Zugriffspolitik (`CatalogAccessPolicy`,
+  {adr-019}), die Markup-Pipeline ({adr-016}) sowie Werttypen und Domain Events. Keine Spring-,
+  JPA- oder Hibernate-Abhängigkeit — durchgesetzt durch `DomainPurityArchitectureTest`.
 | Java 25, Lombok
 
 | [[bb-torg-codex-application,torg-codex-application]] **torg-codex-application**
-| Anwendungsschicht mit treibenden Ports (`CatalogQuery`, `CatalogReferenceQuery`) und
-  getriebenen Ports (`CatalogPersistencePort`) sowie deren framework-unabhängigen
-  Use-Case-Implementierungen (`CatalogQueryService`). Enthält außerdem die
-  DriveThruRPG-Integration und die API-Key-Sicherheitskomponenten als äußere
-  Framework-Adapter. Keine `@Transactional`-Annotation — durchgesetzt durch
+| Anwendungsschicht mit treibenden Ports (`RestrictedCatalogQuery`, `CatalogQuery`,
+  `CatalogBrowseQuery`, `CodexOverviewQuery`, `CatalogReferenceQuery`) und getriebenen Ports
+  (`CatalogPersistencePort`, `CallerProductsPort`, `CatalogAccessObserver`,
+  `CatalogUsageObserver`) sowie deren framework-unabhängigen Use-Case-Implementierungen.
+  Enthält außerdem die DriveThruRPG-Integration und die API-Key-Sicherheitskomponenten als
+  äußere Framework-Adapter ({adr-015}). Keine `@Transactional`-Annotation — durchgesetzt durch
   `ApplicationPurityArchitectureTest` und `TransactionBoundaryArchitectureTest`.
 | Java 25, Spring Boot 4, Spring Security 6
 
 | [[bb-torg-codex-data,torg-codex-data]] **torg-codex-data**
-| Ausgehende (getriebene) Adapter-Schicht. Stellt JPA-Persistenz-Adapter
-  (`Jpa<Area>PersistenceAdapter` mit MapStruct-Entity-Domain-Mappern) und den
-  Spring-`ApplicationEventPublisher`-Brücken-Adapter für Domain Events bereit, alle
-  unterhalb von `data.adapter.out..`. Zusätzlich: Entitäten, Repositories und
-  Markup-Verarbeitung.
+| Ausgehende (getriebene) Adapter-Schicht. Stellt ausschließlich Persistenz-Bausteine bereit:
+  JPA-Persistenz-Adapter (`Jpa<Area>PersistenceAdapter` mit MapStruct-Entity-Domain-Mappern),
+  Entitäten, Repositories und Liquibase-Migrationen unterhalb von `data..`.
 | Java 25, Spring Boot 4, JPA, MapStruct, Liquibase, PostgreSQL
 
 | [[bb-torg-codex,torg-codex]] **torg-codex**
 | Eingehende (treibende) Adapter-Schicht und Composition Root. Stellt REST-Controller
-  (`api.controller..`), die treibende Ports konsumieren, DTO-Mapper (`api.mapper..`,
-  MapStruct) und die Spring-Boot-Konfiguration (`CatalogQueryConfiguration`) bereit, die
-  getriebene-Port-Beans mit ihren Adaptern verdrahtet. Die Transaktionsgrenze
+  (`api.controller..`), die generische Reader-Web-UI (`web.codex..` mit JTE, Bootstrap 5,
+  Bootstrap Icons und htmx gemäß {adr-020} und {adr-021}), die isolierte reservierte
+  Admin-Oberfläche (`web.admin..`), Observability-Adapter (`api.observability..`) sowie
+  `CatalogQueryConfiguration` und `CatalogBrowseConfiguration` bereit. Die Transaktionsgrenze
   (`@Transactional(readOnly = true)`) für Lesezugriffe liegt an dieser eingehenden Grenze.
-| Java 25, Spring Boot 4, JTE, MapStruct
+| Java 25, Spring Boot 4, JTE, Bootstrap 5, htmx, MapStruct
 
 
 3+h| Level 2: Weitere Integrations- und Datenbausteine

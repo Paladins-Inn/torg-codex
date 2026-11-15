@@ -4,6 +4,8 @@ class Article {
 	{field} -id : UUID
 	{field} -name : String
 	{field} -text : String
+	{method} +catalogArea () : CatalogArea
+	{method} +clearance () : Optional
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -11,6 +13,18 @@ class Article {
 	{method} +name () : String
 	{method} +text () : String
 	{method} +toString () : String
+}
+
+
+interface CatalogEntry {
+	{method}  {abstract} +catalogArea () : CatalogArea
+	{method} +clearance () : Optional
+	{method} +cosmSlugs () : Set
+	{method}  {abstract} +id () : UUID
+	{method}  {abstract} +name () : String
+	{method}  {static} +normalizeSlugs ( raw : Collection ) : Set
+	{method} +productCodexIds () : Set
+	{method} +slug () : String
 }
 
 
@@ -46,6 +60,7 @@ class Cosm {
 	{field} -worldLaws : String
 	{method} +axioms () : Map
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -127,6 +142,7 @@ class Item {
 	{method} +axiomTech () : String
 	{method} +bonus () : String
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
@@ -182,6 +198,7 @@ class MiracleList {
 	{field} -text : String
 	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +entityType () : EntityType
@@ -212,6 +229,7 @@ class Perk {
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +contradiction () : boolean
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
@@ -288,6 +306,7 @@ class PowerList {
 	{field} -text : String
 	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +entityType () : EntityType
@@ -308,21 +327,27 @@ class PowerList {
 
 
 interface ProductBoundEntry {
+	{method} +catalogArea () : CatalogArea
+	{method} +clearance () : Optional
+	{method} +clearanceLevel () : ClearanceLevel
 	{method}  {abstract} +entityType () : EntityType
 	{method}  {abstract} +id () : UUID
 	{method}  {abstract} +name () : String
+	{method} +productCodexIds () : Set
 	{method}  {abstract} +products () : Set
 }
 
 
 class Publication {
 	{field} {static} -DRIVETHRURPG_COVER_BASE : String
+	{field} {static} -DRIVETHRURPG_PRODUCT_BASE : String
 	{field} -codexId : String
 	{field} -id : UUID
 	{field} -name : String
 	{field} -primaryProductId : int
 	{field} -productIds : Set
 	{field} -thirdParty : String
+	{method} +catalogArea () : CatalogArea
 	{method} +codexId () : String
 	{method} +coverURL () : String
 	{method} +equals ( o : Object ) : boolean
@@ -330,7 +355,10 @@ class Publication {
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +primaryProductId () : int
+	{method} +productCodexIds () : Set
 	{method} +productIds () : Set
+	{method} +productUrl () : String
+	{method} +slug () : String
 	{method} +thirdParty () : String
 	{method} +toString () : String
 }
@@ -391,6 +419,7 @@ class Shard {
 	{field} -tappingDifficulty : String
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
@@ -447,6 +476,7 @@ class SpellList {
 	{field} -text : String
 	{field} -unlockingPerks : Set
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +disableIf () : String
 	{method} +entityType () : EntityType
@@ -470,6 +500,8 @@ class Tag {
 	{field} -id : UUID
 	{field} -name : String
 	{field} -parent : UUID
+	{method} +catalogArea () : CatalogArea
+	{method} +clearance () : Optional
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -507,6 +539,7 @@ class Threat {
 	{field} -wounds : String
 	{method} +charisma () : String
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +dexterity () : String
 	{method} +entityType () : EntityType
@@ -557,6 +590,7 @@ class Vehicle {
 	{field} -wounds : String
 	{method} +axiomTech () : String
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +cosmSlugs () : Set
 	{method} +cosms () : Set
 	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
@@ -597,6 +631,7 @@ class VehicleWeapon {
 
 
 Article *--  ClearanceLevel : clearanceLevel
+Article ..|>  CatalogEntry
 Cosm *--  ClearanceLevel : clearanceLevel
 Cosm ..|>  ProductBoundEntry
 Item *--  ClearanceLevel : clearanceLevel
@@ -617,6 +652,8 @@ Power ..|>  ProductBoundEntry
 PowerList *--  ClearanceLevel : clearanceLevel
 PowerList ..|>  ProductBoundEntry
 PowerList ..|>  ReferencesEntries
+ProductBoundEntry ..|>  CatalogEntry
+Publication ..|>  CatalogEntry
 Race *--  ClearanceLevel : clearanceLevel
 Race ..|>  ProductBoundEntry
 Shard *--  ClearanceLevel : clearanceLevel
@@ -628,6 +665,7 @@ SpellList *--  ClearanceLevel : clearanceLevel
 SpellList ..|>  ProductBoundEntry
 SpellList ..|>  ReferencesEntries
 Tag *--  ClearanceLevel : clearanceLevel
+Tag ..|>  CatalogEntry
 Threat *--  ClearanceLevel : clearanceLevel
 Threat ..|>  ProductBoundEntry
 Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry

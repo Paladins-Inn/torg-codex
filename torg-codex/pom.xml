@@ -63,6 +63,10 @@
     <spring-modulith.version>2.0.6</spring-modulith.version>
     <archunit.version>1.4.1</archunit.version>
     <swagger-request-validator.version>2.44.9</swagger-request-validator.version>
+    <wiremock.version>3.13.2</wiremock.version>
+    <bootstrap.version>5.3.8</bootstrap.version>
+    <bootstrap-icons.version>1.13.1</bootstrap-icons.version>
+    <htmx.version>2.0.8</htmx.version>
   </properties>
 
   <dependencyManagement>
@@ -184,6 +188,26 @@
       <artifactId>jte-spring-boot-starter-4</artifactId>
       <version>3.2.3</version>
     </dependency>
+    <!-- Self-hosted UI assets via WebJars (ADR-020, ADR-021, feature 006-codex-web-ui) -->
+    <dependency>
+      <groupId>org.webjars</groupId>
+      <artifactId>webjars-locator-lite</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.webjars.npm</groupId>
+      <artifactId>bootstrap</artifactId>
+      <version>${bootstrap.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.webjars.npm</groupId>
+      <artifactId>bootstrap-icons</artifactId>
+      <version>${bootstrap-icons.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.webjars.npm</groupId>
+      <artifactId>htmx.org</artifactId>
+      <version>${htmx.version}</version>
+    </dependency>
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-tracing-bridge-brave</artifactId>
@@ -300,6 +324,12 @@
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-contract-verifier</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock-standalone</artifactId>
+      <version>${wiremock.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

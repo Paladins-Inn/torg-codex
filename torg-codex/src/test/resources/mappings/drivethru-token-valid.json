@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/api/v1/token",
+    "headers": {
+      "Authorization": {
+        "equalTo": "Bearer aabbccddeeff00112233445566778899aabbccdd"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "bodyFileName": "drivethru/token-valid-response.json"
+  }
+}

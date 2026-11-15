@@ -41,6 +41,7 @@ interface DriveThruRPGClient {
 
 class DriveThruRPGClientConfig {
 	{field} {static} -log : Logger
+	{method} -buildDelegate ( properties : DriveThruProperties ) : DriveThruRPGClient
 	{method} -createRequestFactory ( connectTimeout : Duration , readTimeout : Duration ) : SimpleClientHttpRequestFactory
 	{method} +driveThruRPGClient ( properties : DriveThruProperties ) : DriveThruRPGClient
 }

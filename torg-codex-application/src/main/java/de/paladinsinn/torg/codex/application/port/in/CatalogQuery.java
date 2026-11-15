@@ -25,12 +25,14 @@
 
 package de.paladinsinn.torg.codex.application.port.in;
 
+import de.paladinsinn.torg.codex.domain.catalog.CatalogSlugs;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Driving port for reading codex entries.
+ * Driving port for reading unrestricted public reference codex entries (Article, Publication, Tag).
  *
  * @param <T> the entry type
  */
@@ -38,7 +40,15 @@ public interface CatalogQuery<T> {
 
     List<T> findAll();
 
+    default List<T> peekAll() {
+        return findAll();
+    }
+
     Optional<T> findById(UUID id);
+
+    default Optional<T> findByIdentifier(String slugOrId) {
+        return CatalogSlugs.tryParseUuid(slugOrId).flatMap(this::findById);
+    }
 
     List<T> findByCosm(String cosm);
 }

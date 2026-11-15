@@ -84,11 +84,13 @@ import de.paladinsinn.torg.codex.application.port.in.RestrictedCatalogQuery;
 import de.paladinsinn.torg.codex.application.port.out.CallerProductsPort;
 import de.paladinsinn.torg.codex.application.port.out.CatalogAccessObserver;
 import de.paladinsinn.torg.codex.application.port.out.CatalogPersistencePort;
+import de.paladinsinn.torg.codex.application.port.out.CatalogUsageObserver;
 import de.paladinsinn.torg.codex.application.service.CatalogQueryService;
 import de.paladinsinn.torg.codex.application.service.CatalogReferenceQueryService;
 import de.paladinsinn.torg.codex.application.service.ReferencedEntryResolver;
 import de.paladinsinn.torg.codex.application.service.RestrictedCatalogQueryService;
 import de.paladinsinn.torg.codex.domain.access.CatalogAccessPolicy;
+import de.paladinsinn.torg.codex.domain.catalog.CatalogArea;
 import de.paladinsinn.torg.codex.domain.markup.EntityType;
 import de.paladinsinn.torg.codex.domain.model.ProductBoundEntry;
 import lombok.RequiredArgsConstructor;
@@ -116,12 +118,13 @@ public class CatalogQueryConfiguration {
 
     private final CallerProductsPort callerProducts;
     private final CatalogAccessObserver observer;
+    private final CatalogUsageObserver usageObserver;
     private final CatalogAccessPolicy policy = new CatalogAccessPolicy();
 
     @Bean
     CatalogQuery<de.paladinsinn.torg.codex.domain.model.Article> articleCatalogQuery(
             ArticleRepository repository, ArticleEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaArticlePersistenceAdapter(repository, mapper));
+        return new CatalogQueryService<>(CatalogArea.ARTICLE, new JpaArticlePersistenceAdapter(repository, mapper), usageObserver);
     }
 
     @Bean
@@ -148,7 +151,8 @@ public class CatalogQueryConfiguration {
             MiracleRepository miracleRepository, MiracleEntityMapper miracleMapper) {
         return RestrictedCatalogQueryService.withReferences(EntityType.MIRACLE_LIST,
                 new JpaMiracleListPersistenceAdapter(repository, mapper), callerProducts, observer, policy,
-                new ReferencedEntryResolver<>(new JpaMiraclePersistenceAdapter(miracleRepository, miracleMapper), observer, policy));
+                new ReferencedEntryResolver<>(new JpaMiraclePersistenceAdapter(miracleRepository, miracleMapper), observer, policy),
+                usageObserver);
     }
 
     @Bean
@@ -175,13 +179,14 @@ public class CatalogQueryConfiguration {
             PowerRepository powerRepository, PowerEntityMapper powerMapper) {
         return RestrictedCatalogQueryService.withReferences(EntityType.POWER_LIST,
                 new JpaPowerListPersistenceAdapter(repository, mapper), callerProducts, observer, policy,
-                new ReferencedEntryResolver<>(new JpaPowerPersistenceAdapter(powerRepository, powerMapper), observer, policy));
+                new ReferencedEntryResolver<>(new JpaPowerPersistenceAdapter(powerRepository, powerMapper), observer, policy),
+                usageObserver);
     }
 
     @Bean
     CatalogQuery<de.paladinsinn.torg.codex.domain.model.Publication> publicationCatalogQuery(
             PublicationRepository repository, PublicationEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaPublicationPersistenceAdapter(repository, mapper));
+        return new CatalogQueryService<>(CatalogArea.PUBLICATION, new JpaPublicationPersistenceAdapter(repository, mapper), usageObserver);
     }
 
     @Bean
@@ -208,13 +213,14 @@ public class CatalogQueryConfiguration {
             SpellRepository spellRepository, SpellEntityMapper spellMapper) {
         return RestrictedCatalogQueryService.withReferences(EntityType.SPELL_LIST,
                 new JpaSpellListPersistenceAdapter(repository, mapper), callerProducts, observer, policy,
-                new ReferencedEntryResolver<>(new JpaSpellPersistenceAdapter(spellRepository, spellMapper), observer, policy));
+                new ReferencedEntryResolver<>(new JpaSpellPersistenceAdapter(spellRepository, spellMapper), observer, policy),
+                usageObserver);
     }
 
     @Bean
     CatalogQuery<de.paladinsinn.torg.codex.domain.model.Tag> tagCatalogQuery(
             TagRepository repository, TagEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaTagPersistenceAdapter(repository, mapper));
+        return new CatalogQueryService<>(CatalogArea.TAG, new JpaTagPersistenceAdapter(repository, mapper), usageObserver);
     }
 
     @Bean
@@ -240,6 +246,6 @@ public class CatalogQueryConfiguration {
 
     private <T extends ProductBoundEntry> RestrictedCatalogQuery<T> restricted(
             EntityType area, CatalogPersistencePort<T> persistence) {
-        return new RestrictedCatalogQueryService<>(area, persistence, callerProducts, observer, policy);
+        return new RestrictedCatalogQueryService<>(area, persistence, callerProducts, observer, policy, usageObserver);
     }
 }

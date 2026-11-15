@@ -68,4 +68,9 @@ public record MiracleList(
     public MiracleList withReferencedEntries(List<UUID> referencedEntries) {
         return new MiracleList(id, name, clearanceLevel, products, cosms, unlockingPerks, referencedEntries, text, notes, disableIf);
     }
+
+    @Override
+    public Set<String> cosmSlugs() {
+        return CatalogEntry.normalizeSlugs(cosms);
+    }
 }

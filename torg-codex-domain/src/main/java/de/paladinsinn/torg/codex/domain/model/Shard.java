@@ -53,4 +53,9 @@ public record Shard(
     public EntityType entityType() {
         return EntityType.SHARD;
     }
+
+    @Override
+    public Set<String> cosmSlugs() {
+        return CatalogEntry.normalizeSlugs(cosms);
+    }
 }

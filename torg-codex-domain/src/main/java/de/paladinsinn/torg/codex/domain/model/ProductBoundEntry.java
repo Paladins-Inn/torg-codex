@@ -25,24 +25,29 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.catalog.CatalogArea;
 import de.paladinsinn.torg.codex.domain.markup.EntityType;
 
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * A catalog entry whose access is bound to the products (codex ids) it is assigned to (ADR-019).
  *
  * <p>Implemented by the records of the 14 product-bound catalog areas. Reference data (articles,
- * publications and tags) is not product-bound.
+ * publications and tags) implements {@link CatalogEntry} directly and is not product-bound.
  */
-public interface ProductBoundEntry {
+public interface ProductBoundEntry extends CatalogEntry {
 
     /**
      * Returns the stable identifier of the entry.
      *
      * @return the entry id
      */
+    @Override
     UUID id();
 
     /**
@@ -50,7 +55,17 @@ public interface ProductBoundEntry {
      *
      * @return the entry name
      */
+    @Override
     String name();
+
+    /**
+     * Returns the clearance level of the entry, if any.
+     *
+     * @return the clearance level, or {@code null}
+     */
+    default ClearanceLevel clearanceLevel() {
+        return null;
+    }
 
     /**
      * Returns the codex ids of the products the entry is assigned to.
@@ -65,4 +80,26 @@ public interface ProductBoundEntry {
      * @return the catalog area
      */
     EntityType entityType();
+
+    @Override
+    default CatalogArea catalogArea() {
+        return CatalogArea.fromEntityType(entityType());
+    }
+
+    @Override
+    default Optional<ClearanceLevel> clearance() {
+        return Optional.ofNullable(clearanceLevel());
+    }
+
+    @Override
+    default Set<String> productCodexIds() {
+        if (products() == null || products().isEmpty()) {
+            return Set.of();
+        }
+        return products().stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toUnmodifiableSet());
+    }
 }

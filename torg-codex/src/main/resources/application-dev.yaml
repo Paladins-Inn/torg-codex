@@ -1,0 +1,10 @@
+# Local development profile overrides (--spring.profiles.active=dev)
+gg:
+  jte:
+    use-precompiled-templates: false
+    development-mode: true
+
+logging:
+  level:
+    de.paladinsinn: debug
+    org.springframework.web.filter.CommonsRequestLoggingFilter: debug

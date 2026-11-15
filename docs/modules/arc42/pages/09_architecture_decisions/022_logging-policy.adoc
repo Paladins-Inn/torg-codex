@@ -1,0 +1,85 @@
+:adr-title: Operational Logging Policy and Severity Semantics
+:adr-state: Accepted
+:adr-date: 2026-11-15
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 022
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+While {adr-013} standardizes logger injection via Lombok `@Slf4j` and {adr-017} standardizes Spring Boot native ECS structured JSON output, neither decision defines *who* logs are written for or *which severity level* applies to technical versus domain events.
+
+Without a binding logging policy, developers tend to log based on what helped them while writing the code—emitting `WARN` or `ERROR` for ordinary user mistakes (such as invalid login keys, `404` typos, or `403` DRM purchase teasers) and scattering high-volume `INFO` messages across internal loops. In a 24/7 Self-Contained System ({scs}) environment with centralized log ingestion and alerting, ad-hoc developer logging causes alert fatigue, obscures real technical outages, and leaves operations and support teams without predictable diagnostic tiers.
+
+Roland T. Lichti's articles https://www.lichti.de/Software/2017-01-03-logging-in-java.html[_Logging in Java_ (2017)] and https://www.lichti.de/Software/2021-05-24-logging-in-java-ii.html[_Logging in Java II_ (2021)] establish a clear operational model for Java applications that complements our structured logging setup.
+
+== Decision
+
+We adopt a binding **Operations-First Logging Policy** across all modules of {system} (detailed in xref:08_concepts/logging-policy.adoc[Logging Policy for Operations and Support]):
+
+1. **Target Audience**: Log files belong to **Operations and Support** (24/7 Ops, system administrators, 2nd-level and 3rd-level support), never to developers as a substitute for a debugger. Logging requirements are treated as explicit non-functional requirements.
+2. **Facade and Declaration**: All logging MUST go exclusively through **SLF4J** (`org.slf4j.Logger`), declared via Lombok **`@Slf4j`** ({adr-013}) and serialized as ECS JSON with structured key-value fields ({adr-017}). Note: pure domain classes in `torg-codex-domain` remain free of Spring/Logback dependencies; SLF4J with `@Slf4j` is framework-neutral, and operational/metric hooks at use-case boundaries use dedicated driven observer ports where appropriate ({adr-019}).
+3. **Operational Severity Levels**:
+   * **`ERROR`** — *Technical system failure* that may leave the service persistently impaired; triggers **24/7 on-call intervention** (*Bereitschaftsfall*).
+   * **`WARN`** — *Technical single-request or batch disruption / data defect* (such as a product-less catalog entry hidden by DRM per {adr-019} or a transient upstream DriveThruRPG failure); requires **administrator review during normal business hours**, not immediate paging.
+   * **`INFO`** — *Processed request/batch and all domain/business errors (`fachliche Fehler`)*. Invalid credentials, unowned-entry DRM teasers, and not-found lookups MUST be logged at `INFO` (or `DEBUG` on high-rate paths), never `WARN` or `ERROR`. Keep `INFO` volume minimal; if call rates are high, log at most the completion of a call.
+   * **`DEBUG`** — *Execution flow for 2nd-level support* (at minimum service entry in addition to completion), disabled by default in production.
+   * **`TRACE`** — *Full step-by-step execution trace for 3rd-level / vendor support*, enabled only temporarily for deep diagnostics.
+4. **Dedicated Business Logger**: When dedicated business, governance, or audit logging (*fachliches Logging*) is needed separately from technical operational logs, use a named SLF4J logger (`"business"`), restricted to `ERROR`, `INFO`, and `DEBUG`.
+5. **Zero Sensitive Data**: Credentials, API keys, tokens, and caller product-ownership authorities (`ROLE_<codex-id>`) MUST NEVER appear in log messages or structured fields at any severity level.
+
+== Benefits for {system}
+
+* **Actionable 24/7 Alerting**: Operations can safely alert on `ERROR` (immediate on-call) and `WARN` rates (business-hours triage) without false positives from bots hitting missing URLs, mistyped DriveThruRPG API keys, or anonymous visitors hitting DRM teasers.
+* **Clear Support Escalation Tiers**: 1st-level/ops (`ERROR`/`WARN`/`INFO`), 2nd-level support (`DEBUG`), and 3rd-level maintainers (`TRACE`) each have a well-defined verbosity level that can be toggled at runtime via Spring Boot Actuator loggers without redeploying.
+* **Low Production Noise & Cost**: Suppressing developer debug noise and restricting high-frequency endpoints from verbose `INFO` start/end logging keeps ECS JSON ingestion lean while usage counters track traffic quantitatively.
+* **Clean Separation of Technical vs. Domain Logs**: Optional `"business"` logger routing supports governance or audit needs without cluttering technical class loggers.
+
+== Consequences and Challenges
+
+* **Code Review & Test Discipline**: Controllers, exception handlers, and authentication flows (including `/login`, DRM `Teaser`, and `NotFound` handlers in `torg-codex`) must be verified so that user/domain errors never log at `WARN` or `ERROR`.
+* **Developer Habit Shift**: Developers must rely on IDE breakpoints and unit/integration tests rather than leaving `log.info` / `log.warn` breadcrumbs in production paths.
+
+== Evaluated Options
+
+=== Option 1: Operations-First SLF4J Policy with Strict Operational Severity Tiers & Optional `business` Logger (Selected)
+
+* **Pros**: Directly aligns log levels with 24/7 operational response SLAs; eliminates false alarms from domain rejections; integrates seamlessly with `@Slf4j` ({adr-013}) and Spring Boot ECS JSON ({adr-017}).
+* **Cons**: Requires explicit review discipline to keep domain rejections out of `WARN`/`ERROR`.
+
+=== Option 2: Unconstrained Developer-Driven Logging
+
+* **Pros**: Zero upfront rules for contributors.
+* **Cons**: Inconsistent log levels across classes; `WARN`/`ERROR` polluted by `404`/`403`/validation failures; high `INFO` noise; unusable for automated alerting across Self-Contained Systems.
+
+=== Option 3: Custom Domain Event / Audit Framework Replacing Standard Logging
+
+* **Pros**: Strongly typed event classes for every loggable action.
+* **Cons**: High boilerplate for routine operational/support diagnostics; still requires mapping to SLF4J/JSON for central operations tooling. (Note: high-value domain metrics and DRM anomalies already use clean observer ports like `CatalogAccessObserver` where domain decoupling requires it, feeding into this exact SLF4J policy at the adapter boundary.)
+
+== Further Reading
+
+* xref:08_concepts/logging-policy.adoc[]
+* xref:08_concepts/observability.adoc[]
+* {adr-013}
+* {adr-017}
+* {adr-019}
+* https://www.lichti.de/Software/2017-01-03-logging-in-java.html[Roland T. Lichti: Logging in Java (2017)]
+* https://www.lichti.de/Software/2021-05-24-logging-in-java-ii.html[Roland T. Lichti: Logging in Java II (2021)]
+
+<<<
