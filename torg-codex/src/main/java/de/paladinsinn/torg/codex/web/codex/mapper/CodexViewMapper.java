@@ -160,8 +160,9 @@ public class CodexViewMapper {
                 .map(col -> toColumnHeader(area, col, criteria))
                 .toList();
 
+        Censor censor = censorFactory.create();
         List<TableRowViewModel> rows = result.entries().stream()
-                .map(resolved -> toTableRow(area, descriptor, resolved, cosmLabels))
+                .map(resolved -> toTableRow(area, descriptor, resolved, cosmLabels, censor))
                 .toList();
 
         return new TableViewModel(
@@ -424,11 +425,12 @@ public class CodexViewMapper {
             final CatalogArea area,
             final CatalogCategoryDescriptor<CatalogEntry> descriptor,
             final ResolvedEntry resolved,
-            final Map<String, String> cosmLabels) {
+            final Map<String, String> cosmLabels,
+            final Censor censor) {
         String detailPath = area.detailPath(resolved.canonicalSlug());
         CatalogEntry entry = resolved.entry();
         List<TableCellViewModel> cells = descriptor.columns().stream()
-                .map(col -> toCell(col, entry, detailPath, cosmLabels))
+                .map(col -> toCell(col, entry, detailPath, cosmLabels, censor))
                 .toList();
         return new TableRowViewModel(detailPath, cells);
     }
@@ -437,19 +439,22 @@ public class CodexViewMapper {
             final ColumnDescriptor<CatalogEntry> col,
             final CatalogEntry entry,
             final String detailPath,
-            final Map<String, String> cosmLabels) {
+            final Map<String, String> cosmLabels,
+            final Censor censor) {
         String text = col.textExtractor().apply(entry);
         return switch (col.kind()) {
-            case PRIMARY_LINK -> new TableCellViewModel(CellKind.PRIMARY_LINK, text, detailPath, List.of());
+            case PRIMARY_LINK -> new TableCellViewModel(CellKind.PRIMARY_LINK, text, detailPath, List.of(), null);
+            case MARKUP -> new TableCellViewModel(CellKind.MARKUP, "", "", List.of(),
+                    new SanitizedHtml(censor.apply(text)));
             case EXTERNAL_LINK -> new TableCellViewModel(CellKind.EXTERNAL_LINK,
-                    text.isEmpty() ? "" : "Store", text, List.of());
+                    text.isEmpty() ? "" : "Store", text, List.of(), null);
             case COSM_BADGES -> {
                 List<CosmBadgeViewModel> badges = col.listExtractor().apply(entry).stream()
                         .map(slug -> CosmBadgeViewModel.of(slug, cosmLabels.get(slug)))
                         .toList();
-                yield new TableCellViewModel(CellKind.COSM_BADGES, text, "", badges);
+                yield new TableCellViewModel(CellKind.COSM_BADGES, text, "", badges, null);
             }
-            default -> new TableCellViewModel(col.kind(), text, "", List.of());
+            default -> new TableCellViewModel(col.kind(), text, "", List.of(), null);
         };
     }
 }

@@ -26,7 +26,7 @@
 package de.paladinsinn.drivethru.client;
 
 import java.time.Duration;
-import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -41,8 +41,9 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 import de.paladinsinn.drivethru.products.OwnedProduct;
 import de.paladinsinn.drivethru.products.Product;
 import de.paladinsinn.drivethru.publishers.Publisher;
-import de.paladinsinn.drivethru.resource.DriveThruMessage;
-import de.paladinsinn.drivethru.resource.DriveThruMultiMessage;
+import de.paladinsinn.drivethru.resource.JsonApiCollectionDocument;
+import de.paladinsinn.drivethru.resource.JsonApiDocument;
+import de.paladinsinn.drivethru.token.DrivethruToken;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -87,28 +88,46 @@ public class DriveThruRPGClientConfig {
             }
 
             @Override
-            public DriveThruMessage<LinkedHashMap<String, String>> getToken(final String authorization) {
-                return current().getToken(authorization);
+            public DrivethruToken authenticate(
+                    final String applicationKey,
+                    final Map<String, Object> body) {
+                return current().authenticate(applicationKey, body);
             }
 
             @Override
-            public DriveThruMultiMessage<OwnedProduct> getOwnedProducts(
-                    final String bearerToken,
-                    final String customerId,
+            public DrivethruToken refreshSession(
+                    final String refreshCookie,
+                    final Map<String, Object> body) {
+                return current().refreshSession(refreshCookie, body);
+            }
+
+            @Override
+            public JsonApiCollectionDocument<OwnedProduct> getOrderProducts(
+                    final String authorization,
                     final int page,
                     final int pageSize,
-                    final int archived) {
-                return current().getOwnedProducts(bearerToken, customerId, page, pageSize, archived);
+                    final int archived,
+                    final int getChecksum,
+                    final int getFilters) {
+                return current().getOrderProducts(
+                        authorization, page, pageSize, archived, getChecksum, getFilters);
             }
 
             @Override
-            public DriveThruMessage<Publisher> getPublisher(final String publisherId) {
-                return current().getPublisher(publisherId);
+            public JsonApiDocument<OwnedProduct> getOrderProduct(
+                    final String authorization,
+                    final long orderProductId) {
+                return current().getOrderProduct(authorization, orderProductId);
             }
 
             @Override
-            public DriveThruMessage<Product> getProduct(final String productId) {
-                return current().getProduct(productId);
+            public JsonApiDocument<Publisher> getPublisherDocument(final String publisherId) {
+                return current().getPublisherDocument(publisherId);
+            }
+
+            @Override
+            public JsonApiDocument<Product> getProductDocument(final String productId) {
+                return current().getProductDocument(productId);
             }
         };
     }
@@ -137,4 +156,3 @@ public class DriveThruRPGClientConfig {
         return factory;
     }
 }
-

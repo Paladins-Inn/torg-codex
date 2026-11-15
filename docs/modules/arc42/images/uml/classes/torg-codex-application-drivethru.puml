@@ -32,10 +32,20 @@ class DriveThruProperties {
 
 
 interface DriveThruRPGClient {
-	{method}  {abstract} +getOwnedProducts ( bearerToken : String , customerId : String , page : int , pageSize : int , archived : int ) : DriveThruMultiMessage
-	{method}  {abstract} +getProduct ( productId : String ) : DriveThruMessage
-	{method}  {abstract} +getPublisher ( publisherId : String ) : DriveThruMessage
-	{method}  {abstract} +getToken ( authorization : String ) : DriveThruMessage
+	{field} {static} +JSON_API_MEDIA_TYPE : String
+	{method} +authenticate ( applicationKey : String ) : DrivethruToken
+	{method}  {abstract} +authenticate ( applicationKey : String , body : Map ) : DrivethruToken
+	{method} +getLibraryProducts ( authorization : String , page : int , pageSize : int , archived : int ) : List
+	{method}  {abstract} +getOrderProduct ( authorization : String , orderProductId : long ) : JsonApiDocument
+	{method}  {abstract} +getOrderProducts ( authorization : String , page : int , pageSize : int , archived : int , getChecksum : int , getFilters : int ) : JsonApiCollectionDocument
+	{method} +getOwnedProducts ( bearerToken : String , customerId : String , page : int , pageSize : int , archived : int ) : DriveThruMultiMessage
+	{method} +getProduct ( productId : String ) : DriveThruMessage
+	{method}  {abstract} +getProductDocument ( productId : String ) : JsonApiDocument
+	{method} +getPublisher ( publisherId : String ) : DriveThruMessage
+	{method}  {abstract} +getPublisherDocument ( publisherId : String ) : JsonApiDocument
+	{method} +getToken ( authorization : String ) : DriveThruMessage
+	{method}  {abstract} +refreshSession ( refreshCookie : String , body : Map ) : DrivethruToken
+	{method} +refreshToken ( refreshToken : String ) : DrivethruToken
 }
 
 
@@ -52,16 +62,25 @@ class DriveThruRPGConfiguration {
 
 
 class DriveThruRPGService {
-	{field} {static} -DATE_FORMATTER : DateTimeFormatter
 	{field} {static} -DEFAULT_PAGE_SIZE : int
+	{field} {static} -EXCLUDE_ARCHIVED : int
+	{field} {static} -NO_CHECKSUMS : int
+	{field} {static} -NO_FILTERS : int
 	{field} {static} -log : Logger
+	{method} -fetchOrderProductPage ( token : DrivethruToken , page : int , pageSize : int , archived : int ) : OrderProductPage
 	{method} +getIdsOfOwnedProducts ( token : DrivethruToken ) : List
 	{method} +getOwnedProducts ( token : DrivethruToken , page : int , pageSize : int , archived : int ) : List
 	{method} +getOwnedProducts ( apiKey : String , page : int , pageSize : int , archived : int ) : List
 	{method} +getProduct ( productId : String ) : Optional
 	{method} +getPublisher ( publisherId : String ) : Optional
 	{method} +getToken ( apiKey : String ) : DrivethruToken
-	{method} -parse ( raw : String ) : LocalDateTime
+	{method} -logRenewalExhausted ( page : int ) : void
+	{method} -logServiceWarning ( message : String , failure : RestClientException ) : void
+	{method} -logUpstreamFailure ( operation : String , endpoint : String , page : Integer , failure : RestClientException ) : void
+	{method} -renewToken ( token : DrivethruToken ) : void
+	{method} -requestToken ( apiKey : String , operation : String ) : DrivethruToken
+	{method} -tryRefreshToken ( currentToken : DrivethruToken ) : Optional
+	{method} -validateAccessToken ( token : DrivethruToken , operation : String , endpoint : String ) : void
 }
 
 
@@ -77,17 +96,75 @@ class DriveThruRpgProductAdapter {
 
 class DrivethruToken {
 	{field} +accessToken : String
+	{field} +applicationKey : String
 	{field} +customerId : String
 	{field} +expireTime : LocalDateTime
 	{field} +expires : Long
 	{field} +localTime : LocalDateTime
+	{field} +refreshToken : String
+	{field} +refreshTokenTTL : Long
 	{field} +serverTime : LocalDateTime
+	{field} -subject : String
 	{method} +getBearerToken () : String
+	{method} +isRefreshTokenExpiredAt ( instant : Instant ) : boolean
 	{method} +toString () : String
 }
 
 
 annotation EnableDrivethruRPG
+
+class JsonApiCollectionDocument {
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +getAttributesList () : List
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class JsonApiDocument {
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +getAttributes () : Optional
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class JsonApiLinks {
+	{field} +first : String
+	{field} +last : String
+	{field} +next : String
+	{field} +prev : String
+	{field} +self : String
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +hasNext () : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class JsonApiMeta {
+	{field} +currentPage : Integer
+	{field} +itemsPerPage : Integer
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class JsonApiResource {
+	{field} +attributes : Object
+	{field} +id : String
+	{field} +type : String
+	{method} #canEqual ( other : Object ) : boolean
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
 
 class NoDriveThruRPGAPIKeyDefinedException {
 }
@@ -98,41 +175,74 @@ class NoValidTokenException {
 
 
 class OwnedProduct {
-	{field} +archived : String
+	{field} +archivedFlag : Integer
+	{field} +bundleId : Integer
 	{field} +coverURL : String
+	{field} +customerId : Long
 	{field} +datePurchased : OffsetDateTime
-	{field} +id : int
+	{field} +fileLastDownloaded : OffsetDateTime
+	{field} +fileLastModified : OffsetDateTime
+	{field} +isbn : String
 	{field} +name : String
+	{field} +orderId : Long
+	{field} +orderProductId : Long
+	{field} +productId : Integer
+	{field} +royaltyPublisherId : Integer
 	{method} #canEqual ( other : Object ) : boolean
 	{method} +equals ( o : Object ) : boolean
+	{method} +getArchived () : Optional
+	{method} +getId () : int
 	{method} +hashCode () : int
+	{method} +setArchived ( archived : String ) : void
+	{method} +setId ( id : int ) : void
 	{method} +toString () : String
 }
 
 
 class Product {
+	{field} {static} -IMAGES_BASE_URL : String
 	{field} +coverURL : String
-	{field} +productsId : int
+	{field} +productIdValue : Integer
 	{field} +productsName : String
-	{field} +publisherId : int
+	{field} +publisherIdValue : Integer
 	{field} +publisherName : String
 	{field} +thumbnail : String
 	{field} +thumbnail100 : String
 	{field} +thumbnail40 : String
 	{field} +thumbnail80 : String
+	{field} +webImage : String
 	{method} #canEqual ( other : Object ) : boolean
+	{method}  {static} -enrichPublisherName ( product : Product , included : List ) : void
 	{method} +equals ( o : Object ) : boolean
+	{method}  {static} +fromDocument ( document : JsonApiDocument ) : Optional
+	{method} +getProductsId () : int
+	{method} +getPublisherId () : int
 	{method} +hashCode () : int
+	{method}  {static} -matchesPublisher ( expectedId : int , candidate : Object ) : boolean
+	{method}  {static} -resolveImageUrl ( rawPath : String ) : String
+	{method} +setProductsId ( productsId : int ) : void
+	{method} +setPublisherId ( publisherId : int ) : void
 	{method} +toString () : String
 }
 
 
+class ProductDescription {
+	{field} +name : String
+	{field} +shortDescription : String
+	{field} +slug : String
+}
+
+
 class Publisher {
-	{field} +publisherId : int
+	{field} +publisherIdValue : Integer
 	{field} +publisherName : String
+	{field} +slug : String
+	{field} +thumbnail : String
 	{method} #canEqual ( other : Object ) : boolean
 	{method} +equals ( o : Object ) : boolean
+	{method} +getPublisherId () : int
 	{method} +hashCode () : int
+	{method} +setPublisherId ( publisherId : int ) : void
 	{method} +toString () : String
 }
 
@@ -148,7 +258,14 @@ class SpringDomainEventPublisherAdapter {
 DriveThruRPGService *--  DriveThruRPGClient : client
 DriveThruRpgProductAdapter *--  DriveThruRPGService : service
 DrivethruToken --|>  DriveThruResource
+JsonApiCollectionDocument "1" o-- "0..*"  JsonApiResource : data
+JsonApiCollectionDocument "1" o-- "0..*"  JsonApiResource : included
+JsonApiCollectionDocument -->  JsonApiLinks : links
+JsonApiCollectionDocument -->  JsonApiMeta : meta
+JsonApiDocument "1" o-- "0..*"  JsonApiResource : included
+JsonApiDocument -->  JsonApiResource : data
 OwnedProduct --|>  DriveThruResource
+Product -->  ProductDescription : description
 Product --|>  DriveThruResource
 Publisher --|>  DriveThruResource
 

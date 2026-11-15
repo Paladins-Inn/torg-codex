@@ -1,0 +1,39 @@
+{
+  "data": {
+    "id": "/api/vBeta/products/216248",
+    "type": "Product",
+    "attributes": {
+      "productId": 216248,
+      "publisherId": 3444,
+      "image": "3444/216248.jpg",
+      "webImage": "3444/216248.webp",
+      "thumbnail": "3444/216248-thumb140.jpg",
+      "thumbnail100": "3444/216248-thumb100.jpg",
+      "thumbnail80": "3444/216248-thumb80.jpg",
+      "thumbnail40": "3444/216248-thumb40.jpg",
+      "description": {
+        "name": "Torg Eternity - Core Rules",
+        "slug": "torg-eternity-core-rules"
+      }
+    },
+    "relationships": {
+      "publisher": {
+        "data": {
+          "type": "Publisher",
+          "id": "/api/vBeta/publishers/3444"
+        }
+      }
+    }
+  },
+  "included": [
+    {
+      "id": "/api/vBeta/publishers/3444",
+      "type": "Publisher",
+      "attributes": {
+        "publisherId": 3444,
+        "name": "Ulisses Spiele",
+        "slug": "ulisses-spiele"
+      }
+    }
+  ]
+}

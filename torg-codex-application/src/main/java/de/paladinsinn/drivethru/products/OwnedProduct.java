@@ -25,6 +25,8 @@
 
 package de.paladinsinn.drivethru.products;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.paladinsinn.drivethru.resource.DriveThruResource;
@@ -38,7 +40,7 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 
 /**
- * A product owned by a DriveThruRPG customer.
+ * An ordered library product returned by DriveThruRPG {@code /order_products} ({@code OrderProductAttributes}).
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
@@ -48,24 +50,63 @@ import java.util.Optional;
 @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
 public class OwnedProduct extends DriveThruResource {
 
-    @JsonProperty("products_id")
+    @JsonProperty("productId")
+    @JsonAlias("products_id")
     @ToString.Include
     @EqualsAndHashCode.Include
-    private int id;
+    private Integer productId;
 
-    @JsonProperty("products_name")
+    @JsonProperty("orderProductId")
+    private Long orderProductId;
+
+    @JsonProperty("orderId")
+    private Long orderId;
+
+    @JsonProperty("customerId")
+    @JsonAlias("customers_id")
+    private Long customerId;
+
+    @JsonProperty("royaltyPublisherId")
+    private Integer royaltyPublisherId;
+
+    @JsonProperty("bundleId")
+    private Integer bundleId;
+
+    @JsonProperty("name")
+    @JsonAlias("products_name")
     @ToString.Include
     private String name;
 
-    @JsonProperty("is_archived")
-    private String archived;
+    @JsonProperty("isbn")
+    private String isbn;
+
+    @JsonProperty("archived")
+    @JsonAlias("is_archived")
+    private Integer archivedFlag;
 
     @JsonProperty("cover_url")
     private String coverURL;
 
-    @JsonProperty("date_purchased")
+    @JsonProperty("datePurchased")
+    @JsonAlias("date_purchased")
     @ToString.Include
     private OffsetDateTime datePurchased;
+
+    @JsonProperty("fileLastModified")
+    private OffsetDateTime fileLastModified;
+
+    @JsonProperty("fileLastDownloaded")
+    private OffsetDateTime fileLastDownloaded;
+
+    @JsonIgnore
+    public int getId() {
+        return productId != null ? productId : 0;
+    }
+
+    @JsonIgnore
+    public void setId(final int id) {
+        this.productId = id;
+    }
 
     /**
      * Returns the archived status when supplied by DriveThruRPG.
@@ -73,8 +114,15 @@ public class OwnedProduct extends DriveThruResource {
      * @return the optional archived status
      */
     @SuppressWarnings("unused")
+    @JsonIgnore
     public Optional<String> getArchived() {
-        return Optional.ofNullable(archived);
+        return Optional.ofNullable(archivedFlag).map(String::valueOf);
+    }
+
+    @SuppressWarnings("unused")
+    @JsonIgnore
+    public void setArchived(final String archived) {
+        this.archivedFlag = archived == null || archived.isBlank() ? null : Integer.valueOf(archived);
     }
 
     /**
@@ -83,6 +131,7 @@ public class OwnedProduct extends DriveThruResource {
      * @return the optional cover URL
      */
     @SuppressWarnings("unused")
+    @JsonIgnore
     public Optional<String> getCoverURL() {
         return Optional.ofNullable(coverURL);
     }
@@ -93,6 +142,7 @@ public class OwnedProduct extends DriveThruResource {
      * @return the optional purchase date
      */
     @SuppressWarnings("unused")
+    @JsonIgnore
     public Optional<OffsetDateTime> getDatePurchased() {
         return Optional.ofNullable(datePurchased);
     }

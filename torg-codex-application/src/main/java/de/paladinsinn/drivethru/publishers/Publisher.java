@@ -25,6 +25,8 @@
 
 package de.paladinsinn.drivethru.publishers;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -36,7 +38,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- * A publisher from DriveThruRPG.
+ * A publisher resource from DriveThruRPG {@code /publishers/{publisherId}} ({@code PublisherAttributes}).
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
@@ -47,11 +49,31 @@ import lombok.ToString;
 public class Publisher extends DriveThruResource {
 
     /** DriveThruRPG publisher id. */
-    @JsonProperty("publishers_id")
+    @JsonProperty("publisherId")
+    @JsonAlias("publishers_id")
     @EqualsAndHashCode.Include
-    private int publisherId;
+    private Integer publisherIdValue;
 
     /** DriveThruRPG publisher name. */
-    @JsonProperty("publishers_name")
+    @JsonProperty("name")
+    @JsonAlias("publishers_name")
     private String publisherName;
+
+    /** URL-friendly publisher slug. */
+    @JsonProperty("slug")
+    private String slug;
+
+    /** Relative publisher thumbnail image path. */
+    @JsonProperty("thumbnail")
+    private String thumbnail;
+
+    @JsonIgnore
+    public int getPublisherId() {
+        return publisherIdValue != null ? publisherIdValue : 0;
+    }
+
+    @JsonIgnore
+    public void setPublisherId(final int publisherId) {
+        this.publisherIdValue = publisherId;
+    }
 }

@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * Spring Security {@link UserDetails} wrapping a DriveThruRPG bearer token.
  *
- * <p>The {@link #getUsername()} returns the DriveThruRPG {@code customers_id};
+ * <p>The {@link #getUsername()} returns a local random subject when the API supplies no customer id;
  * the {@link #getBearerToken()} and {@link #token ()} methods expose the
  * token data for downstream API calls.</p>
  *
@@ -65,7 +65,7 @@ public record DriveThruUserDetails(@ToString.Include DrivethruToken token,
     // -------------------------------------------------------------------------
     @Override
     public String getUsername() {
-        return token.getCustomerId();
+        return token.getCustomerId() == null ? token.getSubject() : token.getCustomerId();
     }
 
     /**
@@ -121,9 +121,10 @@ public record DriveThruUserDetails(@ToString.Include DrivethruToken token,
     // -------------------------------------------------------------------------
 
     /**
-     * Returns the DriveThruRPG customer id (same as {@link #getUsername()}).
+     * Returns the DriveThruRPG customer id populated from {@code OrderProductAttributes.customerId},
+     * or {@code null} when the library is empty.
      *
-     * @return customer id
+     * @return customer id, or {@code null} when absent
      */
     public String getCustomerId() {
         return token.getCustomerId();
@@ -150,4 +151,3 @@ public record DriveThruUserDetails(@ToString.Include DrivethruToken token,
         return Collections.unmodifiableList(ownedCodexIds);
     }
 }
-

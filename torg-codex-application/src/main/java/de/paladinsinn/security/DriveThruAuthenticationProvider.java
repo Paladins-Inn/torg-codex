@@ -39,12 +39,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Authenticates an {@link ApiKeyAuthenticationToken} by calling the DriveThruRPG
- * {@code /token} endpoint. On success, the returned bearer token and customer id
+ * {@code /auth_key} endpoint. On success, the returned access token
  * are wrapped in a {@link DriveThruUserDetails} and stored in the security context.
  *
  * <p>Additionally, all DriveThruRPG product IDs owned by the customer are resolved
@@ -61,14 +60,20 @@ public class DriveThruAuthenticationProvider implements AuthenticationProvider {
     public Authentication authenticate(final Authentication authentication) throws AuthenticationException {
         final String apiKey = (String) authentication.getPrincipal();
         log.debug("Authenticating DriveThruRPG API key.");
+        String stage = "token-exchange";
         try {
             final DrivethruToken token = driveThruRPGService.getToken(apiKey);
+            stage = "library-load";
+            log.debug("DriveThruRPG token exchange succeeded; resolving publication ownership.");
             final List<String> ownedCodexIds = resolveOwnedCodexIds(token);
             final DriveThruUserDetails userDetails = new DriveThruUserDetails(token, ownedCodexIds);
-            log.info("DriveThruRPG authentication successful. customerId={}, ownedCodexIds={}",
-                    userDetails.getCustomerId(), ownedCodexIds.size());
+            log.info("DriveThruRPG authentication successful. ownedCodexIds={}", ownedCodexIds.size());
             return ApiKeyAuthenticationToken.authenticated(userDetails);
         } catch (final NoValidTokenException e) {
+            log.atDebug()
+                    .addKeyValue("stage", stage)
+                    .addKeyValue("exceptionClass", e.getClass().getName())
+                    .log("DriveThruRPG authentication rejected.");
             log.atInfo()
                     .addKeyValue("event.action", "drivethru-auth-rejected")
                     .addKeyValue("reason", "invalid-api-key")
@@ -89,14 +94,8 @@ public class DriveThruAuthenticationProvider implements AuthenticationProvider {
      * @param token the validated DriveThruRPG token
      * @return unordered list of owned codex ids; never {@code null}
      */
-    private List<String> resolveOwnedCodexIds(final DrivethruToken token) {
-        List<Integer> productIds;
-        try {
-            productIds = driveThruRPGService.getIdsOfOwnedProducts(token);
-        } catch (final NoValidTokenException e) {
-            log.warn("Could not retrieve owned product ids during authentication – returning empty list.", e);
-            return Collections.emptyList();
-        }
+    private List<String> resolveOwnedCodexIds(final DrivethruToken token) throws NoValidTokenException {
+        List<Integer> productIds = driveThruRPGService.getIdsOfOwnedProducts(token);
         final List<String> codexIds = productIds.stream()
                 .flatMap(pid -> catalogReferenceQuery.findPublicationsByProductId(pid).stream())
                 .map(CatalogPublicationReference::codexId)

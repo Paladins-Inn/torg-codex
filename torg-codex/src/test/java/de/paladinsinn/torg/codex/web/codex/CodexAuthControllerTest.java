@@ -29,6 +29,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import de.paladinsinn.drivethru.client.DriveThruProperties;
+import de.paladinsinn.security.DriveThruUserDetails;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,7 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -91,7 +93,7 @@ class CodexAuthControllerTest {
     @BeforeEach
     void setUp(final WireMockRuntimeInfo wmRuntimeInfo) {
         originalBaseUrl = driveThruProperties.getBaseUrl();
-        driveThruProperties.setBaseUrl(wmRuntimeInfo.getHttpBaseUrl() + "/api/v1");
+        driveThruProperties.setBaseUrl(wmRuntimeInfo.getHttpBaseUrl() + "/api/vBeta");
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
                 .apply(springSecurity())
                 .build();
@@ -122,6 +124,10 @@ class CodexAuthControllerTest {
                 .andReturn();
         MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
         assertThat(session).isNotNull();
+        SecurityContext context = (SecurityContext) session.getAttribute("SPRING_SECURITY_CONTEXT");
+        DriveThruUserDetails user = (DriveThruUserDetails) context.getAuthentication().getPrincipal();
+        assertThat(user.getUsername()).isEqualTo("424242").isNotEqualTo(VALID_API_KEY);
+        assertThat(user.getCustomerId()).isEqualTo("424242");
 
         String unlockedDetail = mockMvc.perform(get("/spells/drm-spell-aysle").session(session))
                 .andExpect(status().isOk())
@@ -149,16 +155,16 @@ class CodexAuthControllerTest {
     @Test
     void invalidApiKeysReturn401LoginPageLogAtInfoOnlyAndNeverLeakCredentials(final CapturedOutput output)
             throws Exception {
-        WireMock.stubFor(WireMock.post(urlPathEqualTo("/api/v1/token"))
-                .withHeader("Authorization", equalTo("Bearer " + INVALID_401_KEY))
+        WireMock.stubFor(WireMock.post(urlPathEqualTo("/api/vBeta/auth_key"))
+                .withQueryParam("applicationKey", equalTo(INVALID_401_KEY))
                 .willReturn(aResponse().withStatus(401).withBody("{\"status\":\"unauthorized\"}")));
 
         int snapshot = output.getOut().length();
 
-        String bodyErrorHtml = mockMvc.perform(post("/login").param("apiKey", INVALID_FILE_KEY))
+        String invalidKeyHtml = mockMvc.perform(post("/login").param("apiKey", INVALID_FILE_KEY))
                 .andExpect(status().isUnauthorized())
                 .andReturn().getResponse().getContentAsString();
-        assertThat(bodyErrorHtml).contains("codex-reader-theme", "Invalid DriveThruRPG API key");
+        assertThat(invalidKeyHtml).contains("codex-reader-theme", "Invalid DriveThruRPG API key");
 
         String http401Html = mockMvc.perform(post("/login").param("apiKey", INVALID_401_KEY))
                 .andExpect(status().isUnauthorized())
@@ -173,5 +179,47 @@ class CodexAuthControllerTest {
                 .filter(line -> line.contains("\"level\":\"WARN\"") || line.contains("\"level\":\"ERROR\""))
                 .toList();
         assertThat(warnOrErrorLines).isEmpty();
+    }
+
+    @Test
+    void upstreamFailureIsNotReportedAsAnInvalidKey(final CapturedOutput output) throws Exception {
+        WireMock.stubFor(WireMock.post(urlPathEqualTo("/api/vBeta/auth_key")).atPriority(1)
+                .willReturn(aResponse().withStatus(503).withBody(INVALID_401_KEY)));
+        int snapshot = output.getOut().length();
+
+        String html = mockMvc.perform(post("/login").param("apiKey", INVALID_401_KEY))
+                .andExpect(status().isServiceUnavailable())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("temporarily unavailable").doesNotContain("Invalid DriveThruRPG API key");
+        assertThat(output.getOut().substring(snapshot))
+                .contains("user-login-unavailable")
+                .doesNotContain(INVALID_401_KEY, "invalid-api-key", "user-login-rejected");
+    }
+
+    @Test
+    void apiKeyHeaderUsesTheSameReferenceProtocolAndFailureClassification() throws Exception {
+        mockMvc.perform(get("/api/spells").header("Authorization", "ApiKey " + VALID_API_KEY))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/spells").header("Authorization", "ApiKey " + INVALID_FILE_KEY))
+                .andExpect(status().isUnauthorized());
+        WireMock.stubFor(WireMock.post(urlPathEqualTo("/api/vBeta/auth_key")).atPriority(1)
+                .withQueryParam("applicationKey", equalTo(INVALID_401_KEY))
+                .willReturn(aResponse().withStatus(503).withBody(INVALID_401_KEY)));
+        mockMvc.perform(get("/api/spells").header("Authorization", "ApiKey " + INVALID_401_KEY))
+                .andExpect(status().isServiceUnavailable());
+    }
+
+    @Test
+    void libraryFailureDoesNotEstablishAPartiallyAuthenticatedSession() throws Exception {
+        WireMock.stubFor(WireMock.get(urlPathEqualTo("/api/vBeta/order_products")).atPriority(1)
+                .willReturn(aResponse().withStatus(503)));
+
+        MvcResult result = mockMvc.perform(post("/login").param("apiKey", VALID_API_KEY))
+                .andExpect(status().isServiceUnavailable())
+                .andReturn();
+
+        MockHttpSession session = (MockHttpSession) result.getRequest().getSession(false);
+        assertThat(session == null ? null : session.getAttribute("SPRING_SECURITY_CONTEXT")).isNull();
     }
 }

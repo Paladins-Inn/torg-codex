@@ -58,6 +58,8 @@
                             <td>
                                 @if(cell.kind() == CellKind.PRIMARY_LINK)
                                     <a href="${cell.href()}" class="fw-semibold text-decoration-none">${cell.text()}</a>
+                                @elseif(cell.kind() == CellKind.MARKUP)
+                                    @template.codex.fragments.richText(content = cell.markupValue())
                                 @elseif(cell.kind() == CellKind.CLEARANCE_BADGE)
                                     @if(!cell.text().isEmpty())
                                         <span class="badge text-bg-dark clearance-badge">${cell.text()}</span>

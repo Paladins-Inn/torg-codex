@@ -26,6 +26,7 @@
 package de.paladinsinn.torg.codex.security;
 
 import de.paladinsinn.security.ApiKeyAuthenticationFilter;
+import de.paladinsinn.security.ApiKeySessionAuthentication;
 import de.paladinsinn.security.DriveThruAuthenticationProvider;
 import de.paladinsinn.security.DriveThruUserDetails;
 import de.paladinsinn.security.NotLoggedInUserDetails;
@@ -77,6 +78,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class TorgCodexSecurityConfig {
 
     /**
+     * Shares session-local API-key authentication between the login form and header filter.
+     *
+     * @param authenticationManager the DriveThruRPG authentication manager
+     * @return the session authentication service
+     */
+    @Bean
+    public ApiKeySessionAuthentication apiKeySessionAuthentication(final AuthenticationManager authenticationManager) {
+        return new ApiKeySessionAuthentication(authenticationManager);
+    }
+
+    /**
      * Builds the primary {@link SecurityFilterChain} for the Torg Codex web application.
      *
      * <p>Key settings:
@@ -94,10 +106,12 @@ public class TorgCodexSecurityConfig {
     @Order(1)
     public SecurityFilterChain torgCodexSecurityFilterChain(
             final HttpSecurity http,
-            final AuthenticationManager authenticationManager) {
+            final AuthenticationManager authenticationManager,
+            final ApiKeySessionAuthentication sessionAuthentication) {
 
         final ApiKeyAuthenticationFilter apiKeyFilter =
                 new ApiKeyAuthenticationFilter(authenticationManager);
+        apiKeyFilter.setSessionAuthentication(sessionAuthentication);
 
         http
             .csrf(AbstractHttpConfigurer::disable)

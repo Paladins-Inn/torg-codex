@@ -1,20 +1,32 @@
 {
   "request": {
     "method": "GET",
-    "urlPath": "/api/v1/customers/424242/products",
+    "urlPath": "/api/vBeta/order_products",
     "headers": {
       "Authorization": {
-        "equalTo": "Bearer wiremock-jwt-bearer-token-777"
+        "equalTo": "wiremock-jwt-bearer-token-777"
+      },
+      "Accept": {
+        "contains": "application/vnd.api+json"
       }
     },
     "queryParameters": {
       "page": {
         "equalTo": "1"
       },
-      "page_size": {
-        "equalTo": "1000"
+      "pageSize": {
+        "equalTo": "50"
       },
-      "include_archived": {
+      "archived": {
+        "equalTo": "0"
+      },
+      "library": {
+        "equalTo": "true"
+      },
+      "getChecksum": {
+        "equalTo": "0"
+      },
+      "getFilters": {
         "equalTo": "0"
       }
     }
@@ -22,7 +34,7 @@
   "response": {
     "status": 200,
     "headers": {
-      "Content-Type": "application/json"
+      "Content-Type": "application/vnd.api+json"
     },
     "bodyFileName": "drivethru/owned-products-424242-response.json"
   }

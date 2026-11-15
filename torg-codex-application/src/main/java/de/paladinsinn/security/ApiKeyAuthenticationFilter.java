@@ -30,12 +30,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -52,8 +54,12 @@ import java.util.Objects;
  * been restored, the filter installs {@link NotLoggedInUserDetails} as the
  * anonymous principal before continuing the filter chain.</p>
  *
- * <p>On authentication failure a {@code 401 Unauthorized} response is returned
- * immediately.</p>
+ * <p>Invalid credentials return {@code 401 Unauthorized}; upstream service failures
+ * return {@code 503 Service Unavailable}.</p>
+ *
+ * <p>When {@link #setSessionAuthentication(ApiKeySessionAuthentication)} is configured,
+ * successful authentication is persisted and reused only within the HTTP session.
+ * Otherwise the filter retains its stateless behavior.</p>
  */
 @RequiredArgsConstructor
 @Slf4j
@@ -61,6 +67,8 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     /** Authorization scheme prefix expected in the {@code Authorization} header. */
     public static final String API_KEY_PREFIX = "ApiKey ";
     private final AuthenticationManager authenticationManager;
+    @Setter
+    private ApiKeySessionAuthentication sessionAuthentication;
     @Override
     protected void doFilterInternal(
             final HttpServletRequest request,
@@ -86,20 +94,33 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         final String apiKey = header.substring(API_KEY_PREFIX.length()).strip();
         log.debug("Received API key authentication request.");
         try {
-            final Authentication auth = authenticationManager.authenticate(
-                    ApiKeyAuthenticationToken.unauthenticated(apiKey)
-            );
+            final Authentication auth = sessionAuthentication == null
+                    ? authenticationManager.authenticate(ApiKeyAuthenticationToken.unauthenticated(apiKey))
+                    : sessionAuthentication.authenticate(apiKey, request, response);
             SecurityContextHolder.getContext().setAuthentication(auth);
             log.debug("API key authentication successful. user={}, owned={}, authorities={}",
                     auth.getName(),
                     ((DriveThruPublicationOwner) Objects.requireNonNull(auth.getPrincipal())).ownedCodexIds(),
                     auth.getAuthorities());
-
-            filterChain.doFilter(request, response);
+        } catch (final AuthenticationServiceException ex) {
+            clearAuthentication(request, response);
+            log.warn("DriveThruRPG authentication service unavailable.");
+            response.sendError(HttpStatus.SERVICE_UNAVAILABLE.value(), "DriveThruRPG is temporarily unavailable.");
+            return;
         } catch (final AuthenticationException ex) {
+            clearAuthentication(request, response);
+            log.info("API key authentication rejected.");
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Invalid DriveThruRPG API key.");
+            return;
+        }
+        filterChain.doFilter(request, response);
+    }
+
+    private void clearAuthentication(final HttpServletRequest request, final HttpServletResponse response) {
+        if (sessionAuthentication == null) {
             SecurityContextHolder.clearContext();
-            log.warn("API key authentication failed: {}", ex.getMessage());
-            response.sendError(HttpStatus.UNAUTHORIZED.value(), ex.getMessage());
+        } else {
+            sessionAuthentication.clear(request, response);
         }
     }
 }

@@ -1,13 +1,61 @@
 {
-  "status": "success",
-  "message": [
+  "links": {
+    "self": "/api/vBeta/order_products?archived=0&getChecksum=0&getFilters=0&library=true&pageSize=50&page=1",
+    "first": "/api/vBeta/order_products?archived=0&getChecksum=0&getFilters=0&library=true&pageSize=50&page=1",
+    "last": "/api/vBeta/order_products?archived=0&getChecksum=0&getFilters=0&library=true&pageSize=50&page=1",
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "itemsPerPage": 50,
+    "currentPage": 1
+  },
+  "data": [
     {
-      "products_id": 216248,
-      "products_name": "Torg Eternity - Core Rules"
+      "id": "/api/vBeta/order_products/170405501",
+      "type": "OrderProduct",
+      "attributes": {
+        "orderId": 49674201,
+        "productId": 216248,
+        "royaltyPublisherId": 3444,
+        "isbn": null,
+        "name": "Torg Eternity - Core Rules",
+        "datePurchased": null,
+        "filesize": null,
+        "finalPrice": 19.99,
+        "quantity": 1,
+        "bundleId": 0,
+        "archived": 0,
+        "addOnInfo": null,
+        "orderProductId": 170405501,
+        "customerId": 424242,
+        "fileLastModified": "2018-02-09T14:11:10-06:00",
+        "fileLastDownloaded": null,
+        "files": []
+      }
     },
     {
-      "products_id": 284210,
-      "products_name": "Torg Eternity - Aysle Sourcebook"
+      "id": "/api/vBeta/order_products/170405502",
+      "type": "OrderProduct",
+      "attributes": {
+        "orderId": 49674202,
+        "productId": 284210,
+        "royaltyPublisherId": 3444,
+        "isbn": null,
+        "name": "Torg Eternity - Aysle Sourcebook",
+        "datePurchased": "2024-07-16T10:45:52-05:00",
+        "filesize": 5894763,
+        "finalPrice": 14.99,
+        "quantity": 1,
+        "bundleId": 0,
+        "archived": 0,
+        "addOnInfo": null,
+        "orderProductId": 170405502,
+        "customerId": 424242,
+        "fileLastModified": "2024-07-16T10:45:52-05:00",
+        "fileLastDownloaded": "2025-11-26T16:25:56-06:00",
+        "files": []
+      }
     }
   ]
 }

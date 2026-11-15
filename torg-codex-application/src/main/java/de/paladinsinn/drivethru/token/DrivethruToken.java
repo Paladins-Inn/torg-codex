@@ -26,6 +26,7 @@
 package de.paladinsinn.drivethru.token;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.paladinsinn.drivethru.resource.DriveThruResource;
@@ -34,7 +35,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * An access token for the DriveThruRPG API.
@@ -46,8 +49,21 @@ import java.time.LocalDateTime;
 @ToString(doNotUseGetters = true, onlyExplicitlyIncluded = true)
 public class DrivethruToken extends DriveThruResource {
 
-    @JsonProperty("access_token")
+    @JsonProperty("token")
+    @JsonAlias("access_token")
     private String accessToken;
+
+    @JsonProperty("refreshToken")
+    private String refreshToken;
+
+    @JsonProperty("refreshTokenTTL")
+    private Long refreshTokenTTL;
+
+    @JsonIgnore
+    private String applicationKey;
+
+    @JsonIgnore
+    private final String subject = UUID.randomUUID().toString();
 
     @JsonProperty("customers_id")
     @ToString.Include
@@ -73,6 +89,17 @@ public class DrivethruToken extends DriveThruResource {
      */
     @JsonIgnore
     public String getBearerToken() {
-        return "Bearer " + accessToken;
+        return accessToken;
+    }
+
+    /**
+     * Checks whether the refresh token has expired at the given wall-clock instant.
+     *
+     * @param instant current instant to compare against {@link #refreshTokenTTL} (Unix epoch seconds)
+     * @return {@code true} when {@code refreshTokenTTL} is set and {@code instant} is at or past expiry
+     */
+    @JsonIgnore
+    public boolean isRefreshTokenExpiredAt(final Instant instant) {
+        return refreshTokenTTL != null && instant.getEpochSecond() >= refreshTokenTTL;
     }
 }

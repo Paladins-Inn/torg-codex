@@ -158,6 +158,19 @@ description: "Actionable, dependency-ordered tasks for 006-codex-web-ui"
 
 ---
 
+## Follow-up: Reference DriveThruRPG Protocol Alignment
+
+- [X] T039 Add database-independent WireMock coverage for the vBeta Application Key exchange, direct token/product responses, exact library query parameters, pagination, bounded HTTP 401 renewal and sanitized upstream failures in `torg-codex/src/test/java/de/paladinsinn/drivethru/DriveThruRPGServiceTest.java`.
+- [X] T040 Align the DriveThruRPG client, service, token and security integration with the reference implementation, retain the existing public method signatures and Codex product mapping, and update the auth HTTP fixtures and `CodexAuthControllerTest.java`.
+- [X] T041 Synchronize the authentication building-block documentation and route contract, and verify protocol, login/logout and ownership behavior.
+- [X] T042 Add WireMock contract tests and JSON:API fixtures matching `dtrpg-api/openapi.yaml` for `/auth_key`, `/auth/refresh`, `/order_products`, `/products/{productId}`, and `/publishers/{publisherId}` in `torg-codex/src/test/java/de/paladinsinn/drivethru/DriveThruRPGServiceTest.java` and `torg-codex/src/test/resources/`.
+- [X] T043 Update `de.paladinsinn.drivethru` models, JSON:API envelopes, client, properties, and `DriveThruRPGService` (including `refreshToken` cookie renewal with `auth_key` fallback, `links.next` pagination, `OrderProductAttributes` / `Product` / `Publisher` mapping, and `WARN`/`DEBUG` failure metadata) while preserving ADR-015 public signatures.
+- [X] T044 Update authentication/DriveThruRPG documentation (`level2_drivethrurpg_security_userservice.adoc`, `web-ui-routes.md`) and verify all DriveThruRPG, auth, DRM, and architecture test suites.
+
+## Follow-up: Perk Prerequisite Links
+
+- [X] T045 Render perk prerequisite table cells through the caller-specific `Censor` and shared rich-text fragment, document full-page/htmx behavior, and verify entity links, product-gated content, and empty values with `CodexPrerequisitesRenderingTest`.
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

@@ -13,12 +13,11 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 drivethru:
-  base-url: https://www.drivethrurpg.com/api/v1
+  base-url: https://api.drivethrurpg.com/api/vBeta
   connect-timeout: 5s
-  read-timeout: 10s
+  read-timeout: 30s
 
 logging:
   structured:
     format:
       console: ecs
-

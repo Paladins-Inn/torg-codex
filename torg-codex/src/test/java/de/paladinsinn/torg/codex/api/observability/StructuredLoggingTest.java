@@ -137,7 +137,8 @@ class StructuredLoggingTest {
             throw new BadCredentialsException("invalid");
         };
         CodexViewMapper viewMapper = new CodexViewMapper(mock(de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory.class));
-        CodexAuthController authController = new CodexAuthController(rejectingAuth, viewMapper);
+        CodexAuthController authController = new CodexAuthController(
+                new de.paladinsinn.security.ApiKeySessionAuthentication(rejectingAuth), viewMapper);
 
         UsernamePasswordAuthenticationToken callerAuth = UsernamePasswordAuthenticationToken.authenticated(
                 SENTINEL_PRINCIPAL, SENTINEL_API_KEY, List.of(new SimpleGrantedAuthority("ROLE_" + SENTINEL_PRODUCT)));

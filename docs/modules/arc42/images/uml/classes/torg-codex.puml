@@ -595,6 +595,7 @@ enum CellKind {
 	{field} +COSM_BADGES
 	{field} +EXTERNAL_LINK
 	{field} +GROUP_BADGE
+	{field} +MARKUP
 	{field} +PRIMARY_LINK
 	{field} +TEXT
 }
@@ -634,8 +635,8 @@ class ClearanceLevelConverter {
 
 class CodexAuthController {
 	{field} {static} -INVALID_KEY_MESSAGE : String
-	{field} -authenticationManager : AuthenticationManager
 	{field} {static} -log : Logger
+	{field} -sessionAuthentication : ApiKeySessionAuthentication
 	{method} +login ( logoutParam : String , authentication : Authentication , response : HttpServletResponse , model : Model ) : String
 	{method} +logoutPage ( authentication : Authentication , response : HttpServletResponse , model : Model ) : String
 	{method} +performLogin ( apiKey : String , currentAuthentication : Authentication , request : HttpServletRequest , response : HttpServletResponse , model : Model ) : String
@@ -694,7 +695,7 @@ class CodexViewMapper {
 	{method} -buildSortUrl ( basePath : String , criteria : CatalogFilterCriteria , nextSortKey : String , nextDir : SortDirection ) : String
 	{method} +isSignedIn ( authentication : Authentication ) : boolean
 	{method} -mapPublications ( codexIds : Set , resolvedPublications : List ) : List
-	{method} -toCell ( col : ColumnDescriptor , entry : CatalogEntry , detailPath : String , cosmLabels : Map ) : TableCellViewModel
+	{method} -toCell ( col : ColumnDescriptor , entry : CatalogEntry , detailPath : String , cosmLabels : Map , censor : Censor ) : TableCellViewModel
 	{method} -toColumnHeader ( area : CatalogArea , col : ColumnDescriptor , criteria : CatalogFilterCriteria ) : ColumnHeaderViewModel
 	{method} +toDetailViewModel ( granted : GrantedProductEntry , authentication : Authentication ) : DetailViewModel
 	{method} +toDetailViewModel ( pubRef : PublicReferenceEntry , authentication : Authentication ) : DetailViewModel
@@ -702,7 +703,7 @@ class CodexViewMapper {
 	{method} +toNavContext ( activeArea : CatalogArea , authentication : Authentication ) : NavContextViewModel
 	{method} +toNotFoundViewModel ( activeArea : CatalogArea , title : String , message : String , authentication : Authentication ) : NotFoundViewModel
 	{method} -toPublicationCard ( pub : Publication ) : PublicationCard
-	{method} -toTableRow ( area : CatalogArea , descriptor : CatalogCategoryDescriptor , resolved : ResolvedEntry , cosmLabels : Map ) : TableRowViewModel
+	{method} -toTableRow ( area : CatalogArea , descriptor : CatalogCategoryDescriptor , resolved : ResolvedEntry , cosmLabels : Map , censor : Censor ) : TableRowViewModel
 	{method} +toTableViewModel ( result : CatalogBrowseResult , authentication : Authentication ) : TableViewModel
 	{method} +toTeaserViewModel ( teaserResult : RestrictedTeaser , authentication : Authentication ) : TeaserViewModel
 }
@@ -725,6 +726,7 @@ class ColumnDescriptor {
 	{method} +key () : String
 	{method} +kind () : CellKind
 	{method} +listExtractor () : Function
+	{method}  {static} +markup ( key : String , header : String , extractor : Function ) : ColumnDescriptor
 	{method}  {static} -nullSafe ( value : String ) : String
 	{method}  {static} +primaryName () : ColumnDescriptor
 	{method} +sortable () : boolean
@@ -3216,6 +3218,7 @@ class TableCellViewModel {
 	{method} +hashCode () : int
 	{method} +href () : String
 	{method} +kind () : CellKind
+	{method} +markupValue () : SanitizedHtml
 	{method} +text () : String
 	{method} +toString () : String
 }
@@ -3578,7 +3581,8 @@ class TorgCodexDataApplication {
 
 class TorgCodexSecurityConfig {
 	{field} {static} -log : Logger
-	{method} +torgCodexSecurityFilterChain ( http : HttpSecurity , authenticationManager : AuthenticationManager ) : SecurityFilterChain
+	{method} +apiKeySessionAuthentication ( authenticationManager : AuthenticationManager ) : ApiKeySessionAuthentication
+	{method} +torgCodexSecurityFilterChain ( http : HttpSecurity , authenticationManager : AuthenticationManager , sessionAuthentication : ApiKeySessionAuthentication ) : SecurityFilterChain
 }
 
 
@@ -4257,6 +4261,7 @@ SpellSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 SpellSummaryDto *--  ClearanceLevel : clearanceLevel
 TableCellViewModel "1" o-- "0..*"  CosmBadgeViewModel : cosmBadges
 TableCellViewModel *--  CellKind : kind
+TableCellViewModel *--  SanitizedHtml : markupValue
 TableRowViewModel "1" o-- "0..*"  TableCellViewModel : cells
 TableViewModel "1" o-- "0..*"  ColumnHeaderViewModel : headers
 TableViewModel "1" o-- "0..*"  TableRowViewModel : rows

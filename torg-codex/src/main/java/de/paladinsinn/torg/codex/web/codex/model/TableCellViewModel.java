@@ -36,10 +36,12 @@ import java.util.List;
  * @param text       display text (symbol for clearance, label for primary link)
  * @param href       link target (detail URL for {@code PRIMARY_LINK}, external URL for {@code EXTERNAL_LINK})
  * @param cosmBadges styled cosm badges when {@code kind == COSM_BADGES}
+ * @param markupValue censored HTML when {@code kind == MARKUP}
  */
 public record TableCellViewModel(
         CellKind kind,
         String text,
         String href,
-        List<CosmBadgeViewModel> cosmBadges) {
+        List<CosmBadgeViewModel> cosmBadges,
+        SanitizedHtml markupValue) {
 }

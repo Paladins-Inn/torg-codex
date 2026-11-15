@@ -29,38 +29,45 @@ import de.paladinsinn.drivethru.client.DriveThruRPGClient;
 import de.paladinsinn.drivethru.products.OwnedProduct;
 import de.paladinsinn.drivethru.products.Product;
 import de.paladinsinn.drivethru.publishers.Publisher;
-import de.paladinsinn.drivethru.resource.DriveThruMultiMessage;
+import de.paladinsinn.drivethru.resource.JsonApiCollectionDocument;
+import de.paladinsinn.drivethru.resource.JsonApiDocument;
 import de.paladinsinn.drivethru.token.DrivethruToken;
 import de.paladinsinn.drivethru.token.NoValidTokenException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.spi.LoggingEventBuilder;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Service layer for the DriveThruRPG REST API.
+ * Service layer for the DriveThruRPG vBeta REST and JSON:API endpoints.
  *
  * <p>Wraps the low-level {@link DriveThruRPGClient} and adds caching,
- * token management, and pagination helpers.</p>
+ * session refresh / re-authentication, and JSON:API pagination.</p>
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class DriveThruRPGService {
 
-    private static final DateTimeFormatter DATE_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final int DEFAULT_PAGE_SIZE = 50;
+    private static final int EXCLUDE_ARCHIVED = 0;
+    private static final int NO_CHECKSUMS = 0;
+    private static final int NO_FILTERS = 0;
 
-    private static final int DEFAULT_PAGE_SIZE = 1000;
+    private record OrderProductPage(List<OwnedProduct> products, boolean hasNext) {
+    }
 
     private final DriveThruRPGClient client;
 
@@ -69,43 +76,100 @@ public class DriveThruRPGService {
     // -------------------------------------------------------------------------
 
     /**
-     * Retrieves (and caches) a bearer token for the given API key.
+     * Retrieves a token for the given API key without an application-wide credential cache.
      *
-     * @param apiKey DriveThruRPG API key
+     * @param apiKey DriveThruRPG Application Key
      * @return a valid {@link DrivethruToken}
      * @throws NoValidTokenException if the token cannot be obtained
      */
-    @Cacheable("drivethru.token")
     public DrivethruToken getToken(final String apiKey) throws NoValidTokenException {
+        return requestToken(apiKey, "token-exchange");
+    }
+
+    private DrivethruToken requestToken(final String apiKey, final String operation) throws NoValidTokenException {
+        log.atDebug()
+                .addKeyValue("operation", operation)
+                .addKeyValue("endpoint", "/auth_key")
+                .addKeyValue("httpMethod", "POST")
+                .log("DriveThruRPG token request started.");
         if (apiKey == null || apiKey.isBlank()) {
+            log.atDebug()
+                    .addKeyValue("operation", operation)
+                    .addKeyValue("reason", "missing-api-key")
+                    .log("DriveThruRPG token request skipped: API key is missing or blank.");
             throw new NoValidTokenException();
         }
-        log.trace("Loading DriveThruRPG access token.");
-
-        final LinkedHashMap<String, String> response;
+        final DrivethruToken token;
         try {
-            response = client.getToken("Bearer " + apiKey)
-                    .getData()
-                    .orElseThrow(NoValidTokenException::new);
+            token = client.authenticate(apiKey);
         } catch (final HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
+            logUpstreamFailure(operation, "/auth_key", null, e);
             throw new NoValidTokenException();
+        } catch (final RestClientException e) {
+            logUpstreamFailure(operation, "/auth_key", null, e);
+            logServiceWarning("DriveThruRPG token request failed.", e);
+            throw new AuthenticationServiceException("DriveThruRPG token service unavailable.");
         }
-
-        final LocalDateTime serverTime = parse(response.get("server_time"));
-        final LocalDateTime expireTime = parse(response.get("expires"));
-        final LocalDateTime localTime  = LocalDateTime.now();
-        final long expiresSeconds      = Duration.between(serverTime, expireTime).getSeconds();
-
-        final DrivethruToken token = new DrivethruToken();
-        token.setAccessToken(response.get("access_token"));
-        token.setCustomerId(response.get("customers_id"));
-        token.setExpireTime(expireTime);
-        token.setServerTime(serverTime);
-        token.setLocalTime(localTime);
-        token.setExpires(expiresSeconds);
-
-        log.debug("Obtained DriveThruRPG token. token={}", token);
+        validateAccessToken(token, operation, "/auth_key");
+        token.setApplicationKey(apiKey);
+        log.debug("Obtained DriveThruRPG access token.");
         return token;
+    }
+
+    private Optional<DrivethruToken> tryRefreshToken(final DrivethruToken currentToken) {
+        String refreshToken = currentToken.getRefreshToken();
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return Optional.empty();
+        }
+        if (currentToken.isRefreshTokenExpiredAt(Instant.now())) {
+            log.atDebug()
+                    .addKeyValue("operation", "token-refresh")
+                    .addKeyValue("reason", "refresh-token-expired")
+                    .log("DriveThruRPG refresh token expired; skipping cookie refresh.");
+            return Optional.empty();
+        }
+        log.atDebug()
+                .addKeyValue("operation", "token-refresh")
+                .addKeyValue("endpoint", "/auth/refresh")
+                .addKeyValue("httpMethod", "POST")
+                .log("DriveThruRPG token refresh started.");
+        final DrivethruToken refreshed;
+        try {
+            refreshed = client.refreshToken(refreshToken);
+        } catch (final HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
+            logUpstreamFailure("token-refresh", "/auth/refresh", null, e);
+            log.atDebug()
+                    .addKeyValue("operation", "token-refresh")
+                    .addKeyValue("reason", "refresh-rejected")
+                    .log("DriveThruRPG refresh token rejected; falling back to application key exchange.");
+            return Optional.empty();
+        } catch (final RestClientException e) {
+            logUpstreamFailure("token-refresh", "/auth/refresh", null, e);
+            logServiceWarning("DriveThruRPG token refresh request failed.", e);
+            throw new AuthenticationServiceException("DriveThruRPG token service unavailable.");
+        }
+        validateAccessToken(refreshed, "token-refresh", "/auth/refresh");
+        return Optional.of(refreshed);
+    }
+
+    private void validateAccessToken(
+            final DrivethruToken token,
+            final String operation,
+            final String endpoint) {
+        boolean accessTokenPresent = token != null && token.getAccessToken() != null
+                && !token.getAccessToken().isBlank();
+        log.atDebug()
+                .addKeyValue("operation", operation)
+                .addKeyValue("endpoint", endpoint)
+                .addKeyValue("responsePresent", token != null)
+                .addKeyValue("accessTokenPresent", accessTokenPresent)
+                .addKeyValue("refreshTokenPresent", token != null && token.getRefreshToken() != null
+                        && !token.getRefreshToken().isBlank())
+                .log("DriveThruRPG token response received.");
+        if (!accessTokenPresent) {
+            log.warn("DriveThruRPG token response did not contain an access token.");
+            throw new AuthenticationServiceException("Invalid DriveThruRPG token response.");
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -113,7 +177,7 @@ public class DriveThruRPGService {
     // -------------------------------------------------------------------------
 
     /**
-     * Retrieves (and caches) data for a single product.
+     * Retrieves (and caches) data for a single catalog product.
      *
      * @param productId DriveThruRPG product id
      * @return the product, or empty if not found
@@ -121,9 +185,14 @@ public class DriveThruRPGService {
     @Cacheable("drivethru.product")
     public Optional<Product> getProduct(final String productId) {
         log.trace("Retrieving product. productId={}", productId);
-        final Optional<Product> result = client.getProduct(productId).getData();
-        log.debug("Retrieved product. product={}", result);
-        return result;
+        try {
+            final Optional<Product> result = Product.fromDocument(client.getProductDocument(productId));
+            log.debug("Retrieved product. productId={}, present={}", productId, result.isPresent());
+            return result;
+        } catch (final HttpClientErrorException.NotFound e) {
+            log.debug("DriveThruRPG product not found. productId={}", productId);
+            return Optional.empty();
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -140,9 +209,15 @@ public class DriveThruRPGService {
     @Cacheable("drivethru.publisher")
     public Optional<Publisher> getPublisher(final String publisherId) {
         log.trace("Retrieving publisher. publisherId={}", publisherId);
-        final Optional<Publisher> result = client.getPublisher(publisherId).getData();
-        log.debug("Retrieved publisher. publisher={}", result);
-        return result;
+        try {
+            final JsonApiDocument<Publisher> document = client.getPublisherDocument(publisherId);
+            final Optional<Publisher> result = document != null ? document.getAttributes() : Optional.empty();
+            log.debug("Retrieved publisher. publisherId={}, present={}", publisherId, result.isPresent());
+            return result;
+        } catch (final HttpClientErrorException.NotFound e) {
+            log.debug("DriveThruRPG publisher not found. publisherId={}", publisherId);
+            return Optional.empty();
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -157,7 +232,7 @@ public class DriveThruRPGService {
      * @param pageSize  items per page
      * @param archived  {@code 0} = exclude archived, {@code 1} = include archived
      * @return list of owned products on the requested page
-     * @throws NoValidTokenException if the bearer token cannot be obtained
+     * @throws NoValidTokenException if the session token cannot be obtained
      */
     @SuppressWarnings("unused")
     public List<OwnedProduct> getOwnedProducts(
@@ -165,7 +240,6 @@ public class DriveThruRPGService {
             throws NoValidTokenException {
         log.trace("Retrieving owned products. page={}, pageSize={}, archived={}",
                 page, pageSize, archived);
-        //noinspection SpringCacheableMethodCallsInspection
         final DrivethruToken token = getToken(apiKey);
         return getOwnedProducts(token, page, pageSize, archived);
     }
@@ -173,7 +247,7 @@ public class DriveThruRPGService {
     /**
      * Retrieves a single page of owned products using a pre-obtained token.
      *
-     * @param token     valid DriveThruRPG bearer token
+     * @param token     valid DriveThruRPG session token
      * @param page      1-based page number
      * @param pageSize  items per page
      * @param archived  {@code 0} = exclude archived, {@code 1} = include archived
@@ -181,51 +255,63 @@ public class DriveThruRPGService {
      */
     public List<OwnedProduct> getOwnedProducts(
             final DrivethruToken token, final int page, final int pageSize, final int archived) {
-        log.trace("Retrieving owned products. customerId={}, page={}, pageSize={}, archived={}",
-                token.getCustomerId(), page, pageSize, archived);
-        final DriveThruMultiMessage<OwnedProduct> result =
-                client.getOwnedProducts(token.getBearerToken(), token.getCustomerId(),
-                        page, pageSize, archived);
-        log.debug("Retrieved owned products. count={}", result.getData().size());
-        return result.getData();
+        try {
+            return fetchOrderProductPage(token, page, pageSize, archived).products();
+        } catch (final HttpClientErrorException.Unauthorized e) {
+            try {
+                renewToken(token);
+                return fetchOrderProductPage(token, page, pageSize, archived).products();
+            } catch (final NoValidTokenException | HttpClientErrorException.Unauthorized rejected) {
+                if (rejected instanceof NoValidTokenException) {
+                    log.atDebug()
+                            .addKeyValue("operation", "token-renewal")
+                            .addKeyValue("reason", "renewal-rejected")
+                            .log("DriveThruRPG token renewal was rejected.");
+                } else {
+                    logRenewalExhausted(page);
+                }
+                throw new BadCredentialsException("DriveThruRPG session is no longer valid.");
+            }
+        }
     }
 
     /**
-     * Retrieves (and caches) the complete list of owned product ids, iterating
-     * through all pages automatically.
+     * Retrieves the complete list of owned product ids, iterating
+     * through all JSON:API pages automatically.
      *
-     * @param token valid DriveThruRPG bearer token
+     * @param token valid DriveThruRPG session token
      * @return ids of all products owned by the token holder
      * @throws NoValidTokenException if no valid token is available
      */
-    @Cacheable("drivethru.owned_product_ids")
     public List<Integer> getIdsOfOwnedProducts(final DrivethruToken token)
             throws NoValidTokenException {
         final List<Integer> result = new ArrayList<>(DEFAULT_PAGE_SIZE);
 
         int page = 1;
-        DriveThruMultiMessage<OwnedProduct> data;
-        do {
-            data = client.getOwnedProducts(
-                    token.getBearerToken(), token.getCustomerId(),
-                    page, DEFAULT_PAGE_SIZE, 0);
-
-            final List<Integer> ids = data.getData().stream()
-                    .map(OwnedProduct::getId)
-                    .toList();
-
-            if (!result.addAll(ids)) {
-                log.error("Failed to add owned product ids. customerId={}, page={}, current={}, failed={}",
-                        token.getCustomerId(), page, result.size(), ids.size());
+        boolean renewed = false;
+        while (true) {
+            final OrderProductPage currentPage;
+            try {
+                currentPage = fetchOrderProductPage(token, page, DEFAULT_PAGE_SIZE, EXCLUDE_ARCHIVED);
+            } catch (final HttpClientErrorException.Unauthorized e) {
+                if (renewed) {
+                    logRenewalExhausted(page);
+                    throw new NoValidTokenException();
+                }
+                renewToken(token);
+                renewed = true;
+                continue;
             }
-
-            log.trace("Accumulated owned product ids. customerId={}, page={}, total={}",
-                    token.getCustomerId(), page, result.size());
+            currentPage.products().stream()
+                    .map(OwnedProduct::getId)
+                    .filter(id -> id > 0)
+                    .forEach(result::add);
+            if (!currentPage.hasNext()) {
+                break;
+            }
             page++;
-        } while (data.getData().size() >= DEFAULT_PAGE_SIZE);
-
-        log.info("Collected all owned product ids. customerId={}, total={}",
-                token.getCustomerId(), result.size());
+        }
+        log.debug("Collected all owned product ids. total={}", result.size());
         return result;
     }
 
@@ -233,7 +319,110 @@ public class DriveThruRPGService {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private LocalDateTime parse(final String raw) {
-        return LocalDateTime.parse(raw, DATE_FORMATTER);
+    private OrderProductPage fetchOrderProductPage(
+            final DrivethruToken token, final int page, final int pageSize, final int archived) {
+        log.atDebug()
+                .addKeyValue("operation", "library-fetch")
+                .addKeyValue("endpoint", "/order_products")
+                .addKeyValue("httpMethod", "GET")
+                .addKeyValue("page", page)
+                .addKeyValue("pageSize", pageSize)
+                .addKeyValue("archived", archived)
+                .log("DriveThruRPG library request started.");
+        final JsonApiCollectionDocument<OwnedProduct> document;
+        try {
+            document = client.getOrderProducts(
+                    token.getBearerToken(), page, pageSize, archived, NO_CHECKSUMS, NO_FILTERS);
+        } catch (final HttpClientErrorException.Unauthorized e) {
+            logUpstreamFailure("library-fetch", "/order_products", page, e);
+            throw e;
+        } catch (final HttpClientErrorException.Forbidden e) {
+            logUpstreamFailure("library-fetch", "/order_products", page, e);
+            throw new BadCredentialsException("DriveThruRPG library access denied.");
+        } catch (final RestClientException e) {
+            logUpstreamFailure("library-fetch", "/order_products", page, e);
+            logServiceWarning("DriveThruRPG library request failed.", e);
+            throw new AuthenticationServiceException("DriveThruRPG library service unavailable.");
+        }
+        if (document == null || document.getData() == null) {
+            log.atDebug()
+                    .addKeyValue("operation", "library-fetch")
+                    .addKeyValue("page", page)
+                    .addKeyValue("reason", "missing-product-array")
+                    .log("DriveThruRPG library response is missing.");
+            log.warn("DriveThruRPG library response did not contain a JSON:API data array.");
+            throw new AuthenticationServiceException("Invalid DriveThruRPG library response.");
+        }
+        List<OwnedProduct> products = document.getAttributesList();
+        if (token.getCustomerId() == null) {
+            products.stream()
+                    .map(OwnedProduct::getCustomerId)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .ifPresent(id -> token.setCustomerId(String.valueOf(id)));
+        }
+        boolean hasNext = !products.isEmpty()
+                && (document.getLinks() != null ? document.getLinks().hasNext() : products.size() >= pageSize);
+        log.atDebug()
+                .addKeyValue("operation", "library-fetch")
+                .addKeyValue("page", page)
+                .addKeyValue("productCount", products.size())
+                .addKeyValue("hasNext", hasNext)
+                .log("DriveThruRPG library response received.");
+        return new OrderProductPage(products, hasNext);
+    }
+
+    private void renewToken(final DrivethruToken token) throws NoValidTokenException {
+        // Prefer the cookie-based /auth/refresh endpoint when an unexpired refresh token exists;
+        // otherwise or upon rejection, bypass the token cache and re-exchange the application key.
+        DrivethruToken replacement = tryRefreshToken(token).orElse(null);
+        if (replacement == null) {
+            replacement = requestToken(token.getApplicationKey(), "token-renewal");
+        }
+        token.setAccessToken(replacement.getAccessToken());
+        if (replacement.getRefreshToken() != null && !replacement.getRefreshToken().isBlank()) {
+            token.setRefreshToken(replacement.getRefreshToken());
+        }
+        if (replacement.getRefreshTokenTTL() != null) {
+            token.setRefreshTokenTTL(replacement.getRefreshTokenTTL());
+        }
+    }
+
+    private void logRenewalExhausted(final int page) {
+        log.atDebug()
+                .addKeyValue("operation", "library-fetch")
+                .addKeyValue("page", page)
+                .addKeyValue("reason", "renewal-exhausted")
+                .log("DriveThruRPG library access still unauthorized after token renewal.");
+    }
+
+    private void logServiceWarning(final String message, final RestClientException failure) {
+        // Upstream exceptions can contain credentials in their URL or response body; emit only class names and status.
+        log.atWarn()
+                .addKeyValue("upstream", "drivethrurpg")
+                .addKeyValue("statusCode",
+                        failure instanceof RestClientResponseException http ? http.getStatusCode().value() : null)
+                .addKeyValue("exceptionClass", failure.getClass().getName())
+                .addKeyValue("causeClass", failure.getMostSpecificCause().getClass().getName())
+                .log(message);
+    }
+
+    private void logUpstreamFailure(
+            final String operation, final String endpoint, final Integer page, final RestClientException failure) {
+        LoggingEventBuilder event = log.atDebug()
+                .addKeyValue("upstream", "drivethrurpg")
+                .addKeyValue("operation", operation)
+                .addKeyValue("endpoint", endpoint)
+                .addKeyValue("exceptionClass", failure.getClass().getName())
+                .addKeyValue("causeClass", failure.getMostSpecificCause().getClass().getName());
+        if (page != null) {
+            event = event.addKeyValue("page", page);
+        }
+        if (failure instanceof RestClientResponseException response) {
+            event = event.addKeyValue("statusCode", response.getStatusCode().value())
+                    .addKeyValue("responseBodyBytes", response.getResponseBodyAsByteArray().length);
+        }
+        // Exception messages, stack traces, headers and bodies can contain credentials.
+        event.log("DriveThruRPG HTTP request failed.");
     }
 }

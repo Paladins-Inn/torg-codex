@@ -25,22 +25,18 @@
 
 package de.paladinsinn.torg.codex.web.codex;
 
-import de.paladinsinn.security.ApiKeyAuthenticationToken;
+import de.paladinsinn.security.ApiKeySessionAuthentication;
 import de.paladinsinn.torg.codex.web.codex.mapper.CodexViewMapper;
 import de.paladinsinn.torg.codex.web.codex.model.AuthPageViewModel;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,7 +55,7 @@ public class CodexAuthController {
     private static final String INVALID_KEY_MESSAGE =
             "Invalid DriveThruRPG API key. Please check your Application Key and try again.";
 
-    private final AuthenticationManager authenticationManager;
+    private final ApiKeySessionAuthentication sessionAuthentication;
     private final CodexViewMapper viewMapper;
 
     @GetMapping("/login")
@@ -98,21 +94,22 @@ public class CodexAuthController {
         }
 
         try {
-            Authentication auth = authenticationManager.authenticate(
-                    ApiKeyAuthenticationToken.unauthenticated(apiKey.trim())
-            );
-
-            SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(auth);
-            SecurityContextHolder.setContext(context);
-
-            HttpSession session = request.getSession(true);
-            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+            sessionAuthentication.authenticate(apiKey, request, response);
             log.atInfo()
                     .addKeyValue("event.action", "user-login")
                     .log("DriveThruRPG session established");
 
             return "redirect:/";
+        } catch (AuthenticationServiceException e) {
+            log.atWarn()
+                    .addKeyValue("event.action", "user-login-unavailable")
+                    .log("DriveThruRPG login service unavailable");
+            response.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
+            model.addAttribute("model", new AuthPageViewModel(
+                    viewMapper.toNavContext(null, currentAuthentication),
+                    "DriveThruRPG is temporarily unavailable. Please try again later.",
+                    false));
+            return "codex/pages/login";
         } catch (AuthenticationException e) {
             log.atInfo()
                     .addKeyValue("event.action", "user-login-rejected")

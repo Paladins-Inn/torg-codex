@@ -1,12 +1,25 @@
 {
   "request": {
     "method": "POST",
-    "urlPath": "/api/v1/token",
+    "urlPath": "/api/vBeta/auth_key",
     "headers": {
-      "Authorization": {
-        "equalTo": "Bearer aabbccddeeff00112233445566778899aabbccdd"
+      "Accept": {
+        "contains": "application/json"
+      },
+      "Content-Type": {
+        "contains": "application/json"
       }
-    }
+    },
+    "queryParameters": {
+      "applicationKey": {
+        "equalTo": "aabbccddeeff00112233445566778899aabbccdd"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "equalToJson": "{}"
+      }
+    ]
   },
   "response": {
     "status": 200,

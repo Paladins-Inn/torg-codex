@@ -4,6 +4,7 @@ class ApiKeyAuthenticationFilter {
 	{field} {static} +API_KEY_PREFIX : String
 	{field} -authenticationManager : AuthenticationManager
 	{field} {static} -log : Logger
+	{method} -clearAuthentication ( request : HttpServletRequest , response : HttpServletResponse ) : void
 	{method} #doFilterInternal ( request : HttpServletRequest , response : HttpServletResponse , filterChain : FilterChain ) : void
 }
 
@@ -14,6 +15,18 @@ class ApiKeyAuthenticationToken {
 	{method}  {static} +authenticated ( userDetails : DriveThruUserDetails ) : ApiKeyAuthenticationToken
 	{method} +eraseCredentials () : void
 	{method}  {static} +unauthenticated ( apiKey : String ) : ApiKeyAuthenticationToken
+}
+
+
+class ApiKeySessionAuthentication {
+	{field} {static} -KEY_FINGERPRINT : String
+	{field} -authenticationManager : AuthenticationManager
+	{field} -contextRepository : HttpSessionSecurityContextRepository
+	{field} -sessionStrategy : ChangeSessionIdAuthenticationStrategy
+	{method} +authenticate ( apiKey : String , request : HttpServletRequest , response : HttpServletResponse ) : Authentication
+	{method} +clear ( request : HttpServletRequest , response : HttpServletResponse ) : void
+	{method}  {static} -fingerprint ( apiKey : String ) : byte[]
+	{method} -restore ( authentication : Authentication ) : SecurityContext
 }
 
 
@@ -85,6 +98,7 @@ class NotLoggedInUserDetails {
 
 
 
+ApiKeyAuthenticationFilter -->  ApiKeySessionAuthentication : sessionAuthentication
 DriveThruUserDetails ..|>  DriveThruPublicationOwner
 NotLoggedInUserDetails *--  NotLoggedInUserDetails : INSTANCE
 NotLoggedInUserDetails ..|>  DriveThruPublicationOwner

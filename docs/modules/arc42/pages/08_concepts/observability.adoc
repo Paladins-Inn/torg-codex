@@ -66,10 +66,11 @@ Monitoring collects metrics (e.g. latency, memory usage, throughput) to continuo
 
 === Technology: Spring Boot Actuator + Prometheus
 
-* `spring-boot-actuator` exposes metrics via the `/actuator/metrics` endpoint.
-* Integration with `micrometer` enables Prometheus as a metrics backend.
+* `spring-boot-starter-actuator` exposes metric names via `/actuator/metrics` and individual measurements via `/actuator/metrics/{name}`.
+* `micrometer-registry-prometheus` exports metrics via `/actuator/prometheus`.
+* OTLP metric, trace, and log exports are disabled by default; Prometheus pulls metrics without an OTLP collector.
 
-=== Example configuration (application.yml)
+=== Metrics export configuration (application.yaml)
 
 [source,yaml]
 ----
@@ -77,12 +78,23 @@ management:
   endpoints:
     web:
       exposure:
-        include: prometheus
-  metrics:
+        include: health,info,metrics,prometheus
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
     export:
-      prometheus:
-        enabled: true
+      otlp:
+        enabled: false
+  logging:
+    export:
+      otlp:
+        enabled: false
 ----
+
+The application exposes additional operational endpoints in its configuration.
+Metrics endpoints currently allow anonymous access; restrict access at the network or ingress boundary in production.
 
 * Prometheus is configured with a `scrape` job to periodically collect metrics:
 

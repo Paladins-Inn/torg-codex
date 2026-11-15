@@ -1,4 +1,5 @@
 {
-  "status": "error",
-  "message": null
+  "errorCode": "invalid_application_key",
+  "message": "The supplied application key is invalid or no longer active.",
+  "authState": "unauthenticated"
 }

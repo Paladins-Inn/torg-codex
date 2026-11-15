@@ -168,7 +168,7 @@ public final class CatalogCategoryRegistry {
                         ColumnDescriptor.groupBadge("group", "Group", true, p -> displaySlug(p.group())),
                         ColumnDescriptor.cosms(),
                         ColumnDescriptor.flag("contradiction", "Contradiction", Perk::contradiction),
-                        ColumnDescriptor.text("prerequisites", "Prerequisites", false, Perk::prerequisites)),
+                        ColumnDescriptor.markup("prerequisites", "Prerequisites", Perk::prerequisites)),
                 List.of(
                         FilterFacetDescriptor.grouping(GroupingDimension.CLEARANCE),
                         FilterFacetDescriptor.cosm(),

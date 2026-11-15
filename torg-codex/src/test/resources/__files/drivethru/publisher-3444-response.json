@@ -1,0 +1,12 @@
+{
+  "data": {
+    "id": "/api/vBeta/publishers/3444",
+    "type": "Publisher",
+    "attributes": {
+      "publisherId": 3444,
+      "name": "Ulisses Spiele",
+      "slug": "ulisses-spiele",
+      "thumbnail": "3444/Ulisses Logo-schwarz.png"
+    }
+  }
+}

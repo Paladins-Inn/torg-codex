@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/vBeta/publishers/3444",
+    "headers": {
+      "Accept": {
+        "contains": "application/vnd.api+json"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/vnd.api+json"
+    },
+    "bodyFileName": "drivethru/publisher-3444-response.json"
+  }
+}

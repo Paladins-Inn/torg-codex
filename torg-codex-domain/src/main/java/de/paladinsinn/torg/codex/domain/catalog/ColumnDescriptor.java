@@ -57,6 +57,7 @@ public record ColumnDescriptor<E extends CatalogEntry>(
     public enum CellKind {
         PRIMARY_LINK,
         TEXT,
+        MARKUP,
         CLEARANCE_BADGE,
         COSM_BADGES,
         GROUP_BADGE,
@@ -87,6 +88,14 @@ public record ColumnDescriptor<E extends CatalogEntry>(
             final boolean sortable,
             final Function<E, String> extractor) {
         return new ColumnDescriptor<>(key, header, CellKind.TEXT, sortable,
+                e -> nullSafe(extractor.apply(e)), e -> List.of());
+    }
+
+    public static <E extends CatalogEntry> ColumnDescriptor<E> markup(
+            final String key,
+            final String header,
+            final Function<E, String> extractor) {
+        return new ColumnDescriptor<>(key, header, CellKind.MARKUP, false,
                 e -> nullSafe(extractor.apply(e)), e -> List.of());
     }
 

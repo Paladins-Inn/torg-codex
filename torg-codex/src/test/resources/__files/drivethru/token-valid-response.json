@@ -1,9 +1,5 @@
 {
-  "status": "success",
-  "message": {
-    "access_token": "wiremock-jwt-bearer-token-777",
-    "customers_id": "424242",
-    "server_time": "2026-11-15 10:00:00",
-    "expires": "2026-11-16 10:00:00"
-  }
+  "token": "wiremock-jwt-bearer-token-777",
+  "refreshToken": "wiremock-refresh-token",
+  "refreshTokenTTL": 4102444800
 }

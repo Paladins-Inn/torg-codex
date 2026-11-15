@@ -31,15 +31,22 @@ activate prov
 prov ->> svc      : getToken(apiKey)
 activate svc
 
-svc ->> http      : getToken("Bearer " + apiKey)
+svc ->> http      : authenticate(apiKey)
 activate http
-http ->> api      : POST /token
-api -->> http     : {access_token, customers_id, expires}
+http ->> api      : POST /api/vBeta/auth_key?applicationKey=...\n body: {}
+api -->> http     : {token, refreshToken, refreshTokenTTL}
 http -->> svc     :
 deactivate http
 
 svc -->> prov     : DrivethruToken
 deactivate svc
+
+prov ->> svc      : getIdsOfOwnedProducts(token)
+svc ->> http      : getOrderProducts(token, page, 50, 0, 0, 0)
+http ->> api      : GET /api/vBeta/order_products?library=true\n Accept: application/vnd.api+json\n Authorization: token (raw JWT)
+api -->> http     : {links, meta, data: [{attributes: {productId, customerId, ...}}]}
+http -->> svc     : JsonApiCollectionDocument<OwnedProduct>
+svc -->> prov     : product ids
 
 prov -->> mgr     : ApiKeyAuthenticationToken\n  .authenticated(userDetails)
 deactivate prov
@@ -53,6 +60,89 @@ deactivate filter
 
 @enduml
 ----
+
+Die Basis-URL ist `https://api.drivethrurpg.com/api/vBeta` gemäß der
+DriveThruRPG-OpenAPI-Spezifikation (`dtrpg-api`).
+Der Token-Austausch sendet `POST /auth_key?applicationKey=<key>` mit JSON-Body `{}`
+und erhält `AuthTokenResponse` (`token`, `refreshToken`, `refreshTokenTTL` als
+Unix-Zeitstempel in Sekunden).
+Die Bibliotheksabfrage fordert mit `Accept: application/vnd.api+json` das
+JSON:API-Dokument `OrderProductListResponse` (`links`, `meta`, `data`) über
+`GET /order_products?library=true&page=<n>&pageSize=50&archived=0&getChecksum=0&getFilters=0`
+an. Das JWT wird unverändert im `Authorization`-Header gesendet.
+Die Seitennavigation folgt `links.next` und endet, sobald `data` leer ist oder
+`links.next` fehlt (`null`).
+Bei HTTP 401 wird einmalig versucht, die Sitzung über `POST /auth/refresh`
+(`Cookie: refreshToken=<refreshToken>`) zu erneuern, sofern ein noch gültiges
+Refresh-Token vorliegt; schlägt dies fehl oder ist das Refresh-Token abgelaufen,
+erfolgt einmalig ein neuer Austausch über `/auth_key`, bevor dieselbe Seite
+wiederholt wird. Weitere Ablehnungen brechen die Anmeldung ab; unvollständige
+Besitzlisten werden niemals als erfolgreiche Anmeldung behandelt.
+Katalogabfragen auf `/products/{productId}` und `/publishers/{publisherId}` nutzen
+ebenfalls `Accept: application/vnd.api+json` und entpacken die JSON:API-Dokumente
+(`JsonApiDocument`), einschließlich eingebetteter Verlagsdaten (`included`) und
+relativer Cover-Pfade unter `https://api.drivethrurpg.com/images/`.
+
+Liefert `OrderProductAttributes` eine `customerId`, wird diese übernommen; bei
+leerer Bibliothek fällt der Spring-Security-Benutzername auf eine lokale zufällige
+UUID zurück (`getCustomerId()` bleibt dann `null`). Die Freischaltung bleibt
+unverändert: Produkt-IDs (`productId`) werden über die Publikationsreferenzen in
+`ROLE_<codex-id>`-Authorities übersetzt.
+Application Key und Tokens werden weder als Benutzername verwendet noch protokolliert.
+Technische HTTP-/Protokollfehler werden von ungültigen Zugangsdaten unterschieden
+und protokollieren auf `WARN` neben `statusCode` auch `exceptionClass` und
+`causeClass` (ohne Nachrichten, Header oder Antworttexte); die Login-Seite antwortet
+bei technischen Fehlern mit HTTP 503 statt HTTP 401.
+
+== Session-lokaler Login-Cache
+
+`ApiKeySessionAuthentication` wird explizit von `TorgCodexSecurityConfig` als Bean
+bereitgestellt und von Login-Controller und API-Key-Filter gemeinsam verwendet.
+Erst nach vollstaendig erfolgreicher Token- und Bibliotheksabfrage werden
+Principal und Produkt-Authorities im `SecurityContext` der aktuellen HTTP-Session
+gespeichert und sofort fuer die Anfrage wirksam. Weitere Anfragen mit demselben
+Key oder ohne Authorization-Header verwenden dieses Ergebnis; auch erneute
+Formularanmeldungen fuehren keine erneute Bibliotheksabfrage aus.
+
+Zur Wiedererkennung speichert der Cache einen SHA-256-Fingerprint statt eines
+zusaetzlichen Klartext-Keys. Gleichzeitige Login-Anfragen derselben Session
+werden serialisiert. Bei einer neuen erfolgreichen Anmeldung wird die
+Session-ID gewechselt. Ein anderer Key erfordert eine neue Authentifizierung;
+Fehler werden nicht gecacht. Logout und Session-Ablauf entfernen das Ergebnis.
+Es gibt keinen sessionsuebergreifenden Token- oder Besitzlisten-Cache;
+oeffentliche Produkt- und Verlagsdaten duerfen weiterhin gecacht werden.
+Die optionale Integration im Filter laesst dessen stateless Standardverhalten
+fuer andere Anwendungen unveraendert.
+
+== Login-Diagnose auf DEBUG
+
+Die INFO-Meldung `drivethru-auth-rejected` allein unterscheidet nicht zwischen
+einem abgelehnten Token-Austausch und einer nach Token-Erneuerung weiterhin
+abgelehnten Bibliotheksabfrage. Fuer die Diagnose gezielt diese Klassen aktivieren:
+
+[source,yaml]
+----
+logging:
+  level:
+    de.paladinsinn.drivethru.DriveThruRPGService: DEBUG
+    de.paladinsinn.security.DriveThruAuthenticationProvider: DEBUG
+----
+
+Die DEBUG-Ereignisse unterscheiden `operation=token-exchange`, `token-refresh`,
+`token-renewal` und `library-fetch`. Sie enthalten den relativen `endpoint`, bei
+HTTP-Fehlern den `statusCode`, die Ausnahme- und Ursachenklasse sowie die
+Antwortgroesse (`responseBodyBytes`). Bibliotheksabfragen protokollieren
+Seitennummer, Seitengroesse, Ergebnisanzahl und `hasNext`. Der Provider nennt mit
+`stage=token-exchange` oder `stage=library-load` den abgebrochenen Anmeldeschritt.
+Die Token-Antwort wird nur durch Vorhandenseinsmerkmale wie `accessTokenPresent`
+beschrieben. API-Key, Tokens, Antwortinhalt, Header und rohe Exceptions werden
+nicht ausgegeben; auch vollstaendige Request-URLs mit Query-Parametern bleiben
+ausgeschlossen. Bei vorhandener Tracing-Konfiguration gehoeren die Ereignisse
+anhand der `traceId` zum selben Login-Versuch.
+
+Kein allgemeines HTTP-Wire-Logging aktivieren: Die Authentifizierungs-URL enthaelt
+den Application Key als Query-Parameter. Produktions-Logging bleibt standardmaessig
+auf INFO; diese DEBUG-Logger nur fuer die Diagnose aktivieren.
 
 == Klassendiagramm
 

@@ -1,15 +1,15 @@
 {
   "request": {
     "method": "POST",
-    "urlPath": "/api/v1/token",
-    "headers": {
-      "Authorization": {
-        "equalTo": "Bearer deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+    "urlPath": "/api/vBeta/auth_key",
+    "queryParameters": {
+      "applicationKey": {
+        "equalTo": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
       }
     }
   },
   "response": {
-    "status": 200,
+    "status": 401,
     "headers": {
       "Content-Type": "application/json"
     },

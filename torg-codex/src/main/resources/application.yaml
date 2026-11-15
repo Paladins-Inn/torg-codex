@@ -38,6 +38,14 @@ logging:
     root: info
 
 management:
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  logging:
+    export:
+      otlp:
+        enabled: false
   tracing:
     export:
       otlp:
