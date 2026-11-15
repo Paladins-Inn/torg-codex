@@ -24,10 +24,9 @@
  */
 
 package de.paladinsinn.torg.codex.api.controller;
-import de.paladinsinn.torg.codex.api.dto.SpellDetailDto;
 import de.paladinsinn.torg.codex.api.dto.SpellSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.SpellMapper;
-import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.RestrictedCatalogQuery;
 import de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory;
 import de.paladinsinn.torg.codex.domain.markup.Censor;
 import de.paladinsinn.torg.codex.domain.model.Spell;
@@ -42,19 +41,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SpellController {
-    private final CatalogQuery<Spell> catalogQuery;
+    private final RestrictedCatalogQuery<Spell> catalogQuery;
     private final SpellMapper mapper;
     private final CurrentUserCensorFactory censorFactory;
+    private final CatalogAccessResponses responses;
     @GetMapping
     public List<SpellSummaryDto> list() {
         return catalogQuery.findAll().stream().map(mapper::toSummary).toList();
     }
     @GetMapping("/{id}")
-    public ResponseEntity<SpellDetailDto> getById(@PathVariable UUID id) {
+    public ResponseEntity<?> getById(@PathVariable UUID id) {
         final Censor censor = censorFactory.create();
-        return catalogQuery.findById(id)
-                .map(e -> mapper.toDetail(e, censor))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return responses.toResponse(catalogQuery.findById(id), e -> mapper.toDetail(e, censor));
     }
 }

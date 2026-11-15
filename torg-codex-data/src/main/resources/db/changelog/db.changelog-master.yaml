@@ -13,3 +13,6 @@ databaseChangeLog:
   - include:
       file: data-fix-lists.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 2026-11-14-001-migrate.yaml
+      relativeToChangelogFile: true

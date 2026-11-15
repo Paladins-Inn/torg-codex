@@ -27,6 +27,12 @@ gg:
     development-mode: true
 
 logging:
+  # Spring Boot native structured JSON logging in ECS format (ADR-017, constitution Principle VII).
+  # No Logstash-specific encoder is used. File logging is not enabled; if it ever is, also set
+  # logging.structured.format.file: ecs.
+  structured:
+    format:
+      console: ecs
   level:
     root: info
     de.paladinsinn: debug

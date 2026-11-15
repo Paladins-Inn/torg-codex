@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -45,5 +47,25 @@ public record PowerList(
     String text,
     String notes,
     String disableIf
-) {
+) implements ProductBoundEntry, ReferencesEntries<PowerList> {
+
+    @Override
+    public EntityType entityType() {
+        return EntityType.POWER_LIST;
+    }
+
+    @Override
+    public EntityType referencedType() {
+        return EntityType.POWER;
+    }
+
+    @Override
+    public List<UUID> referencedEntries() {
+        return powers == null ? List.of() : powers;
+    }
+
+    @Override
+    public PowerList withReferencedEntries(List<UUID> referencedEntries) {
+        return new PowerList(id, name, clearanceLevel, products, cosms, unlockingPerks, referencedEntries, text, notes, disableIf);
+    }
 }

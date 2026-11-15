@@ -30,6 +30,7 @@ import de.paladinsinn.torg.codex.data.mapper.MiracleEntityMapper;
 import de.paladinsinn.torg.codex.data.repository.MiracleRepository;
 import de.paladinsinn.torg.codex.domain.model.Miracle;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,5 +62,16 @@ public final class JpaMiraclePersistenceAdapter implements CatalogPersistencePor
     @Override
     public List<Miracle> findByCosm(String cosm) {
         throw new UnsupportedOperationException("Miracles cannot be filtered by cosm.");
+    }
+
+    /**
+     * Reads the requested miracles with one batched repository query.
+     */
+    @Override
+    public List<Miracle> findAllById(Collection<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return repository.findAllById(ids.stream().distinct().toList()).stream().map(mapper::toDomain).toList();
     }
 }

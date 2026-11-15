@@ -1,0 +1,125 @@
+:adr-title: Domain-Level Product-Ownership DRM
+:adr-state: Accepted
+:adr-date: 2026-11-15
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 019
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+The catalog contains proprietary Torg Eternity content. Every catalog entry in the
+14 product-bound areas (cosms, items, miracles, miracle lists, perks, perk groups,
+powers, power lists, races, shards, spells, spell lists, threats and vehicles) is
+assigned to one or more products (`codex-id`). A caller may read an entry only when
+they own at least one of its products.
+
+Before this decision, the only DRM was the in-text `<IF:…>` censoring of detail
+responses. The catalog use cases passed every entry through unfiltered, so anonymous
+callers could list and read the whole catalog. Each new inbound adapter would have had
+to remember to filter, which is how the defect arose.
+
+The catalog data also contained gaps: several core cosms had no product assignment and
+all perk groups were assigned only to a non-existent product.
+
+== Decision
+
+=== Central enforcement in the core
+
+The access rule is a pure domain policy (`CatalogAccessPolicy` with the value object
+`OwnedProducts` in `torg-codex-domain`). It is evaluated in this order:
+
+. an entry without products is `UNASSIGNED` (fail-closed);
+. an entry with at least one owned product is `GRANTED`;
+. otherwise the decision is `TEASER`.
+
+The framework-free driving port `RestrictedCatalogQuery<T extends ProductBoundEntry>`
+and its implementation `RestrictedCatalogQueryService` in `torg-codex-application` are
+the only way inbound adapters read the 14 product-bound areas. The unrestricted
+`CatalogQuery` remains only for the public reference data (articles, publications and
+tags). Architecture tests guard all production modules, not only the current
+controllers, against bypassing the restricted port.
+
+=== Effective ownership
+
+The driven port `CallerProductsPort` returns the caller's effective `OwnedProducts`.
+It always contains the free tier `core-rulebook` (`OwnedProducts.FREE_TIER`), for
+anonymous and authenticated callers alike. The existing `ProductOwnershipResolver`, the
+single reader of `ROLE_<codex-id>` authorities (constitution Principle V), implements the
+port. In-text censoring uses the same effective set. No role grants an implicit bypass.
+
+=== HTTP contract
+
+* Lists and cosm-filtered lists contain only granted entries; they never contain teasers.
+* A granted single entry returns `200` with the unchanged detail DTO.
+* A single entry that exists but is not owned returns `403` with a closed purchase teaser:
+  `id`, `name`, `type` and the sorted `requiredProducts` (each with its publication
+  reference, or `null` if none is known). No other entry field is exposed.
+* An entry without products returns the same `404` as a non-existent entry.
+* Embedded entry references (spell, miracle and power lists) omit inaccessible entries.
+  Cosm cross-references to a product-less cosm use the unknown-slug fallback.
+
+The authoritative contract is the catalog OpenAPI specification. The teaser is an
+additive error body, so no media-type version change is needed ({adr-008}).
+
+=== Observability
+
+Each encounter of an entry without products is reported through the driven port
+`CatalogAccessObserver`. A single adapter logs one `WARN` with the structured fields
+`catalogArea`, `entryId` and `entryName`, and increments the Micrometer counter
+`torg.codex.catalog.entries.without.products` tagged only with `area`. There is no
+deduplication across requests. Logs and metrics never contain caller identity,
+authorities, owned products or credentials. Logging uses Spring Boot native structured
+JSON logging as decided in {adr-017}.
+
+=== Data correction
+
+A Liquibase data migration ("migrate" phase, {adr-011}) closes the known data gaps:
+
+* the ten core cosms without products are assigned to `core-rulebook`; cosms that
+  already have products are left unchanged;
+* each perk group gets exactly the union of the products of its perks. Every other
+  assignment, including the non-existent `groups` product, is removed. A group without
+  product-bearing perks ends unassigned and is therefore hidden (fail-closed).
+
+== Rejected alternatives
+
+* *Filtering in the controllers*: every new entry point would need to remember it.
+* *Spring Security `@PostFilter` or AOP*: requires Spring in the framework-free
+  application module and hides the rule.
+* *Database filters or product predicates in queries*: put the rule in persistence, need
+  to be repeated for every area, and cannot observe product-less entries.
+* *`200` with a teaser body*: breaks the typed detail contract.
+* *`402 Payment Required`*: non-standard semantics.
+* *`404` for non-owned entries*: the teaser was chosen so callers learn which product
+  unlocks an entry.
+* *Retaining stale perk-group grants as a fallback*: would grant access the data does not
+  justify.
+
+== Consequences
+
+* All present and future inbound adapters inherit the access rule from the core; new
+  catalog read capabilities must extend the restricted driving ports and the architecture
+  guards.
+* Anonymous callers and owners of other products see fewer entries; owners of a product
+  always also see the free tier, and in-text censoring follows the same effective set.
+* Entries without products are invisible until the catalog data is fixed; the warning
+  and the counter make such gaps visible to operators.
+* Characterization fixtures change for ownership filtering, the data correction and the
+  effective free tier; response shapes of successful responses remain unchanged.
+
+<<<

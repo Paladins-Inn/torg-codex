@@ -38,6 +38,7 @@ public interface MiracleListEntityMapper {
 
     @Mapping(target = "notes", source = "rawNotes")
     @Mapping(target = "text", source = "rawText")
+    @Mapping(target = "withReferencedEntries", ignore = true)
     de.paladinsinn.torg.codex.domain.model.MiracleList toDomain(de.paladinsinn.torg.codex.data.model.MiracleList entity);
 
     @Mapping(target = "censor", ignore = true)

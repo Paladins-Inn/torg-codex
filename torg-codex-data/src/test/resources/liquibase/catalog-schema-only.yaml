@@ -1,0 +1,8 @@
+databaseChangeLog:
+  # Test-only changelog: builds the real catalog schema (including the applied schema
+  # changes of data-fix-lists.yaml) without loading any catalog data. Used by
+  # CatalogDataFixMigrationIT to seed its own rows before executing the data correction.
+  - include:
+      file: classpath:db/changelog/torg-data-entity.yaml
+  - include:
+      file: classpath:db/changelog/data-fix-lists.yaml

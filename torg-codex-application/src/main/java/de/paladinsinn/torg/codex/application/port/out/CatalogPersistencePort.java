@@ -25,6 +25,7 @@
 
 package de.paladinsinn.torg.codex.application.port.out;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,4 +42,24 @@ public interface CatalogPersistencePort<T> {
     Optional<T> findById(UUID id);
 
     List<T> findByCosm(String cosm);
+
+    /**
+     * Reads the entries with the given ids; ids without an entry are omitted.
+     *
+     * <p>The default implementation looks up each distinct id through {@link #findById(UUID)}.
+     * Adapters backing embedded-reference filtering override it with a single batched query.
+     *
+     * @param ids the requested ids; may be {@code null}
+     * @return the existing entries among the requested ids
+     */
+    default List<T> findAllById(Collection<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return ids.stream()
+                .distinct()
+                .map(this::findById)
+                .flatMap(Optional::stream)
+                .toList();
+    }
 }

@@ -7,16 +7,15 @@ include::_nav.adoc[]
 
 == Numbering
 
-Existing records are numbered consecutively from 001 through 017. Numbers 018 and
-019 are reserved for the pending multi-valued-reference and domain-level DRM
-proposals respectively. Their feature plans create and register those records;
-they are not accepted decisions or linked pages yet.
+Accepted records are numbered 001 through 017 and 019. Number 018 is reserved for
+the pending multi-valued-reference proposal; its feature plan creates and registers
+that record.
 
 [cols="1,3,3",options="header"]
 |===
-| Reserved number | Proposal | Feature plan
-| 018 | Multi-valued references and encoded-list repair | `specs/004-multi-cosm-assignment/`
-| 019 | Domain-level product-ownership DRM | `specs/005-domain-drm-enforcement/`
+| Number | Record | Feature plan
+| 018 | Multi-valued references and encoded-list repair (reserved) | `specs/004-multi-cosm-assignment/`
+| 019 | xref:019_domain-level-drm.adoc[] (Accepted 2026-11-15) | `specs/005-domain-drm-enforcement/`
 |===
 
 === Historical number mapping

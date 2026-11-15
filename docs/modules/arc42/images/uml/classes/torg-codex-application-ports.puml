@@ -1,7 +1,32 @@
 @startuml
 
+interface CallerProductsPort {
+	{method}  {abstract} +current () : OwnedProducts
+}
+
+
+interface CatalogAccessObserver {
+	{method}  {abstract} +entryWithoutProducts ( area : EntityType , id : UUID , name : String ) : void
+}
+
+
+class CatalogEntryReference {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -products : Set
+	{method} +entityType () : EntityType
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +products () : Set
+	{method} +toString () : String
+}
+
+
 interface CatalogPersistencePort {
 	{method}  {abstract} +findAll () : List
+	{method} +findAllById ( ids : Collection ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findById ( id : UUID ) : Optional
 }
@@ -60,9 +85,11 @@ interface CatalogReferenceQuery {
 
 
 class CatalogReferenceQueryService {
+	{field} -policy : CatalogAccessPolicy
 	{method} +findCosmBySlug ( slug : String ) : Optional
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
+	{method} -visibleReference ( cosm : CatalogEntryReference ) : Optional
 }
 
 
@@ -71,12 +98,47 @@ interface DriveThruRpgProductPort {
 }
 
 
+class ReferencedEntryResolver {
+	{field} -policy : CatalogAccessPolicy
+	{method} -accessibleIds ( requested : Set , owned : OwnedProducts ) : Set
+	{method} +filter ( entries : List , owned : OwnedProducts ) : List
+}
+
+
+interface RestrictedCatalogQuery {
+	{method}  {abstract} +findAll () : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findById ( id : UUID ) : EntryAccess
+}
+
+
+class RestrictedCatalogQueryService {
+	{field} -area : EntityType
+	{field} -policy : CatalogAccessPolicy
+	{field} -references : ReferenceFilter
+	{method} -access ( entry : ProductBoundEntry , owned : OwnedProducts ) : EntryAccess
+	{method} -decide ( entry : ProductBoundEntry , owned : OwnedProducts ) : AccessDecision
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : EntryAccess
+	{method} -granted ( candidates : List , owned : OwnedProducts ) : List
+	{method}  {static} +withReferences ( area : EntityType , persistence : CatalogPersistencePort , callerProducts : CallerProductsPort , observer : CatalogAccessObserver , policy : CatalogAccessPolicy , resolver : ReferencedEntryResolver ) : RestrictedCatalogQueryService
+}
+
+
 
 
 CatalogQueryService *--  CatalogPersistencePort : persistence
 CatalogQueryService ..|>  CatalogQuery
+CatalogReferenceQueryService *--  CatalogAccessObserver : observer
 CatalogReferenceQueryService *--  CatalogReferencePersistencePort : persistence
 CatalogReferenceQueryService ..|>  CatalogReferenceQuery
+ReferencedEntryResolver *--  CatalogAccessObserver : observer
+ReferencedEntryResolver *--  CatalogPersistencePort : referenced
+RestrictedCatalogQueryService *--  CallerProductsPort : callerProducts
+RestrictedCatalogQueryService *--  CatalogAccessObserver : observer
+RestrictedCatalogQueryService *--  CatalogPersistencePort : persistence
+RestrictedCatalogQueryService ..|>  RestrictedCatalogQuery
 
 hide methods
 

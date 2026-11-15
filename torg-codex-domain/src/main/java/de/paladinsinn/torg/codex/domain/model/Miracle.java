@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Map;
@@ -46,5 +48,10 @@ public record Miracle(
     String range,
     String duration,
     String text
-) {
+) implements ProductBoundEntry {
+
+    @Override
+    public EntityType entityType() {
+        return EntityType.MIRACLE;
+    }
 }

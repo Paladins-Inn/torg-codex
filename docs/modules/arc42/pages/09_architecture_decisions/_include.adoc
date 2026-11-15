@@ -15,3 +15,4 @@
 :adr-015: xref:arc42:page$09_architecture_decisions/015_application-integration-boundaries.adoc[&uparrow;ADR-015]
 :adr-016: xref:arc42:page$09_architecture_decisions/016_markup-domain-service.adoc[&uparrow;ADR-016]
 :adr-017: xref:arc42:page$09_architecture_decisions/017_spring-boot-structured-logging.adoc[&uparrow;ADR-017]
+:adr-019: xref:arc42:page$09_architecture_decisions/019_domain-level-drm.adoc[&uparrow;ADR-019]

@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Set;
@@ -43,5 +45,10 @@ public record Perk(
     String group,
     String prerequisites,
     String text
-) {
+) implements ProductBoundEntry {
+
+    @Override
+    public EntityType entityType() {
+        return EntityType.PERK;
+    }
 }

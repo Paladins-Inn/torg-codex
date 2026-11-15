@@ -1,0 +1,2169 @@
+# Authoritative OpenAPI contract of the catalog REST API (feature 005, T015).
+openapi: 3.0.3
+info:
+  title: Torg Codex Catalog API
+  version: 1.0.0
+  description: 'Authoritative contract of the catalog REST API (constitution Principle III, ADR-006). The 14 product-bound
+    collections apply domain-level product-ownership DRM (ADR-019): every caller owns the free tier core-rulebook
+    plus the products of its ROLE_<codex-id> authorities. Articles, publications and tags are public reference data.'
+paths:
+  /api/articles:
+    get:
+      operationId: listArticles
+      tags:
+      - articles
+      summary: Lists articles.
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ArticleSummary'
+  /api/articles/{id}:
+    get:
+      operationId: getArticle
+      tags:
+      - articles
+      summary: Reads an article.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+        '404':
+          description: No such entry. No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/cosms:
+    get:
+      operationId: listCosms
+      tags:
+      - cosms
+      summary: Lists cosms the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CosmSummary'
+  /api/cosms/{id}:
+    get:
+      operationId: getCosm
+      tags:
+      - cosms
+      summary: Reads a cosm.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CosmDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/items:
+    get:
+      operationId: listItems
+      tags:
+      - items
+      summary: Lists items the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemSummary'
+      parameters:
+      - name: cosm
+        in: query
+        required: false
+        description: Restricts the list to entries of the cosm with this slug.
+        schema:
+          type: string
+  /api/items/{id}:
+    get:
+      operationId: getItem
+      tags:
+      - items
+      summary: Reads an item.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/miracles:
+    get:
+      operationId: listMiracles
+      tags:
+      - miracles
+      summary: Lists miracles the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MiracleSummary'
+  /api/miracles/{id}:
+    get:
+      operationId: getMiracle
+      tags:
+      - miracles
+      summary: Reads a miracle.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MiracleDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/miracle-lists:
+    get:
+      operationId: listMiracleLists
+      tags:
+      - miracle-lists
+      summary: Lists miracle-lists the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MiracleListSummary'
+      parameters:
+      - name: cosm
+        in: query
+        required: false
+        description: Restricts the list to entries of the cosm with this slug.
+        schema:
+          type: string
+  /api/miracle-lists/{id}:
+    get:
+      operationId: getMiracleList
+      tags:
+      - miracle-lists
+      summary: Reads a miracle list.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MiracleListDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/perks:
+    get:
+      operationId: listPerks
+      tags:
+      - perks
+      summary: Lists perks the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PerkSummary'
+      parameters:
+      - name: cosm
+        in: query
+        required: false
+        description: Restricts the list to entries of the cosm with this slug.
+        schema:
+          type: string
+  /api/perks/{id}:
+    get:
+      operationId: getPerk
+      tags:
+      - perks
+      summary: Reads a perk.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerkDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/perk-groups:
+    get:
+      operationId: listPerkGroups
+      tags:
+      - perk-groups
+      summary: Lists perk-groups the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PerkGroupSummary'
+  /api/perk-groups/{id}:
+    get:
+      operationId: getPerkGroup
+      tags:
+      - perk-groups
+      summary: Reads a perk group.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerkGroupDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/powers:
+    get:
+      operationId: listPowers
+      tags:
+      - powers
+      summary: Lists powers the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PowerSummary'
+  /api/powers/{id}:
+    get:
+      operationId: getPower
+      tags:
+      - powers
+      summary: Reads a power.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PowerDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/power-lists:
+    get:
+      operationId: listPowerLists
+      tags:
+      - power-lists
+      summary: Lists power-lists the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PowerListSummary'
+      parameters:
+      - name: cosm
+        in: query
+        required: false
+        description: Restricts the list to entries of the cosm with this slug.
+        schema:
+          type: string
+  /api/power-lists/{id}:
+    get:
+      operationId: getPowerList
+      tags:
+      - power-lists
+      summary: Reads a power list.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PowerListDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/publications:
+    get:
+      operationId: listPublications
+      tags:
+      - publications
+      summary: Lists publications.
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicationSummary'
+  /api/publications/{id}:
+    get:
+      operationId: getPublication
+      tags:
+      - publications
+      summary: Reads a publication.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicationDetail'
+        '404':
+          description: No such entry. No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/races:
+    get:
+      operationId: listRaces
+      tags:
+      - races
+      summary: Lists races the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RaceSummary'
+  /api/races/{id}:
+    get:
+      operationId: getRace
+      tags:
+      - races
+      summary: Reads a race.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaceDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/shards:
+    get:
+      operationId: listShards
+      tags:
+      - shards
+      summary: Lists shards the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShardSummary'
+      parameters:
+      - name: cosm
+        in: query
+        required: false
+        description: Restricts the list to entries of the cosm with this slug.
+        schema:
+          type: string
+  /api/shards/{id}:
+    get:
+      operationId: getShard
+      tags:
+      - shards
+      summary: Reads a shard.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShardDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/spells:
+    get:
+      operationId: listSpells
+      tags:
+      - spells
+      summary: Lists spells the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpellSummary'
+  /api/spells/{id}:
+    get:
+      operationId: getSpell
+      tags:
+      - spells
+      summary: Reads a spell.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpellDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/spell-lists:
+    get:
+      operationId: listSpellLists
+      tags:
+      - spell-lists
+      summary: Lists spell-lists the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpellListSummary'
+      parameters:
+      - name: cosm
+        in: query
+        required: false
+        description: Restricts the list to entries of the cosm with this slug.
+        schema:
+          type: string
+  /api/spell-lists/{id}:
+    get:
+      operationId: getSpellList
+      tags:
+      - spell-lists
+      summary: Reads a spell list.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpellListDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/tags:
+    get:
+      operationId: listTags
+      tags:
+      - tags
+      summary: Lists tags.
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagSummary'
+  /api/tags/{id}:
+    get:
+      operationId: getTag
+      tags:
+      - tags
+      summary: Reads a tag.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagDetail'
+        '404':
+          description: No such entry. No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/threats:
+    get:
+      operationId: listThreats
+      tags:
+      - threats
+      summary: Lists threats the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ThreatSummary'
+      parameters:
+      - name: cosm
+        in: query
+        required: false
+        description: Restricts the list to entries of the cosm with this slug.
+        schema:
+          type: string
+  /api/threats/{id}:
+    get:
+      operationId: getThreat
+      tags:
+      - threats
+      summary: Reads a threat.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreatDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+  /api/vehicles:
+    get:
+      operationId: listVehicles
+      tags:
+      - vehicles
+      summary: Lists vehicles the caller may read (only entries assigned to an owned product; never teasers).
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VehicleSummary'
+      parameters:
+      - name: cosm
+        in: query
+        required: false
+        description: Restricts the list to entries of the cosm with this slug.
+        schema:
+          type: string
+  /api/vehicles/{id}:
+    get:
+      operationId: getVehicle
+      tags:
+      - vehicles
+      summary: Reads a vehicle.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleDetail'
+        '403':
+          description: 'The entry exists but the caller owns none of its products: purchase teaser.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTeaser'
+        '404':
+          description: No such entry, or the entry has no product assignment (indistinguishable). No body.
+        '400':
+          description: The id is not a valid UUID. No body.
+components:
+  schemas:
+    ClearanceLevel:
+      type: string
+      nullable: true
+      enum:
+      - ALPHA
+      - BETA
+      - GAMMA
+      - DELTA
+      - OMEGA
+      - null
+      description: Product clearance level.
+    PublicationRef:
+      type: object
+      description: Reference to a publication.
+      additionalProperties: false
+      required:
+      - id
+      - title
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+    NullablePublicationRef:
+      type: object
+      description: Reference to a publication, or null if no publication is known for the codex id.
+      additionalProperties: false
+      required:
+      - id
+      - title
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+      nullable: true
+    CosmRef:
+      type: object
+      description: Reference to a cosm; id is null for unknown or product-less cosms (the name then is the slug).
+      additionalProperties: false
+      required:
+      - id
+      - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+      nullable: true
+    DifficultyNumber:
+      type: object
+      description: Difficulty number.
+      additionalProperties: false
+      required:
+      - level
+      - text
+      properties:
+        level:
+          type: string
+          nullable: true
+        text:
+          type: string
+          nullable: true
+      nullable: true
+    VehicleWeapon:
+      type: object
+      description: Weapon mounted on a vehicle.
+      additionalProperties: false
+      required:
+      - weaponId
+      - ammo
+      - amount
+      properties:
+        weaponId:
+          type: string
+          format: uuid
+          nullable: true
+        ammo:
+          type: string
+          nullable: true
+        amount:
+          type: string
+          nullable: true
+    RequiredProduct:
+      type: object
+      description: A product that grants access to a teased entry.
+      additionalProperties: false
+      required:
+      - codexId
+      - publication
+      properties:
+        codexId:
+          type: string
+        publication:
+          $ref: '#/components/schemas/NullablePublicationRef'
+    EntryTeaser:
+      type: object
+      description: Purchase teaser for an entry the caller does not own (ADR-019). Carries no protected entry data.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - type
+      - requiredProducts
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - cosm
+          - group
+          - perk
+          - spell
+          - spell-list
+          - miracle
+          - miracle-list
+          - power
+          - power-list
+          - threat
+          - item
+          - vehicle
+          - race
+          - shard
+          description: Catalog area tag.
+        requiredProducts:
+          type: array
+          minItems: 1
+          description: Granting products, sorted ascending by codex id.
+          items:
+            $ref: '#/components/schemas/RequiredProduct'
+    ArticleSummary:
+      type: object
+      description: Summary of an article.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    ArticleDetail:
+      type: object
+      description: Details of an article. The text is rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      - text
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        text:
+          type: string
+          nullable: true
+    CosmSummary:
+      type: object
+      description: Summary of a cosm.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    CosmDetail:
+      type: object
+      description: Details of a cosm. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      - axioms
+      - text
+      - worldLaws
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        axioms:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: integer
+        text:
+          type: string
+          nullable: true
+        worldLaws:
+          type: string
+          nullable: true
+    ItemSummary:
+      type: object
+      description: Summary of an item.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    ItemDetail:
+      type: object
+      description: Details of an item. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      - type
+      - axiomTech
+      - axiomMagic
+      - price
+      - bonus
+      - ammo
+      - range
+      - features
+      - additionalFeatures
+      - text
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        type:
+          type: string
+          nullable: true
+        axiomTech:
+          type: string
+          nullable: true
+        axiomMagic:
+          type: string
+          nullable: true
+        price:
+          type: string
+          nullable: true
+        bonus:
+          type: string
+          nullable: true
+        ammo:
+          type: string
+          nullable: true
+        range:
+          type: string
+          nullable: true
+        features:
+          type: string
+          nullable: true
+        additionalFeatures:
+          type: string
+          nullable: true
+        text:
+          type: string
+          nullable: true
+    MiracleSummary:
+      type: object
+      description: Summary of a miracle.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    MiracleDetail:
+      type: object
+      description: Details of a miracle. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      - axiom
+      - castingTime
+      - dn
+      - range
+      - duration
+      - requiredSkills
+      - text
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        axiom:
+          type: string
+          nullable: true
+        castingTime:
+          type: string
+          nullable: true
+        dn:
+          $ref: '#/components/schemas/DifficultyNumber'
+        range:
+          type: string
+          nullable: true
+        duration:
+          type: string
+          nullable: true
+        requiredSkills:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: integer
+        text:
+          type: string
+          nullable: true
+    MiracleListSummary:
+      type: object
+      description: Summary of a miracle list.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    MiracleListDetail:
+      type: object
+      description: Details of a miracle list. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      - unlockingPerk
+      - miracles
+      - text
+      - notes
+      - disableIf
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        unlockingPerk:
+          type: string
+          nullable: true
+        miracles:
+          type: array
+          nullable: true
+          description: Accessible referenced entries only, in original order.
+          items:
+            type: string
+            format: uuid
+        text:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        disableIf:
+          type: string
+          nullable: true
+    PerkSummary:
+      type: object
+      description: Summary of a perk.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    PerkDetail:
+      type: object
+      description: Details of a perk. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      - contradiction
+      - group
+      - prerequisites
+      - text
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        contradiction:
+          type: boolean
+        group:
+          type: string
+          nullable: true
+        prerequisites:
+          type: string
+          nullable: true
+        text:
+          type: string
+          nullable: true
+    PerkGroupSummary:
+      type: object
+      description: Summary of a perk group.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    PerkGroupDetail:
+      type: object
+      description: Details of a perk group. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      - text
+      - infos
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        text:
+          type: string
+          nullable: true
+        infos:
+          type: string
+          nullable: true
+    PowerSummary:
+      type: object
+      description: Summary of a power.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    PowerDetail:
+      type: object
+      description: Details of a power. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      - axiom
+      - castingTime
+      - dn
+      - range
+      - duration
+      - requiredSkills
+      - text
+      - enhancements
+      - limitations
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        axiom:
+          type: string
+          nullable: true
+        castingTime:
+          type: string
+          nullable: true
+        dn:
+          $ref: '#/components/schemas/DifficultyNumber'
+        range:
+          type: string
+          nullable: true
+        duration:
+          type: string
+          nullable: true
+        requiredSkills:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: integer
+        text:
+          type: string
+          nullable: true
+        enhancements:
+          type: string
+          nullable: true
+        limitations:
+          type: string
+          nullable: true
+    PowerListSummary:
+      type: object
+      description: Summary of a power list.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    PowerListDetail:
+      type: object
+      description: Details of a power list. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      - unlockingPerk
+      - powers
+      - text
+      - notes
+      - disableIf
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        unlockingPerk:
+          type: string
+          nullable: true
+        powers:
+          type: array
+          nullable: true
+          description: Accessible referenced entries only, in original order.
+          items:
+            type: string
+            format: uuid
+        text:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        disableIf:
+          type: string
+          nullable: true
+    PublicationSummary:
+      type: object
+      description: Summary of a publication.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - codexId
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        codexId:
+          type: string
+    PublicationDetail:
+      type: object
+      description: Details of a publication.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - codexId
+      - primaryProductId
+      - thirdParty
+      - productIds
+      - coverURL
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        codexId:
+          type: string
+        primaryProductId:
+          type: integer
+        thirdParty:
+          type: string
+          nullable: true
+        productIds:
+          type: array
+          nullable: true
+          items:
+            type: integer
+        coverURL:
+          type: string
+          nullable: true
+    RaceSummary:
+      type: object
+      description: Summary of a race.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    RaceDetail:
+      type: object
+      description: Details of a race. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      - major
+      - attributeLimits
+      - abilities
+      - text
+      - perkText
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        major:
+          type: boolean
+        attributeLimits:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: integer
+        abilities:
+          type: string
+          nullable: true
+        text:
+          type: string
+          nullable: true
+        perkText:
+          type: string
+          nullable: true
+    ShardSummary:
+      type: object
+      description: Summary of a shard.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    ShardDetail:
+      type: object
+      description: Details of a shard. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      - possibilities
+      - tappingDifficulty
+      - purpose
+      - text
+      - powers
+      - restrictions
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        possibilities:
+          type: string
+          nullable: true
+        tappingDifficulty:
+          type: string
+          nullable: true
+        purpose:
+          type: string
+          nullable: true
+        text:
+          type: string
+          nullable: true
+        powers:
+          type: string
+          nullable: true
+        restrictions:
+          type: string
+          nullable: true
+    SpellSummary:
+      type: object
+      description: Summary of a spell.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    SpellDetail:
+      type: object
+      description: Details of a spell. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      - axiom
+      - castingTime
+      - dn
+      - range
+      - duration
+      - requiredSkills
+      - text
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        axiom:
+          type: string
+          nullable: true
+        castingTime:
+          type: string
+          nullable: true
+        dn:
+          $ref: '#/components/schemas/DifficultyNumber'
+        range:
+          type: string
+          nullable: true
+        duration:
+          type: string
+          nullable: true
+        requiredSkills:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: integer
+        text:
+          type: string
+          nullable: true
+    SpellListSummary:
+      type: object
+      description: Summary of a spell list.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    SpellListDetail:
+      type: object
+      description: Details of a spell list. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      - unlockingPerk
+      - spells
+      - text
+      - notes
+      - disableIf
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        unlockingPerk:
+          type: string
+          nullable: true
+        spells:
+          type: array
+          nullable: true
+          description: Accessible referenced entries only, in original order.
+          items:
+            type: string
+            format: uuid
+        text:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        disableIf:
+          type: string
+          nullable: true
+    TagSummary:
+      type: object
+      description: Summary of a tag.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    TagDetail:
+      type: object
+      description: Details of a tag.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - clearanceLevel
+      - publications
+      - parentId
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+    ThreatSummary:
+      type: object
+      description: Summary of a threat.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    ThreatDetail:
+      type: object
+      description: Details of a threat. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      - unique
+      - subName
+      - quote
+      - text
+      - charisma
+      - dexterity
+      - mind
+      - spirit
+      - strength
+      - skills
+      - moveWalk
+      - moveFly
+      - moveSwim
+      - tough
+      - shock
+      - wounds
+      - equipment
+      - perks
+      - possibilities
+      - specialAbilities
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        unique:
+          type: boolean
+        subName:
+          type: string
+          nullable: true
+        quote:
+          type: string
+          nullable: true
+        text:
+          type: string
+          nullable: true
+        charisma:
+          type: string
+          nullable: true
+        dexterity:
+          type: string
+          nullable: true
+        mind:
+          type: string
+          nullable: true
+        spirit:
+          type: string
+          nullable: true
+        strength:
+          type: string
+          nullable: true
+        skills:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+        moveWalk:
+          type: string
+          nullable: true
+        moveFly:
+          type: string
+          nullable: true
+        moveSwim:
+          type: string
+          nullable: true
+        tough:
+          type: string
+          nullable: true
+        shock:
+          type: string
+          nullable: true
+        wounds:
+          type: string
+          nullable: true
+        equipment:
+          type: array
+          nullable: true
+          items:
+            type: string
+        perks:
+          type: array
+          nullable: true
+          items:
+            type: string
+        possibilities:
+          type: string
+          nullable: true
+        specialAbilities:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+    VehicleSummary:
+      type: object
+      description: Summary of a vehicle.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+    VehicleDetail:
+      type: object
+      description: Details of a vehicle. Text fields are rendered with the caller's effective owned products.
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - cosm
+      - clearanceLevel
+      - publications
+      - type
+      - axiomTech
+      - unique
+      - speed
+      - speedValue
+      - speedMod
+      - size
+      - passengers
+      - maneuverRating
+      - wounds
+      - tough
+      - price
+      - weaponry
+      - text
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cosm:
+          $ref: '#/components/schemas/CosmRef'
+        clearanceLevel:
+          $ref: '#/components/schemas/ClearanceLevel'
+        publications:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationRef'
+        type:
+          type: string
+          nullable: true
+        axiomTech:
+          type: string
+          nullable: true
+        unique:
+          type: boolean
+        speed:
+          type: string
+          nullable: true
+        speedValue:
+          type: string
+          nullable: true
+        speedMod:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        passengers:
+          type: string
+          nullable: true
+        maneuverRating:
+          type: string
+          nullable: true
+        wounds:
+          type: string
+          nullable: true
+        tough:
+          type: string
+          nullable: true
+        price:
+          type: string
+          nullable: true
+        weaponry:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/VehicleWeapon'
+        text:
+          type: string
+          nullable: true

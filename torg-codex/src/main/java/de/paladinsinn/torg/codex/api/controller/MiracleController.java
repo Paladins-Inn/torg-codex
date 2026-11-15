@@ -24,10 +24,9 @@
  */
 
 package de.paladinsinn.torg.codex.api.controller;
-import de.paladinsinn.torg.codex.api.dto.MiracleDetailDto;
 import de.paladinsinn.torg.codex.api.dto.MiracleSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.MiracleMapper;
-import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.RestrictedCatalogQuery;
 import de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory;
 import de.paladinsinn.torg.codex.domain.markup.Censor;
 import de.paladinsinn.torg.codex.domain.model.Miracle;
@@ -42,19 +41,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MiracleController {
-    private final CatalogQuery<Miracle> catalogQuery;
+    private final RestrictedCatalogQuery<Miracle> catalogQuery;
     private final MiracleMapper mapper;
     private final CurrentUserCensorFactory censorFactory;
+    private final CatalogAccessResponses responses;
     @GetMapping
     public List<MiracleSummaryDto> list() {
         return catalogQuery.findAll().stream().map(mapper::toSummary).toList();
     }
     @GetMapping("/{id}")
-    public ResponseEntity<MiracleDetailDto> getById(@PathVariable UUID id) {
+    public ResponseEntity<?> getById(@PathVariable UUID id) {
         final Censor censor = censorFactory.create();
-        return catalogQuery.findById(id)
-                .map(e -> mapper.toDetail(e, censor))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return responses.toResponse(catalogQuery.findById(id), e -> mapper.toDetail(e, censor));
     }
 }

@@ -76,7 +76,8 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
                         userDetails.getAuthorities()
                 );
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("No API key authentication header found. owned={}, authorities={}", userDetails.ownedCodexIds(), userDetails.getAuthorities());
+                log.debug("No API key authentication header found. owned={}, authorities={}",
+                        userDetails.ownedCodexIds(), userDetails.getAuthorities());
             }
             filterChain.doFilter(request, response);
             return;
@@ -89,7 +90,10 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
                     ApiKeyAuthenticationToken.unauthenticated(apiKey)
             );
             SecurityContextHolder.getContext().setAuthentication(auth);
-            log.debug("API key authentication successful. user={}, owned={}, authorities={}", auth.getName(), ((DriveThruPublicationOwner) Objects.requireNonNull(auth.getPrincipal())).ownedCodexIds(), auth.getAuthorities());
+            log.debug("API key authentication successful. user={}, owned={}, authorities={}",
+                    auth.getName(),
+                    ((DriveThruPublicationOwner) Objects.requireNonNull(auth.getPrincipal())).ownedCodexIds(),
+                    auth.getAuthorities());
 
             filterChain.doFilter(request, response);
         } catch (final AuthenticationException ex) {

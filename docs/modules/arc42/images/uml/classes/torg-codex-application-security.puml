@@ -27,6 +27,11 @@ class DriveThruAuthenticationProvider {
 }
 
 
+interface DriveThruPublicationOwner {
+	{method}  {abstract} +ownedCodexIds () : List
+}
+
+
 class DriveThruSecurityConfig {
 	{field} {static} -log : Logger
 	{method} +authenticationManager ( provider : DriveThruAuthenticationProvider ) : AuthenticationManager
@@ -72,15 +77,17 @@ class NotLoggedInUserDetails {
 	{field} {static} +FREE_PRODUCT_ID : String
 	{field} {static} -OWNED_CODEX_IDS : List
 	{field} {static} +USERNAME : String
-	{method} +getOwnedCodexIds () : List
 	{method} +getPassword () : String
+	{method} +ownedCodexIds () : List
 	{method} +toString () : String
 }
 
 
 
 
+DriveThruUserDetails ..|>  DriveThruPublicationOwner
 NotLoggedInUserDetails *--  NotLoggedInUserDetails : INSTANCE
+NotLoggedInUserDetails ..|>  DriveThruPublicationOwner
 
 hide methods
 

@@ -46,6 +46,7 @@ class Cosm {
 	{field} -worldLaws : String
 	{method} +axioms () : Map
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -127,6 +128,7 @@ class Item {
 	{method} +bonus () : String
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +features () : String
 	{method} +hashCode () : int
@@ -156,6 +158,7 @@ class Miracle {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +dn () : DifficultyNumber
 	{method} +duration () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -181,6 +184,7 @@ class MiracleList {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
 	{method} +disableIf () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -188,9 +192,12 @@ class MiracleList {
 	{method} +name () : String
 	{method} +notes () : String
 	{method} +products () : Set
+	{method} +referencedEntries () : List
+	{method} +referencedType () : EntityType
 	{method} +text () : String
 	{method} +toString () : String
 	{method} +unlockingPerks () : Set
+	{method} +withReferencedEntries ( referencedEntries : List ) : MiracleList
 }
 
 
@@ -206,6 +213,7 @@ class Perk {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +contradiction () : boolean
 	{method} +cosms () : Set
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +group () : String
 	{method} +hashCode () : int
@@ -225,6 +233,7 @@ class PerkGroup {
 	{field} -products : Set
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -254,6 +263,7 @@ class Power {
 	{method} +dn () : DifficultyNumber
 	{method} +duration () : String
 	{method} +enhancements () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -280,6 +290,7 @@ class PowerList {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
 	{method} +disableIf () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -287,9 +298,20 @@ class PowerList {
 	{method} +notes () : String
 	{method} +powers () : List
 	{method} +products () : Set
+	{method} +referencedEntries () : List
+	{method} +referencedType () : EntityType
 	{method} +text () : String
 	{method} +toString () : String
 	{method} +unlockingPerks () : Set
+	{method} +withReferencedEntries ( referencedEntries : List ) : PowerList
+}
+
+
+interface ProductBoundEntry {
+	{method}  {abstract} +entityType () : EntityType
+	{method}  {abstract} +id () : UUID
+	{method}  {abstract} +name () : String
+	{method}  {abstract} +products () : Set
 }
 
 
@@ -337,6 +359,7 @@ class Race {
 	{method} +abilities () : String
 	{method} +attributeLimits () : Map
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -346,6 +369,13 @@ class Race {
 	{method} +products () : Set
 	{method} +text () : String
 	{method} +toString () : String
+}
+
+
+interface ReferencesEntries {
+	{method}  {abstract} +referencedEntries () : List
+	{method}  {abstract} +referencedType () : EntityType
+	{method}  {abstract} +withReferencedEntries ( referencedEntries : List ) : ReferencesEntries
 }
 
 
@@ -362,6 +392,7 @@ class Shard {
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -392,6 +423,7 @@ class Spell {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +dn () : DifficultyNumber
 	{method} +duration () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -417,16 +449,20 @@ class SpellList {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
 	{method} +disableIf () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +notes () : String
 	{method} +products () : Set
+	{method} +referencedEntries () : List
+	{method} +referencedType () : EntityType
 	{method} +spells () : List
 	{method} +text () : String
 	{method} +toString () : String
 	{method} +unlockingPerks () : Set
+	{method} +withReferencedEntries ( referencedEntries : List ) : SpellList
 }
 
 
@@ -473,6 +509,7 @@ class Threat {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
 	{method} +dexterity () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +equipment () : List
 	{method} +hashCode () : int
@@ -521,6 +558,7 @@ class Vehicle {
 	{method} +axiomTech () : String
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -560,24 +598,41 @@ class VehicleWeapon {
 
 Article *--  ClearanceLevel : clearanceLevel
 Cosm *--  ClearanceLevel : clearanceLevel
+Cosm ..|>  ProductBoundEntry
 Item *--  ClearanceLevel : clearanceLevel
+Item ..|>  ProductBoundEntry
 Miracle *--  ClearanceLevel : clearanceLevel
 Miracle *--  DifficultyNumber : dn
+Miracle ..|>  ProductBoundEntry
 MiracleList *--  ClearanceLevel : clearanceLevel
+MiracleList ..|>  ProductBoundEntry
+MiracleList ..|>  ReferencesEntries
 Perk *--  ClearanceLevel : clearanceLevel
+Perk ..|>  ProductBoundEntry
 PerkGroup *--  ClearanceLevel : clearanceLevel
+PerkGroup ..|>  ProductBoundEntry
 Power *--  ClearanceLevel : clearanceLevel
 Power *--  DifficultyNumber : dn
+Power ..|>  ProductBoundEntry
 PowerList *--  ClearanceLevel : clearanceLevel
+PowerList ..|>  ProductBoundEntry
+PowerList ..|>  ReferencesEntries
 Race *--  ClearanceLevel : clearanceLevel
+Race ..|>  ProductBoundEntry
 Shard *--  ClearanceLevel : clearanceLevel
+Shard ..|>  ProductBoundEntry
 Spell *--  ClearanceLevel : clearanceLevel
 Spell *--  DifficultyNumber : dn
+Spell ..|>  ProductBoundEntry
 SpellList *--  ClearanceLevel : clearanceLevel
+SpellList ..|>  ProductBoundEntry
+SpellList ..|>  ReferencesEntries
 Tag *--  ClearanceLevel : clearanceLevel
 Threat *--  ClearanceLevel : clearanceLevel
+Threat ..|>  ProductBoundEntry
 Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry
 Vehicle *--  ClearanceLevel : clearanceLevel
+Vehicle ..|>  ProductBoundEntry
 
 hide methods
 

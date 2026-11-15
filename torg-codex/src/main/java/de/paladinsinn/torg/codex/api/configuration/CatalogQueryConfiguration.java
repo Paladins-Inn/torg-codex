@@ -44,6 +44,7 @@ import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaTagPersistenceA
 import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaThreatPersistenceAdapter;
 import de.paladinsinn.torg.codex.data.adapter.out.persistence.JpaVehiclePersistenceAdapter;
 import de.paladinsinn.torg.codex.data.mapper.ArticleEntityMapper;
+import de.paladinsinn.torg.codex.data.mapper.CatalogReferenceEntityMapper;
 import de.paladinsinn.torg.codex.data.mapper.CosmEntityMapper;
 import de.paladinsinn.torg.codex.data.mapper.ItemEntityMapper;
 import de.paladinsinn.torg.codex.data.mapper.MiracleEntityMapper;
@@ -79,8 +80,18 @@ import de.paladinsinn.torg.codex.data.repository.ThreatRepository;
 import de.paladinsinn.torg.codex.data.repository.VehicleRepository;
 import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
+import de.paladinsinn.torg.codex.application.port.in.RestrictedCatalogQuery;
+import de.paladinsinn.torg.codex.application.port.out.CallerProductsPort;
+import de.paladinsinn.torg.codex.application.port.out.CatalogAccessObserver;
+import de.paladinsinn.torg.codex.application.port.out.CatalogPersistencePort;
 import de.paladinsinn.torg.codex.application.service.CatalogQueryService;
 import de.paladinsinn.torg.codex.application.service.CatalogReferenceQueryService;
+import de.paladinsinn.torg.codex.application.service.ReferencedEntryResolver;
+import de.paladinsinn.torg.codex.application.service.RestrictedCatalogQueryService;
+import de.paladinsinn.torg.codex.domain.access.CatalogAccessPolicy;
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
+import de.paladinsinn.torg.codex.domain.model.ProductBoundEntry;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -91,9 +102,21 @@ import org.springframework.context.annotation.Configuration;
  * model and wired to the corresponding outbound {@code Jpa<Area>PersistenceAdapter}, which maps
  * JPA entities to domain models via MapStruct. Product-gate rendering (censoring) is applied at
  * the inbound (web) boundary in the controllers/DTO mappers, not here.
+ *
+ * <p>The 14 product-bound areas are exposed only as {@link RestrictedCatalogQuery} beans that
+ * apply the domain-level product-ownership DRM (ADR-019). Unrestricted {@link CatalogQuery} beans
+ * exist only for the public reference data: articles, publications and tags. Caller ownership
+ * is wired through the {@link CallerProductsPort} interface type only. Spell, miracle and power
+ * lists filter their embedded references through a {@link ReferencedEntryResolver} backed by the
+ * batched persistence adapter of the referenced area.
  */
 @Configuration
+@RequiredArgsConstructor
 public class CatalogQueryConfiguration {
+
+    private final CallerProductsPort callerProducts;
+    private final CatalogAccessObserver observer;
+    private final CatalogAccessPolicy policy = new CatalogAccessPolicy();
 
     @Bean
     CatalogQuery<de.paladinsinn.torg.codex.domain.model.Article> articleCatalogQuery(
@@ -102,51 +125,57 @@ public class CatalogQueryConfiguration {
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Cosm> cosmCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.Cosm> cosmCatalogQuery(
             CosmRepository repository, CosmEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaCosmPersistenceAdapter(repository, mapper));
+        return restricted(EntityType.COSM, new JpaCosmPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Item> itemCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.Item> itemCatalogQuery(
             ItemRepository repository, ItemEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaItemPersistenceAdapter(repository, mapper));
+        return restricted(EntityType.ITEM, new JpaItemPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Miracle> miracleCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.Miracle> miracleCatalogQuery(
             MiracleRepository repository, MiracleEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaMiraclePersistenceAdapter(repository, mapper));
+        return restricted(EntityType.MIRACLE, new JpaMiraclePersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.MiracleList> miracleListCatalogQuery(
-            MiracleListRepository repository, MiracleListEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaMiracleListPersistenceAdapter(repository, mapper));
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.MiracleList> miracleListCatalogQuery(
+            MiracleListRepository repository, MiracleListEntityMapper mapper,
+            MiracleRepository miracleRepository, MiracleEntityMapper miracleMapper) {
+        return RestrictedCatalogQueryService.withReferences(EntityType.MIRACLE_LIST,
+                new JpaMiracleListPersistenceAdapter(repository, mapper), callerProducts, observer, policy,
+                new ReferencedEntryResolver<>(new JpaMiraclePersistenceAdapter(miracleRepository, miracleMapper), observer, policy));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Perk> perkCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.Perk> perkCatalogQuery(
             PerkRepository repository, PerkEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaPerkPersistenceAdapter(repository, mapper));
+        return restricted(EntityType.PERK, new JpaPerkPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.PerkGroup> perkGroupCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.PerkGroup> perkGroupCatalogQuery(
             PerkGroupRepository repository, PerkGroupEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaPerkGroupPersistenceAdapter(repository, mapper));
+        return restricted(EntityType.GROUP, new JpaPerkGroupPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Power> powerCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.Power> powerCatalogQuery(
             PowerRepository repository, PowerEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaPowerPersistenceAdapter(repository, mapper));
+        return restricted(EntityType.POWER, new JpaPowerPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.PowerList> powerListCatalogQuery(
-            PowerListRepository repository, PowerListEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaPowerListPersistenceAdapter(repository, mapper));
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.PowerList> powerListCatalogQuery(
+            PowerListRepository repository, PowerListEntityMapper mapper,
+            PowerRepository powerRepository, PowerEntityMapper powerMapper) {
+        return RestrictedCatalogQueryService.withReferences(EntityType.POWER_LIST,
+                new JpaPowerListPersistenceAdapter(repository, mapper), callerProducts, observer, policy,
+                new ReferencedEntryResolver<>(new JpaPowerPersistenceAdapter(powerRepository, powerMapper), observer, policy));
     }
 
     @Bean
@@ -156,27 +185,30 @@ public class CatalogQueryConfiguration {
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Race> raceCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.Race> raceCatalogQuery(
             RaceRepository repository, RaceEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaRacePersistenceAdapter(repository, mapper));
+        return restricted(EntityType.RACE, new JpaRacePersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Shard> shardCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.Shard> shardCatalogQuery(
             ShardRepository repository, ShardEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaShardPersistenceAdapter(repository, mapper));
+        return restricted(EntityType.SHARD, new JpaShardPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Spell> spellCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.Spell> spellCatalogQuery(
             SpellRepository repository, SpellEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaSpellPersistenceAdapter(repository, mapper));
+        return restricted(EntityType.SPELL, new JpaSpellPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.SpellList> spellListCatalogQuery(
-            SpellListRepository repository, SpellListEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaSpellListPersistenceAdapter(repository, mapper));
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.SpellList> spellListCatalogQuery(
+            SpellListRepository repository, SpellListEntityMapper mapper,
+            SpellRepository spellRepository, SpellEntityMapper spellMapper) {
+        return RestrictedCatalogQueryService.withReferences(EntityType.SPELL_LIST,
+                new JpaSpellListPersistenceAdapter(repository, mapper), callerProducts, observer, policy,
+                new ReferencedEntryResolver<>(new JpaSpellPersistenceAdapter(spellRepository, spellMapper), observer, policy));
     }
 
     @Bean
@@ -186,21 +218,28 @@ public class CatalogQueryConfiguration {
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Threat> threatCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.Threat> threatCatalogQuery(
             ThreatRepository repository, ThreatEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaThreatPersistenceAdapter(repository, mapper));
+        return restricted(EntityType.THREAT, new JpaThreatPersistenceAdapter(repository, mapper));
     }
 
     @Bean
-    CatalogQuery<de.paladinsinn.torg.codex.domain.model.Vehicle> vehicleCatalogQuery(
+    RestrictedCatalogQuery<de.paladinsinn.torg.codex.domain.model.Vehicle> vehicleCatalogQuery(
             VehicleRepository repository, VehicleEntityMapper mapper) {
-        return new CatalogQueryService<>(new JpaVehiclePersistenceAdapter(repository, mapper));
+        return restricted(EntityType.VEHICLE, new JpaVehiclePersistenceAdapter(repository, mapper));
     }
 
     @Bean
     CatalogReferenceQuery catalogReferenceQuery(
-            CosmRepository cosmRepository, PublicationRepository publicationRepository) {
+            CosmRepository cosmRepository, PublicationRepository publicationRepository,
+            CatalogReferenceEntityMapper referenceMapper) {
         return new CatalogReferenceQueryService(
-                new JpaCatalogReferenceAdapter(cosmRepository, publicationRepository));
+                new JpaCatalogReferenceAdapter(cosmRepository, publicationRepository, referenceMapper),
+                observer, policy);
+    }
+
+    private <T extends ProductBoundEntry> RestrictedCatalogQuery<T> restricted(
+            EntityType area, CatalogPersistencePort<T> persistence) {
+        return new RestrictedCatalogQueryService<>(area, persistence, callerProducts, observer, policy);
     }
 }

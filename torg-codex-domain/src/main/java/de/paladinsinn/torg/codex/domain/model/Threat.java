@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -64,5 +66,10 @@ public record Threat(
     List<String> perks,
     String possibilities,
     Map<String, String> specialAbilities
-) {
+) implements ProductBoundEntry {
+
+    @Override
+    public EntityType entityType() {
+        return EntityType.THREAT;
+    }
 }

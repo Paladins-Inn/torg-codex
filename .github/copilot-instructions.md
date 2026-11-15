@@ -8,6 +8,7 @@
 - Run one data-module unit test: `./mvnw -pl torg-codex-data -Dtest=TorgMarkupServiceTest test`
 - Run one application-module unit test (building its data-module dependency): `./mvnw -pl torg-codex -am -Dtest=ProductOwnershipResolverTest -Dsurefire.failIfNoSpecifiedTests=false test`
 - Run the Testcontainers-backed Liquibase integration test: `./mvnw -pl torg-codex-data -Dit.test=LiquibaseImportIT verify` (requires a running Docker daemon).
+- Run the DRM behavior and contract tests: `./mvnw -pl torg-codex -am -Dtest='CatalogDrmDifferentialTest,CatalogOpenApiContractTest,CatalogDrmArchitectureTest*' -Dsurefire.failIfNoSpecifiedTests=false test` (requires Docker).
 - There is no repository lint command. Maven compilation includes Lombok, MapStruct, JTE generation, and Hibernate enhancement.
 
 ## Architecture & Architectural Decision Records (ADRs)
@@ -29,6 +30,7 @@
 - **ADR-015 (Application Integration Boundaries):** `de.paladinsinn.drivethru` and `de.paladinsinn.security`, including all subpackages, belong to `torg-codex-application`. Preserve their fully qualified names and public APIs. `torg-codex-data` owns persistence, Liquibase, markup processing, and data adapters, not the DriveThruRPG client or API-key security implementation.
 - **ADR-016 (Markup Domain Service):** The framework-free markup pipeline belongs to `torg-codex-domain`; its Spring bean wiring remains in `torg-codex-application`. This supersedes older markup-placement descriptions.
 - **ADR-017 (Native Structured Logging):** Use Spring Boot native ECS structured JSON logging, preserving SLF4J key-value fields in emitted output. Do not add or retain Logstash-specific encoder dependencies or configuration.
+- **ADR-019 (Domain-Level Product-Ownership DRM):** The access rule (`CatalogAccessPolicy`, `OwnedProducts`) lives in `torg-codex-domain`; the 14 product-bound catalog areas are read only through the restricted driving port `RestrictedCatalogQuery`. Lists contain granted entries only, unowned single entries return a `403` purchase teaser, and entries without products behave like missing ones (`404`). ADR-018 is reserved for multi-valued references.
 
 ## Cross-Cutting Concepts (arc42 08_concepts)
 
@@ -38,7 +40,7 @@
 - **Security & Access Control (RBAC & ABAC):** Roles include `Player`, `GM`, `Third Party Systems`, `Orga`, `Judge`, `Admin`. ABAC policies govern resource ownership and Torg Eternity DRM.
 - **Data Protection & Privacy:** User identities map (Issuer, User) tuples to UUIDs. Account data is retained for 3 years post-closure; audit logs persist for account lifetime. API keys and credentials are strictly protected. User-created content transfers ownership to Torganized Play upon account deletion.
 - **Observability:** Built on three pillars:
-  - *Logging:* JSON-structured logs via Logback / LogstashEncoder.
+  - *Logging:* Spring Boot native structured ECS JSON logs (`logging.structured.format.console: ecs`), no Logstash encoder.
   - *Monitoring:* Spring Boot Actuator with Micrometer exporting to Prometheus (`/actuator/prometheus`).
   - *Alerting:* Prometheus alerting rules and Alertmanager routing.
 
@@ -49,7 +51,9 @@
   - `torg-codex-application`: Driving/driven ports and use-case services plus the `de.paladinsinn.drivethru` client and `de.paladinsinn.security` API-key integration.
   - `torg-codex-data`: JPA entities/repositories, Liquibase migrations, persistence/event adapters, and the Torg markup pipeline. Enabled via `@EnableTorgData`.
   - `torg-codex`: Spring Boot application exposing REST controllers/JTE pages, DTO mappers, and role-based censoring.
-- **Security & Censoring:** Requests may authenticate with `Authorization: ApiKey <key>` or OIDC tokens. `ROLE_<codex-id>` authorities control product ownership and content visibility. `ProductOwnershipResolver` and `CurrentUserCensorFactory` are the single censoring path; do not bypass censoring.
+- **Security & Censoring:** Requests may authenticate with `Authorization: ApiKey <key>` or OIDC tokens. `ROLE_<codex-id>` authorities control product ownership and content visibility. `ProductOwnershipResolver` is the single ownership source; it implements `CallerProductsPort` (`current()` = owned products plus the free tier `OwnedProducts.FREE_TIER` = `core-rulebook`, for every caller). `CurrentUserCensorFactory` is the single censoring path and uses the same effective ownership; do not bypass censoring.
+- **Domain-Level DRM (ADR-019):** Inbound adapters in any package read the 14 product-bound areas only through `RestrictedCatalogQuery<T extends ProductBoundEntry>` (`RestrictedCatalogQueryService`); the unrestricted `CatalogQuery` is limited to Article, Publication and Tag. Never read catalog repositories, entities, persistence adapters or persistence ports from inbound code; `CatalogDrmArchitectureTest` enforces this production-wide (A1-A6) including actual Spring bean bindings. Wire new restricted queries in `CatalogQueryConfiguration` through `CallerProductsPort`/`CatalogAccessObserver` interface types. Entries without products are reported through `CatalogAccessObserver` (WARN + counter `torg.codex.catalog.entries.without.products{area}`, no caller data).
+- **REST Contract:** The catalog API source of truth is `specs/005-domain-drm-enforcement/contracts/catalog-api.openapi.yaml`; keep it in sync with DTOs and controllers (`CatalogOpenApiContractTest` validates the specification and live responses).
 - **Markup Pipeline:** Rendering order must be strictly preserved: conditional product blocks -> entity references -> raw HTML -> game tokens -> CommonMark (`TorgMarkupService` / `Censor`).
 - **Web & DTO Mapping:** Keep web adapters thin. Controllers return summary DTOs for lists and detail DTOs for item endpoints. MapStruct mappers must be Spring components (`componentModel = "spring"`) sharing rules via `TorgMappingSupport`.
 - **Data Entities:** Value types/records where appropriate; JPA entities extend `TorgEntity` with generated UUID IDs and concrete product collections.

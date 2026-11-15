@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Map;
@@ -44,5 +46,10 @@ public record Race(
     String abilities,
     String text,
     String perkText
-) {
+) implements ProductBoundEntry {
+
+    @Override
+    public EntityType entityType() {
+        return EntityType.RACE;
+    }
 }

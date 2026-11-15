@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -45,5 +47,25 @@ public record MiracleList(
     String text,
     String notes,
     String disableIf
-) {
+) implements ProductBoundEntry, ReferencesEntries<MiracleList> {
+
+    @Override
+    public EntityType entityType() {
+        return EntityType.MIRACLE_LIST;
+    }
+
+    @Override
+    public EntityType referencedType() {
+        return EntityType.MIRACLE;
+    }
+
+    @Override
+    public List<UUID> referencedEntries() {
+        return miracles == null ? List.of() : miracles;
+    }
+
+    @Override
+    public MiracleList withReferencedEntries(List<UUID> referencedEntries) {
+        return new MiracleList(id, name, clearanceLevel, products, cosms, unlockingPerks, referencedEntries, text, notes, disableIf);
+    }
 }

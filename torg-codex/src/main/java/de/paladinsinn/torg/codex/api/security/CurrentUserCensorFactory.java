@@ -37,6 +37,10 @@ import org.springframework.stereotype.Component;
  * single, principal-type-agnostic {@code ROLE_<codex-id>}-authority mechanism required by
  * constitution Principle V (feature {@code 001-unify-censoring-authorization}). This class no
  * longer derives ownership from any authentication-provider-specific principal.
+ *
+ * <p>It uses the caller's effective ownership ({@link ProductOwnershipResolver#current()}), which
+ * always includes the free tier, so in-text censoring and entry access decisions apply the same
+ * owned products (ADR-019).
  */
 @Component
 @RequiredArgsConstructor
@@ -46,6 +50,6 @@ public class CurrentUserCensorFactory {
     private final TorgMarkupService markupService;
 
     public Censor create() {
-        return Censor.of(markupService, ownershipResolver.resolve());
+        return Censor.of(markupService, ownershipResolver.current().codexIds());
     }
 }

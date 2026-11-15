@@ -7,7 +7,14 @@ The TORG markup language uses `<IF:product-id>` / `<IF:!product-id>` conditional
 At runtime, the rendering pipeline needs to know which products the current user owns so it can resolve those conditions.
 
 This page describes how Spring Security roles are mapped to product IDs and how the single ownership-resolution mechanism
-(`CurrentUserCensorFactory` delegating to `ProductOwnershipResolver`) bridges the security layer and the markup pipeline.
+(`ProductOwnershipResolver`) bridges the security layer, the domain-level entry access decisions ({adr-019}) and the
+markup pipeline.
+
+Product ownership governs two things, both evaluated with the same _effective owned products_:
+
+* *Entry access*: whether a catalog entry of the 14 product-bound areas may be listed and read at all (see
+  <<entry-access>>).
+* *In-text censoring*: which `<IF:…>` passages of an accessible entry or article are rendered.
 
 
 == Role Naming Convention
@@ -27,6 +34,10 @@ ROLE_digital-orrorsh     -> digital-orrorsh
 The mapping rule is simple: strip the `ROLE_` prefix.
 Everything that follows becomes the product-id matched against `<IF:product-id>` tags in the markup.
 
+The _effective owned products_ of every caller are these product-ids united with the free tier `core-rulebook`
+(`OwnedProducts.FREE_TIER`). Anonymous callers and authenticated callers without an explicit `ROLE_core-rulebook`
+authority (for example API-key users who did not buy the core rulebook) therefore always own the free tier.
+
 Non-product authorities (e.g., OAuth2 scopes such as `SCOPE_read`) do not carry the `ROLE_` prefix and are therefore ignored by the resolver.
 
 This mechanism is *principal-type independent*: ownership is derived purely from the `ROLE_<codex-id>` `GrantedAuthority`
@@ -43,41 +54,90 @@ With the role mapping in place, the two conditional block forms have the followi
 |===
 | Markup | Rendered when
 
+| `<IF:sourcebook-aysle>…</IF>`
+| `sourcebook-aysle` is among the caller's effective owned products (authority `ROLE_sourcebook-aysle`)
+
+| `<IF:!sourcebook-aysle>…</IF>`
+| `sourcebook-aysle` is *not* among the caller's effective owned products, or the caller is not authenticated at all
+
 | `<IF:core-rulebook>…</IF>`
-| The authenticated user holds the authority `ROLE_core-rulebook`
+| Always, because every caller owns the free tier
 
 | `<IF:!core-rulebook>…</IF>`
-| The authenticated user does *not* hold `ROLE_core-rulebook`, or is not authenticated at all
+| Never
 
 |===
 
-The second form is intentionally used as a "teaser" or "you need this book" notice: unauthenticated and anonymous users see only the negated blocks.
+The negated form is intentionally used as a "teaser" or "you need this book" notice.
 
 
 == Unauthenticated and Anonymous Users
 
-If no `Authentication` is present in the security context, or the authentication is not flagged as authenticated, the resolved product-id set is *empty*.
+If no `Authentication` is present in the security context, or the authentication is not flagged as authenticated,
+`ProductOwnershipResolver.resolve()` returns an *empty* set and `current()` returns only the free tier.
 As a result:
 
-* All `<IF:product-id>` (positive) blocks are suppressed.
-* All `<IF:!product-id>` (negated) blocks are shown.
+* Only free-tier entries are listed and readable; every other entry is omitted from lists, and reading it directly
+  returns the purchase teaser.
+* `<IF:core-rulebook>` blocks are shown; all other positive `<IF:product-id>` blocks are suppressed.
+* All `<IF:!product-id>` blocks for other products are shown.
 
-This gives anonymous visitors the minimal, non-gated view of all content without requiring any authentication check in the rendering code itself.
+NOTE: In production, the configured anonymous principal (`NotLoggedInUserDetails`) additionally carries
+`ROLE_core-rulebook`; its `FREE_PRODUCT_ID` is the domain constant `OwnedProducts.FREE_TIER`.
 
-NOTE: In production, the configured anonymous principal (`NotLoggedInUserDetails`) always carries `ROLE_core-rulebook`,
-so anonymous visitors additionally see the free-tier core-rulebook content.
+
+[#entry-access]
+== Entry Access (Domain-Level DRM)
+
+The access rule is the pure domain policy `CatalogAccessPolicy` in `torg-codex-domain`, evaluated in this order:
+
+. an entry without products is `UNASSIGNED` and hidden from every caller (fail-closed);
+. an entry with at least one effectively owned product is `GRANTED`;
+. otherwise the decision is `TEASER`.
+
+The 14 product-bound areas (cosms, items, miracles, miracle lists, perks, perk groups, powers, power lists, races,
+shards, spells, spell lists, threats and vehicles) are read exclusively through the framework-free driving port
+`RestrictedCatalogQuery<T extends ProductBoundEntry>` (`RestrictedCatalogQueryService` in `torg-codex-application`).
+Articles, publications and tags are public reference data read through the unrestricted `CatalogQuery`.
+`CatalogDrmArchitectureTest` guards every production class of all modules against bypassing the restricted port.
+
+The REST contract is documented in the authoritative OpenAPI specification
+`specs/005-domain-drm-enforcement/contracts/catalog-api.openapi.yaml`:
+
+[cols="<.<5,<.<7",options="header",frame="topbot",grid="rows"]
+|===
+| Request | Response
+
+| List or cosm-filtered list
+| `200` with granted entries only; never teasers
+
+| Single granted entry
+| `200` with the unchanged detail DTO; embedded spell, miracle and power references contain only granted entries
+
+| Single entry the caller does not own
+| `403` with the closed purchase teaser `{id, name, type, requiredProducts}`; `requiredProducts` are sorted by codex
+  id and carry the publication reference or `null`
+
+| Entry without products, or no such entry
+| The same empty `404`
+|===
+
+Cosm references to a cosm without products fall back to `{id: null, name: <slug>}`, like an unknown slug.
+Every encounter of an entry without products is reported through the `CatalogAccessObserver` port (see
+xref:08_concepts/observability.adoc[]).
 
 
 == Architecture
 
 The DriveThruRPG authentication integration lives in the `torg-codex-application`
-module. Product-ownership resolution for rendering lives in the `torg-codex` web
-module. The `torg-codex-data` library module has no Spring Security dependency; it
-accepts a plain `Set<String>` of product IDs and does not know how that set was obtained.
+module. Product-ownership resolution lives in the `torg-codex` web module. The markup pipeline and the access
+policy live in the framework-free `torg-codex-domain` module; they accept plain product IDs and do not know how
+they were obtained.
 
-There is exactly *one* production mechanism that derives product ownership for censoring (constitution Principle V):
-`CurrentUserCensorFactory`, which delegates to `ProductOwnershipResolver`. Both live in the
-`de.paladinsinn.torg.codex.api.security` package.
+There is exactly *one* production mechanism that derives product ownership (constitution Principle V):
+`ProductOwnershipResolver` in the `de.paladinsinn.torg.codex.api.security` package. It also implements the
+application port `CallerProductsPort`, through which the composition root wires the restricted use cases.
+`CurrentUserCensorFactory` is the only other class depending on the resolver.
 
 [source]
 ----
@@ -85,7 +145,9 @@ torg-codex-application (DriveThruRPG HTTP and API-key security)
 └── de.paladinsinn.drivethru / de.paladinsinn.security
         Provides authentication and ROLE_* authority producers
 
-torg-codex-data (no Spring Security dependency)
+torg-codex-domain (framework-free)
+└── access.OwnedProducts / access.CatalogAccessPolicy
+        decide(ProductBoundEntry, OwnedProducts) : UNASSIGNED | GRANTED | TEASER
 └── TorgMarkupService
         render(String rawText, Set<String> ownedProducts)
             |
@@ -95,14 +157,22 @@ torg-codex-data (no Spring Security dependency)
         of(TorgMarkupService, Set<String> ownedProducts)
         apply(String rawText) -> render(rawText, ownedProducts)
 
+torg-codex-application (framework-free core)
+└── port.in.RestrictedCatalogQuery / service.RestrictedCatalogQueryService
+        findAll() / findByCosm(slug) / findById(id) : EntryAccess
+└── port.out.CallerProductsPort
+        current() : OwnedProducts
+
 torg-codex (Spring Security on classpath)
-└── api.security.ProductOwnershipResolver
+└── api.security.ProductOwnershipResolver implements CallerProductsPort
         resolve() : Set<String>                          <1>
+        current() : OwnedProducts                        <2>
 └── api.security.CurrentUserCensorFactory
-        create() : Censor                                <2>
+        create() : Censor                                <3>
 ----
 <1> Reads `ROLE_*` authorities from `SecurityContextHolder`, strips the prefix, returns the owned product-id set. Performs no I/O.
-<2> Calls `ProductOwnershipResolver.resolve()` and constructs a request-scoped `Censor.of(markupService, ownedProducts)`.
+<2> `OwnedProducts.of(resolve())`: the effective owned products including the free tier.
+<3> Constructs a request-scoped `Censor.of(markupService, ownershipResolver.current().codexIds())`.
 
 
 == Rendering Order
@@ -143,7 +213,8 @@ return auth.getAuthorities().stream()
 == Usage in Web Controllers
 
 The 15 gated REST controllers do not resolve ownership themselves. They inject `CurrentUserCensorFactory`, obtain a
-request-scoped `Censor`, and pass it to their MapStruct mapper as a `@Context` parameter:
+request-scoped `Censor`, and pass it to their MapStruct mapper as a `@Context` parameter. The 14 product-bound
+controllers read through `RestrictedCatalogQuery` and map the `EntryAccess` result with `CatalogAccessResponses`:
 
 [source,java]
 ----
@@ -152,23 +223,20 @@ request-scoped `Censor`, and pass it to their MapStruct mapper as a `@Context` p
 @RequiredArgsConstructor
 public class CosmController {
 
-    private final CatalogQuery<Cosm> catalogQuery;
+    private final RestrictedCatalogQuery<Cosm> catalogQuery;
     private final CosmMapper mapper;
     private final CurrentUserCensorFactory censorFactory;
+    private final CatalogAccessResponses responses;
 
     @GetMapping("/{id}")
-    public ResponseEntity<CosmDetailDto> getById(@PathVariable UUID id) {
+    public ResponseEntity<?> getById(@PathVariable UUID id) {
         final Censor censor = censorFactory.create();
-        return catalogQuery.findById(id)
-                .map(e -> mapper.toDetail(e, censor))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return responses.toResponse(catalogQuery.findById(id), e -> mapper.toDetail(e, censor));
     }
 }
 ----
 
-The controller does not handle roles itself.
-`CurrentUserCensorFactory` → `ProductOwnershipResolver` resolves the current user's product ownership transparently.
+The controller does not handle roles or access decisions itself.
 
 
 == Module Boundary
@@ -177,17 +245,25 @@ The controller does not handle roles itself.
 |===
 | Module | Responsibility
 
-| `torg-codex-data`
-| Markup parsing pipeline (`TorgMarkupService`, `ConditionalBlockProcessor`, `Censor`, …).
+| `torg-codex-domain`
+| Markup parsing pipeline (`TorgMarkupService`, `ConditionalBlockProcessor`, `Censor`, …) and the access policy
+(`CatalogAccessPolicy`, `OwnedProducts`, `EntryAccess`).
 No knowledge of Spring Security or HTTP sessions.
-Accepts `Set<String> ownedProducts` as a plain parameter.
+
+| `torg-codex-application`
+| Restricted driving port `RestrictedCatalogQuery` and its framework-free use case; driven ports
+`CallerProductsPort` and `CatalogAccessObserver`.
+
+| `torg-codex-data`
+| Persistence only; no knowledge of ownership.
 
 | `torg-codex`
-| Spring Security integration (`ProductOwnershipResolver`, `CurrentUserCensorFactory`).
-Extracts product IDs from the authenticated user's `ROLE_*` authorities and passes them to the data module.
+| Spring Security integration (`ProductOwnershipResolver`, `CurrentUserCensorFactory`), REST controllers, the teaser
+mapping and the observability adapter.
+Extracts product IDs from the authenticated user's `ROLE_*` authorities.
 |===
 
-This boundary keeps the data module independently testable and reusable without the application container.
+This boundary keeps the domain and application modules independently testable without the application container.
 
 
 == Test Strategy
@@ -218,6 +294,11 @@ This boundary keeps the data module independently testable and reusable without 
 | Included as-is; inert during rendering
 
 |===
+
+`ProductOwnershipResolverTest` also verifies that `current()` always includes the free tier.
+`CatalogDrmDifferentialTest` compares anonymous callers with owners for lists, cosm filters, details, teasers,
+not-found responses, embedded references and the observability counter in all 14 areas, and
+`CatalogOpenApiContractTest` validates live responses against the OpenAPI specification.
 
 In addition, `CensoringDifferentialTest` asserts — via live MockMvc requests to the Aysle cosm detail endpoint — that an
 anonymous request and a `ROLE_sourcebook-aysle` owner request produce genuinely *different* `worldLaws` output, and

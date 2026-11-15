@@ -1,0 +1,16 @@
+databaseChangeLog:
+  # Migrate phase (ADR-011): data-only correction for domain-level DRM (ADR-019, FR-018).
+  # No schema change. The SQL is idempotent and a no-op on the public free-tier dataset.
+  - changeSet:
+      id: 2026-11-14-001-migrate
+      author: klenkes74 (with copilot)
+      comment: >-
+        - Assign the free tier core-rulebook to the ten core cosms without product assignment.
+        - Derive each perk group's products from the exact union of its perks' products and
+          remove every other assignment (including the non-existent product "groups").
+      changes:
+        - sqlFile:
+            path: 2026-11-14-001-migrate.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true

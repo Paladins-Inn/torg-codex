@@ -30,6 +30,7 @@ import de.paladinsinn.torg.codex.data.mapper.PowerEntityMapper;
 import de.paladinsinn.torg.codex.data.repository.PowerRepository;
 import de.paladinsinn.torg.codex.domain.model.Power;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,5 +62,16 @@ public final class JpaPowerPersistenceAdapter implements CatalogPersistencePort<
     @Override
     public List<Power> findByCosm(String cosm) {
         throw new UnsupportedOperationException("Powers cannot be filtered by cosm.");
+    }
+
+    /**
+     * Reads the requested powers with one batched repository query.
+     */
+    @Override
+    public List<Power> findAllById(Collection<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return repository.findAllById(ids.stream().distinct().toList()).stream().map(mapper::toDomain).toList();
     }
 }

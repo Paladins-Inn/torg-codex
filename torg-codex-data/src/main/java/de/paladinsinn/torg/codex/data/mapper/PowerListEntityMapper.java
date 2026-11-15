@@ -38,6 +38,7 @@ public interface PowerListEntityMapper {
 
     @Mapping(target = "notes", source = "rawNotes")
     @Mapping(target = "text", source = "rawText")
+    @Mapping(target = "withReferencedEntries", ignore = true)
     de.paladinsinn.torg.codex.domain.model.PowerList toDomain(de.paladinsinn.torg.codex.data.model.PowerList entity);
 
     @Mapping(target = "censor", ignore = true)

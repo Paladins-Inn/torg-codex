@@ -1,5 +1,19 @@
 @startuml
 
+class Absent {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+enum AccessDecision {
+	{field} +GRANTED
+	{field} +TEASER
+	{field} +UNASSIGNED
+}
+
+
 class Article {
 	{field} +text : String
 	{method} +getRawText () : String
@@ -85,8 +99,50 @@ class ArticleSummaryDto {
 }
 
 
+interface CallerProductsPort {
+	{method}  {abstract} +current () : OwnedProducts
+}
+
+
+class CatalogAccessObservabilityAdapter {
+	{field} {static} +COUNTER_NAME : String
+	{field} {static} -log : Logger
+	{method} +entryWithoutProducts ( area : EntityType , id : UUID , name : String ) : void
+}
+
+
+interface CatalogAccessObserver {
+	{method}  {abstract} +entryWithoutProducts ( area : EntityType , id : UUID , name : String ) : void
+}
+
+
+class CatalogAccessPolicy {
+	{method} +decide ( entry : ProductBoundEntry , owned : OwnedProducts ) : AccessDecision
+}
+
+
+class CatalogAccessResponses {
+	{method} +toResponse ( access : EntryAccess , detailMapper : Function ) : ResponseEntity
+}
+
+
+class CatalogEntryReference {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -products : Set
+	{method} +entityType () : EntityType
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +products () : Set
+	{method} +toString () : String
+}
+
+
 interface CatalogPersistencePort {
 	{method}  {abstract} +findAll () : List
+	{method} +findAllById ( ids : Collection ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findById ( id : UUID ) : Optional
 }
@@ -127,23 +183,24 @@ interface CatalogQuery {
 
 class CatalogQueryConfiguration {
 	{method} ~articleCatalogQuery ( repository : ArticleRepository , mapper : ArticleEntityMapper ) : CatalogQuery
-	{method} ~catalogReferenceQuery ( cosmRepository : CosmRepository , publicationRepository : PublicationRepository ) : CatalogReferenceQuery
-	{method} ~cosmCatalogQuery ( repository : CosmRepository , mapper : CosmEntityMapper ) : CatalogQuery
-	{method} ~itemCatalogQuery ( repository : ItemRepository , mapper : ItemEntityMapper ) : CatalogQuery
-	{method} ~miracleCatalogQuery ( repository : MiracleRepository , mapper : MiracleEntityMapper ) : CatalogQuery
-	{method} ~miracleListCatalogQuery ( repository : MiracleListRepository , mapper : MiracleListEntityMapper ) : CatalogQuery
-	{method} ~perkCatalogQuery ( repository : PerkRepository , mapper : PerkEntityMapper ) : CatalogQuery
-	{method} ~perkGroupCatalogQuery ( repository : PerkGroupRepository , mapper : PerkGroupEntityMapper ) : CatalogQuery
-	{method} ~powerCatalogQuery ( repository : PowerRepository , mapper : PowerEntityMapper ) : CatalogQuery
-	{method} ~powerListCatalogQuery ( repository : PowerListRepository , mapper : PowerListEntityMapper ) : CatalogQuery
+	{method} ~catalogReferenceQuery ( cosmRepository : CosmRepository , publicationRepository : PublicationRepository , referenceMapper : CatalogReferenceEntityMapper ) : CatalogReferenceQuery
+	{method} ~cosmCatalogQuery ( repository : CosmRepository , mapper : CosmEntityMapper ) : RestrictedCatalogQuery
+	{method} ~itemCatalogQuery ( repository : ItemRepository , mapper : ItemEntityMapper ) : RestrictedCatalogQuery
+	{method} ~miracleCatalogQuery ( repository : MiracleRepository , mapper : MiracleEntityMapper ) : RestrictedCatalogQuery
+	{method} ~miracleListCatalogQuery ( repository : MiracleListRepository , mapper : MiracleListEntityMapper , miracleRepository : MiracleRepository , miracleMapper : MiracleEntityMapper ) : RestrictedCatalogQuery
+	{method} ~perkCatalogQuery ( repository : PerkRepository , mapper : PerkEntityMapper ) : RestrictedCatalogQuery
+	{method} ~perkGroupCatalogQuery ( repository : PerkGroupRepository , mapper : PerkGroupEntityMapper ) : RestrictedCatalogQuery
+	{method} ~powerCatalogQuery ( repository : PowerRepository , mapper : PowerEntityMapper ) : RestrictedCatalogQuery
+	{method} ~powerListCatalogQuery ( repository : PowerListRepository , mapper : PowerListEntityMapper , powerRepository : PowerRepository , powerMapper : PowerEntityMapper ) : RestrictedCatalogQuery
 	{method} ~publicationCatalogQuery ( repository : PublicationRepository , mapper : PublicationEntityMapper ) : CatalogQuery
-	{method} ~raceCatalogQuery ( repository : RaceRepository , mapper : RaceEntityMapper ) : CatalogQuery
-	{method} ~shardCatalogQuery ( repository : ShardRepository , mapper : ShardEntityMapper ) : CatalogQuery
-	{method} ~spellCatalogQuery ( repository : SpellRepository , mapper : SpellEntityMapper ) : CatalogQuery
-	{method} ~spellListCatalogQuery ( repository : SpellListRepository , mapper : SpellListEntityMapper ) : CatalogQuery
+	{method} ~raceCatalogQuery ( repository : RaceRepository , mapper : RaceEntityMapper ) : RestrictedCatalogQuery
+	{method} -restricted ( area : EntityType , persistence : CatalogPersistencePort ) : RestrictedCatalogQuery
+	{method} ~shardCatalogQuery ( repository : ShardRepository , mapper : ShardEntityMapper ) : RestrictedCatalogQuery
+	{method} ~spellCatalogQuery ( repository : SpellRepository , mapper : SpellEntityMapper ) : RestrictedCatalogQuery
+	{method} ~spellListCatalogQuery ( repository : SpellListRepository , mapper : SpellListEntityMapper , spellRepository : SpellRepository , spellMapper : SpellEntityMapper ) : RestrictedCatalogQuery
 	{method} ~tagCatalogQuery ( repository : TagRepository , mapper : TagEntityMapper ) : CatalogQuery
-	{method} ~threatCatalogQuery ( repository : ThreatRepository , mapper : ThreatEntityMapper ) : CatalogQuery
-	{method} ~vehicleCatalogQuery ( repository : VehicleRepository , mapper : VehicleEntityMapper ) : CatalogQuery
+	{method} ~threatCatalogQuery ( repository : ThreatRepository , mapper : ThreatEntityMapper ) : RestrictedCatalogQuery
+	{method} ~vehicleCatalogQuery ( repository : VehicleRepository , mapper : VehicleEntityMapper ) : RestrictedCatalogQuery
 }
 
 
@@ -165,6 +222,16 @@ class CatalogReference {
 }
 
 
+interface CatalogReferenceEntityMapper {
+	{method}  {abstract} +toCosmReference ( cosm : Cosm ) : CatalogEntryReference
+}
+
+
+class CatalogReferenceEntityMapperImpl {
+	{method} +toCosmReference ( cosm : Cosm ) : CatalogEntryReference
+}
+
+
 interface CatalogReferencePersistencePort {
 	{method}  {abstract} +findCosmBySlug ( slug : String ) : Optional
 	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
@@ -183,6 +250,7 @@ class CatalogReferenceQueryService {
 	{method} +findCosmBySlug ( slug : String ) : Optional
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
+	{method} -visibleReference ( cosm : CatalogEntryReference ) : Optional
 }
 
 
@@ -235,6 +303,7 @@ class Cosm {
 	{field} -worldLaws : String
 	{method} +axioms () : Map
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -480,6 +549,37 @@ enum EntityType {
 }
 
 
+interface EntryAccess {
+	{method}  {static} +absent () : EntryAccess
+	{method}  {static} +granted ( entry : ProductBoundEntry ) : EntryAccess
+	{method}  {static} +teaserOf ( entry : ProductBoundEntry ) : EntryAccess
+}
+
+
+class EntryTeaserDto {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -type : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +requiredProducts () : List
+	{method} +toString () : String
+	{method} +type () : String
+}
+
+
+interface EntryTeaserMapper {
+	{method}  {abstract} +toDto ( teaser : Teaser ) : EntryTeaserDto
+}
+
+
+class EntryTeaserMapperImpl {
+	{method} +toDto ( teaser : Teaser ) : EntryTeaserDto
+}
+
+
 class GameTokenProcessor {
 	{field} {static} -GAME_TOKEN : Pattern
 	{method} +process ( text : String ) : String
@@ -491,6 +591,14 @@ class GameTokenRegistry {
 	{field} {static} -TOKEN_CSS_CLASSES : Map
 	{method}  {static} +cssClassFor ( tokenName : String ) : String
 	{method}  {static} +isKnown ( tokenName : String ) : boolean
+}
+
+
+class Granted {
+	{method} +entry () : ProductBoundEntry
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
 }
 
 
@@ -534,6 +642,7 @@ class Item {
 	{method} +bonus () : String
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +features () : String
 	{method} +hashCode () : int
@@ -615,7 +724,7 @@ class ItemMapperImpl {
 
 
 interface ItemRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
@@ -652,7 +761,6 @@ class JpaCatalogReferenceAdapter {
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
 	{method} -toPublicationReference ( publication : Publication ) : CatalogPublicationReference
-	{method} -toReference ( cosm : Cosm ) : CatalogReference
 	{method} -toReference ( publication : Publication ) : CatalogReference
 }
 
@@ -680,6 +788,7 @@ class JpaMiracleListPersistenceAdapter {
 
 class JpaMiraclePersistenceAdapter {
 	{method} +findAll () : List
+	{method} +findAllById ( ids : Collection ) : List
 	{method} +findByCosm ( cosm : String ) : List
 	{method} +findById ( id : UUID ) : Optional
 }
@@ -708,6 +817,7 @@ class JpaPowerListPersistenceAdapter {
 
 class JpaPowerPersistenceAdapter {
 	{method} +findAll () : List
+	{method} +findAllById ( ids : Collection ) : List
 	{method} +findByCosm ( cosm : String ) : List
 	{method} +findById ( id : UUID ) : Optional
 }
@@ -743,6 +853,7 @@ class JpaSpellListPersistenceAdapter {
 
 class JpaSpellPersistenceAdapter {
 	{method} +findAll () : List
+	{method} +findAllById ( ids : Collection ) : List
 	{method} +findByCosm ( cosm : String ) : List
 	{method} +findById ( id : UUID ) : Optional
 }
@@ -821,6 +932,7 @@ class Miracle {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +dn () : DifficultyNumber
 	{method} +duration () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -903,6 +1015,7 @@ class MiracleList {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
 	{method} +disableIf () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -910,9 +1023,12 @@ class MiracleList {
 	{method} +name () : String
 	{method} +notes () : String
 	{method} +products () : Set
+	{method} +referencedEntries () : List
+	{method} +referencedType () : EntityType
 	{method} +text () : String
 	{method} +toString () : String
 	{method} +unlockingPerks () : Set
+	{method} +withReferencedEntries ( referencedEntries : List ) : MiracleList
 }
 
 
@@ -1010,7 +1126,7 @@ class MiracleMapperImpl {
 
 
 interface MiracleRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
 	{method}  {abstract} +findByProduct ( product : String ) : List
@@ -1026,6 +1142,20 @@ class MiracleSummaryDto {
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +publications () : List
+	{method} +toString () : String
+}
+
+
+class OwnedProducts {
+	{field} {static} +FREE_TIER : String
+	{field} -codexIds : Set
+	{method}  {static} +anonymous () : OwnedProducts
+	{method} +codexIds () : Set
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method}  {static} ~normalize ( ids : Set ) : Set
+	{method}  {static} +of ( codexIds : Set ) : OwnedProducts
+	{method} +ownsAnyOf ( products : Set ) : boolean
 	{method} +toString () : String
 }
 
@@ -1054,6 +1184,7 @@ class Perk {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +contradiction () : boolean
 	{method} +cosms () : Set
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +group () : String
 	{method} +hashCode () : int
@@ -1122,6 +1253,7 @@ class PerkGroup {
 	{field} -products : Set
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -1215,7 +1347,7 @@ class PerkMapperImpl {
 
 
 interface PerkRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByContradiction ( contradiction : boolean ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findByCosmAndProduct ( cosm : String , product : String ) : List
@@ -1258,6 +1390,7 @@ class Power {
 	{method} +dn () : DifficultyNumber
 	{method} +duration () : String
 	{method} +enhancements () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -1361,6 +1494,7 @@ class PowerList {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
 	{method} +disableIf () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -1368,9 +1502,12 @@ class PowerList {
 	{method} +notes () : String
 	{method} +powers () : List
 	{method} +products () : Set
+	{method} +referencedEntries () : List
+	{method} +referencedType () : EntityType
 	{method} +text () : String
 	{method} +toString () : String
 	{method} +unlockingPerks () : Set
+	{method} +withReferencedEntries ( referencedEntries : List ) : PowerList
 }
 
 
@@ -1468,7 +1605,7 @@ class PowerMapperImpl {
 
 
 interface PowerRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
 	{method}  {abstract} +findByProduct ( product : String ) : List
@@ -1488,8 +1625,17 @@ class PowerSummaryDto {
 }
 
 
+interface ProductBoundEntry {
+	{method}  {abstract} +entityType () : EntityType
+	{method}  {abstract} +id () : UUID
+	{method}  {abstract} +name () : String
+	{method}  {abstract} +products () : Set
+}
+
+
 class ProductOwnershipResolver {
 	{field} {static} -ROLE_PREFIX : String
+	{method} +current () : OwnedProducts
 	{method} +resolve () : Set
 }
 
@@ -1660,6 +1806,7 @@ class Race {
 	{method} +abilities () : String
 	{method} +attributeLimits () : Map
 	{method} +clearanceLevel () : ClearanceLevel
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -1728,7 +1875,7 @@ class RaceMapperImpl {
 
 
 interface RaceRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByMajor ( major : boolean ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
@@ -1755,6 +1902,48 @@ class RawHtmlProcessor {
 }
 
 
+class ReferencedEntryResolver {
+	{method} -accessibleIds ( requested : Set , owned : OwnedProducts ) : Set
+	{method} +filter ( entries : List , owned : OwnedProducts ) : List
+}
+
+
+interface ReferencesEntries {
+	{method}  {abstract} +referencedEntries () : List
+	{method}  {abstract} +referencedType () : EntityType
+	{method}  {abstract} +withReferencedEntries ( referencedEntries : List ) : ReferencesEntries
+}
+
+
+class RequiredProductDto {
+	{field} -codexId : String
+	{method} +codexId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +publication () : PublicationRefDto
+	{method} +toString () : String
+}
+
+
+interface RestrictedCatalogQuery {
+	{method}  {abstract} +findAll () : List
+	{method}  {abstract} +findByCosm ( cosm : String ) : List
+	{method}  {abstract} +findById ( id : UUID ) : EntryAccess
+}
+
+
+class RestrictedCatalogQueryService {
+	{field} -references : ReferenceFilter
+	{method} -access ( entry : ProductBoundEntry , owned : OwnedProducts ) : EntryAccess
+	{method} -decide ( entry : ProductBoundEntry , owned : OwnedProducts ) : AccessDecision
+	{method} +findAll () : List
+	{method} +findByCosm ( cosm : String ) : List
+	{method} +findById ( id : UUID ) : EntryAccess
+	{method} -granted ( candidates : List , owned : OwnedProducts ) : List
+	{method}  {static} +withReferences ( area : EntityType , persistence : CatalogPersistencePort , callerProducts : CallerProductsPort , observer : CatalogAccessObserver , policy : CatalogAccessPolicy , resolver : ReferencedEntryResolver ) : RestrictedCatalogQueryService
+}
+
+
 class Shard {
 	{field} -cosms : Set
 	{field} -id : UUID
@@ -1768,6 +1957,7 @@ class Shard {
 	{field} -text : String
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -1858,7 +2048,7 @@ class ShardMapperImpl {
 
 
 interface ShardRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
@@ -1895,6 +2085,7 @@ class Spell {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +dn () : DifficultyNumber
 	{method} +duration () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -1989,16 +2180,20 @@ class SpellList {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
 	{method} +disableIf () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +notes () : String
 	{method} +products () : Set
+	{method} +referencedEntries () : List
+	{method} +referencedType () : EntityType
 	{method} +spells () : List
 	{method} +text () : String
 	{method} +toString () : String
 	{method} +unlockingPerks () : Set
+	{method} +withReferencedEntries ( referencedEntries : List ) : SpellList
 }
 
 
@@ -2096,7 +2291,7 @@ class SpellMapperImpl {
 
 
 interface SpellRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
 	{method}  {abstract} +findByProduct ( product : String ) : List
@@ -2201,6 +2396,20 @@ class TagSummaryDto {
 }
 
 
+class Teaser {
+	{field} -id : UUID
+	{field} -name : String
+	{field} -requiredProducts : SortedSet
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +name () : String
+	{method} +requiredProducts () : SortedSet
+	{method} +toString () : String
+	{method} +type () : EntityType
+}
+
+
 class Threat {
 	{field} +charisma : String
 	{field} +cosms : Set
@@ -2259,6 +2468,7 @@ class Threat {
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
 	{method} +dexterity () : String
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +equipment () : List
 	{method} +hashCode () : int
@@ -2373,7 +2583,7 @@ class ThreatMapperImpl {
 
 
 interface ThreatRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findByCosmAndProduct ( cosm : String , product : String ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
@@ -2429,11 +2639,13 @@ class TorgMappingSupport {
 	{method} +censorMap ( rawMap : Map , censor : Censor ) : Map
 	{method} +censorText ( rawText : String , censor : Censor ) : String
 	{method} +foldSlugs ( slugs : Set ) : String
+	{method} +toAreaTag ( area : EntityType ) : String
 	{method} +toCosmRef ( cosmSlugs : Set ) : CosmRefDto
 	{method} +toCosmRef ( cosmSlug : String ) : CosmRefDto
 	{method} +toDifficultyNumberDto ( dn : DifficultyNumber ) : DifficultyNumberDto
 	{method} +toDifficultyNumberDto ( dn : DifficultyNumber ) : DifficultyNumberDto
 	{method} +toPublicationRefs ( products : Set ) : List
+	{method} +toRequiredProducts ( codexIds : Set ) : List
 }
 
 
@@ -2501,6 +2713,7 @@ class Vehicle {
 	{method} +axiomTech () : String
 	{method} +clearanceLevel () : ClearanceLevel
 	{method} +cosms () : Set
+	{method} +entityType () : EntityType
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +id () : UUID
@@ -2602,7 +2815,7 @@ class VehicleMapperImpl {
 
 
 interface VehicleRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
@@ -2662,6 +2875,7 @@ class VehicleWeaponDto {
 
 
 
+Absent ..|>  EntryAccess
 Article *--  ClearanceLevel : clearanceLevel
 Article --|>  TorgEntity
 ArticleController *--  ArticleMapper : mapper
@@ -2675,16 +2889,28 @@ ArticleMapperImpl -->  TorgMappingSupport : torgMappingSupport
 ArticleMapperImpl ..|>  ArticleMapper
 ArticleSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 ArticleSummaryDto *--  ClearanceLevel : clearanceLevel
+CatalogAccessObservabilityAdapter "1" o-- "0..*"  EntityType : counters
+CatalogAccessObservabilityAdapter ..|>  CatalogAccessObserver
+CatalogAccessResponses *--  EntryTeaserMapper : teaserMapper
+CatalogEntryReference ..|>  ProductBoundEntry
+CatalogQueryConfiguration *--  CallerProductsPort : callerProducts
+CatalogQueryConfiguration *--  CatalogAccessObserver : observer
+CatalogQueryConfiguration *--  CatalogAccessPolicy : policy
 CatalogQueryService *--  CatalogPersistencePort : persistence
 CatalogQueryService ..|>  CatalogQuery
+CatalogReferenceEntityMapperImpl ..|>  CatalogReferenceEntityMapper
+CatalogReferenceQueryService *--  CatalogAccessObserver : observer
+CatalogReferenceQueryService *--  CatalogAccessPolicy : policy
 CatalogReferenceQueryService *--  CatalogReferencePersistencePort : persistence
 CatalogReferenceQueryService ..|>  CatalogReferenceQuery
 Censor *--  TorgMarkupService : markupService
 Cosm *--  ClearanceLevel : clearanceLevel
 Cosm --|>  TorgEntity
-CosmController *--  CatalogQuery : catalogQuery
+Cosm ..|>  ProductBoundEntry
+CosmController *--  CatalogAccessResponses : responses
 CosmController *--  CosmMapper : mapper
 CosmController *--  CurrentUserCensorFactory : censorFactory
+CosmController *--  RestrictedCatalogQuery : catalogQuery
 CosmDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 CosmDetailDto *--  ClearanceLevel : clearanceLevel
 CosmDetailDto *--  CosmRefDto : cosm
@@ -2703,11 +2929,18 @@ EntityDetailDto *--  CosmRefDto : cosm
 EntitySummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 EntitySummaryDto *--  ClearanceLevel : clearanceLevel
 EntitySummaryDto *--  CosmRefDto : cosm
+EntryTeaserDto "1" o-- "0..*"  RequiredProductDto : requiredProducts
+EntryTeaserMapperImpl *--  TorgMappingSupport : torgMappingSupport
+EntryTeaserMapperImpl ..|>  EntryTeaserMapper
+Granted *--  ProductBoundEntry : entry
+Granted ..|>  EntryAccess
 Item *--  ClearanceLevel : clearanceLevel
 Item --|>  TorgEntity
-ItemController *--  CatalogQuery : catalogQuery
+Item ..|>  ProductBoundEntry
+ItemController *--  CatalogAccessResponses : responses
 ItemController *--  CurrentUserCensorFactory : censorFactory
 ItemController *--  ItemMapper : mapper
+ItemController *--  RestrictedCatalogQuery : catalogQuery
 ItemDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 ItemDetailDto *--  ClearanceLevel : clearanceLevel
 ItemDetailDto *--  CosmRefDto : cosm
@@ -2721,6 +2954,7 @@ ItemSummaryDto *--  CosmRefDto : cosm
 JpaArticlePersistenceAdapter *--  ArticleEntityMapper : mapper
 JpaArticlePersistenceAdapter *--  ArticleRepository : repository
 JpaArticlePersistenceAdapter ..|>  CatalogPersistencePort
+JpaCatalogReferenceAdapter *--  CatalogReferenceEntityMapper : mapper
 JpaCatalogReferenceAdapter *--  CosmRepository : cosmRepository
 JpaCatalogReferenceAdapter *--  PublicationRepository : publicationRepository
 JpaCatalogReferenceAdapter ..|>  CatalogReferencePersistencePort
@@ -2776,9 +3010,11 @@ Miracle *--  ClearanceLevel : clearanceLevel
 Miracle *--  DifficultyNumber : dn
 Miracle -->  DifficultyNumber : dn
 Miracle --|>  TorgEntity
-MiracleController *--  CatalogQuery : catalogQuery
+Miracle ..|>  ProductBoundEntry
+MiracleController *--  CatalogAccessResponses : responses
 MiracleController *--  CurrentUserCensorFactory : censorFactory
 MiracleController *--  MiracleMapper : mapper
+MiracleController *--  RestrictedCatalogQuery : catalogQuery
 MiracleDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 MiracleDetailDto *--  ClearanceLevel : clearanceLevel
 MiracleDetailDto *--  DifficultyNumberDto : dn
@@ -2786,9 +3022,12 @@ MiracleEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 MiracleEntityMapperImpl ..|>  MiracleEntityMapper
 MiracleList *--  ClearanceLevel : clearanceLevel
 MiracleList --|>  TorgEntity
-MiracleListController *--  CatalogQuery : catalogQuery
+MiracleList ..|>  ProductBoundEntry
+MiracleList ..|>  ReferencesEntries
+MiracleListController *--  CatalogAccessResponses : responses
 MiracleListController *--  CurrentUserCensorFactory : censorFactory
 MiracleListController *--  MiracleListMapper : mapper
+MiracleListController *--  RestrictedCatalogQuery : catalogQuery
 MiracleListDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 MiracleListDetailDto *--  ClearanceLevel : clearanceLevel
 MiracleListDetailDto *--  CosmRefDto : cosm
@@ -2803,11 +3042,14 @@ MiracleMapperImpl -->  TorgMappingSupport : torgMappingSupport
 MiracleMapperImpl ..|>  MiracleMapper
 MiracleSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 MiracleSummaryDto *--  ClearanceLevel : clearanceLevel
+OwnedProducts *--  OwnedProducts : ANONYMOUS
 Perk *--  ClearanceLevel : clearanceLevel
 Perk --|>  TorgEntity
-PerkController *--  CatalogQuery : catalogQuery
+Perk ..|>  ProductBoundEntry
+PerkController *--  CatalogAccessResponses : responses
 PerkController *--  CurrentUserCensorFactory : censorFactory
 PerkController *--  PerkMapper : mapper
+PerkController *--  RestrictedCatalogQuery : catalogQuery
 PerkDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 PerkDetailDto *--  ClearanceLevel : clearanceLevel
 PerkDetailDto *--  CosmRefDto : cosm
@@ -2815,9 +3057,11 @@ PerkEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 PerkEntityMapperImpl ..|>  PerkEntityMapper
 PerkGroup *--  ClearanceLevel : clearanceLevel
 PerkGroup --|>  TorgEntity
-PerkGroupController *--  CatalogQuery : catalogQuery
+PerkGroup ..|>  ProductBoundEntry
+PerkGroupController *--  CatalogAccessResponses : responses
 PerkGroupController *--  CurrentUserCensorFactory : censorFactory
 PerkGroupController *--  PerkGroupMapper : mapper
+PerkGroupController *--  RestrictedCatalogQuery : catalogQuery
 PerkGroupDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 PerkGroupDetailDto *--  ClearanceLevel : clearanceLevel
 PerkGroupEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
@@ -2835,9 +3079,11 @@ Power *--  ClearanceLevel : clearanceLevel
 Power *--  DifficultyNumber : dn
 Power -->  DifficultyNumber : dn
 Power --|>  TorgEntity
-PowerController *--  CatalogQuery : catalogQuery
+Power ..|>  ProductBoundEntry
+PowerController *--  CatalogAccessResponses : responses
 PowerController *--  CurrentUserCensorFactory : censorFactory
 PowerController *--  PowerMapper : mapper
+PowerController *--  RestrictedCatalogQuery : catalogQuery
 PowerDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 PowerDetailDto *--  ClearanceLevel : clearanceLevel
 PowerDetailDto *--  DifficultyNumberDto : dn
@@ -2845,9 +3091,12 @@ PowerEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 PowerEntityMapperImpl ..|>  PowerEntityMapper
 PowerList *--  ClearanceLevel : clearanceLevel
 PowerList --|>  TorgEntity
-PowerListController *--  CatalogQuery : catalogQuery
+PowerList ..|>  ProductBoundEntry
+PowerList ..|>  ReferencesEntries
+PowerListController *--  CatalogAccessResponses : responses
 PowerListController *--  CurrentUserCensorFactory : censorFactory
 PowerListController *--  PowerListMapper : mapper
+PowerListController *--  RestrictedCatalogQuery : catalogQuery
 PowerListDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 PowerListDetailDto *--  ClearanceLevel : clearanceLevel
 PowerListDetailDto *--  CosmRefDto : cosm
@@ -2862,15 +3111,18 @@ PowerMapperImpl -->  TorgMappingSupport : torgMappingSupport
 PowerMapperImpl ..|>  PowerMapper
 PowerSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 PowerSummaryDto *--  ClearanceLevel : clearanceLevel
+ProductOwnershipResolver ..|>  CallerProductsPort
 PublicationController *--  CatalogQuery : catalogQuery
 PublicationController *--  PublicationMapper : mapper
 PublicationEntityMapperImpl ..|>  PublicationEntityMapper
 PublicationMapperImpl ..|>  PublicationMapper
 Race *--  ClearanceLevel : clearanceLevel
 Race --|>  TorgEntity
-RaceController *--  CatalogQuery : catalogQuery
+Race ..|>  ProductBoundEntry
+RaceController *--  CatalogAccessResponses : responses
 RaceController *--  CurrentUserCensorFactory : censorFactory
 RaceController *--  RaceMapper : mapper
+RaceController *--  RestrictedCatalogQuery : catalogQuery
 RaceDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 RaceDetailDto *--  ClearanceLevel : clearanceLevel
 RaceEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
@@ -2879,10 +3131,22 @@ RaceMapperImpl -->  TorgMappingSupport : torgMappingSupport
 RaceMapperImpl ..|>  RaceMapper
 RaceSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 RaceSummaryDto *--  ClearanceLevel : clearanceLevel
+ReferencedEntryResolver *--  CatalogAccessObserver : observer
+ReferencedEntryResolver *--  CatalogAccessPolicy : policy
+ReferencedEntryResolver *--  CatalogPersistencePort : referenced
+RequiredProductDto *--  PublicationRefDto : publication
+RestrictedCatalogQueryService *--  CallerProductsPort : callerProducts
+RestrictedCatalogQueryService *--  CatalogAccessObserver : observer
+RestrictedCatalogQueryService *--  CatalogAccessPolicy : policy
+RestrictedCatalogQueryService *--  CatalogPersistencePort : persistence
+RestrictedCatalogQueryService *--  EntityType : area
+RestrictedCatalogQueryService ..|>  RestrictedCatalogQuery
 Shard *--  ClearanceLevel : clearanceLevel
 Shard --|>  TorgEntity
-ShardController *--  CatalogQuery : catalogQuery
+Shard ..|>  ProductBoundEntry
+ShardController *--  CatalogAccessResponses : responses
 ShardController *--  CurrentUserCensorFactory : censorFactory
+ShardController *--  RestrictedCatalogQuery : catalogQuery
 ShardController *--  ShardMapper : mapper
 ShardDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 ShardDetailDto *--  ClearanceLevel : clearanceLevel
@@ -2898,8 +3162,10 @@ Spell *--  ClearanceLevel : clearanceLevel
 Spell *--  DifficultyNumber : dn
 Spell -->  DifficultyNumber : dn
 Spell --|>  TorgEntity
-SpellController *--  CatalogQuery : catalogQuery
+Spell ..|>  ProductBoundEntry
+SpellController *--  CatalogAccessResponses : responses
 SpellController *--  CurrentUserCensorFactory : censorFactory
+SpellController *--  RestrictedCatalogQuery : catalogQuery
 SpellController *--  SpellMapper : mapper
 SpellDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 SpellDetailDto *--  ClearanceLevel : clearanceLevel
@@ -2908,8 +3174,11 @@ SpellEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 SpellEntityMapperImpl ..|>  SpellEntityMapper
 SpellList *--  ClearanceLevel : clearanceLevel
 SpellList --|>  TorgEntity
-SpellListController *--  CatalogQuery : catalogQuery
+SpellList ..|>  ProductBoundEntry
+SpellList ..|>  ReferencesEntries
+SpellListController *--  CatalogAccessResponses : responses
 SpellListController *--  CurrentUserCensorFactory : censorFactory
+SpellListController *--  RestrictedCatalogQuery : catalogQuery
 SpellListController *--  SpellListMapper : mapper
 SpellListDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 SpellListDetailDto *--  ClearanceLevel : clearanceLevel
@@ -2936,10 +3205,14 @@ TagEntityMapperImpl ..|>  TagEntityMapper
 TagMapperImpl ..|>  TagMapper
 TagSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 TagSummaryDto *--  ClearanceLevel : clearanceLevel
+Teaser *--  EntityType : type
+Teaser ..|>  EntryAccess
 Threat *--  ClearanceLevel : clearanceLevel
 Threat --|>  TorgEntity
-ThreatController *--  CatalogQuery : catalogQuery
+Threat ..|>  ProductBoundEntry
+ThreatController *--  CatalogAccessResponses : responses
 ThreatController *--  CurrentUserCensorFactory : censorFactory
+ThreatController *--  RestrictedCatalogQuery : catalogQuery
 ThreatController *--  ThreatMapper : mapper
 ThreatDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 ThreatDetailDto *--  ClearanceLevel : clearanceLevel
@@ -2966,8 +3239,10 @@ Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry
 Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry
 Vehicle *--  ClearanceLevel : clearanceLevel
 Vehicle --|>  TorgEntity
-VehicleController *--  CatalogQuery : catalogQuery
+Vehicle ..|>  ProductBoundEntry
+VehicleController *--  CatalogAccessResponses : responses
 VehicleController *--  CurrentUserCensorFactory : censorFactory
+VehicleController *--  RestrictedCatalogQuery : catalogQuery
 VehicleController *--  VehicleMapper : mapper
 VehicleDetailDto "1" o-- "0..*"  PublicationRefDto : publications
 VehicleDetailDto "1" o-- "0..*"  VehicleWeaponDto : weaponry

@@ -38,6 +38,7 @@ public interface SpellListEntityMapper {
 
     @Mapping(target = "notes", source = "rawNotes")
     @Mapping(target = "text", source = "rawText")
+    @Mapping(target = "withReferencedEntries", ignore = true)
     de.paladinsinn.torg.codex.domain.model.SpellList toDomain(de.paladinsinn.torg.codex.data.model.SpellList entity);
 
     @Mapping(target = "censor", ignore = true)

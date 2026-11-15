@@ -30,6 +30,7 @@ import de.paladinsinn.torg.codex.data.mapper.SpellEntityMapper;
 import de.paladinsinn.torg.codex.data.repository.SpellRepository;
 import de.paladinsinn.torg.codex.domain.model.Spell;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,5 +62,16 @@ public final class JpaSpellPersistenceAdapter implements CatalogPersistencePort<
     @Override
     public List<Spell> findByCosm(String cosm) {
         throw new UnsupportedOperationException("Spells cannot be filtered by cosm.");
+    }
+
+    /**
+     * Reads the requested spells with one batched repository query.
+     */
+    @Override
+    public List<Spell> findAllById(Collection<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return repository.findAllById(ids.stream().distinct().toList()).stream().map(mapper::toDomain).toList();
     }
 }

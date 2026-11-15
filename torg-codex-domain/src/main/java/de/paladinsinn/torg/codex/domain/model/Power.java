@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Map;
@@ -48,5 +50,10 @@ public record Power(
     String text,
     String enhancements,
     String limitations
-) {
+) implements ProductBoundEntry {
+
+    @Override
+    public EntityType entityType() {
+        return EntityType.POWER;
+    }
 }

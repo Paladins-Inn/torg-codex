@@ -40,9 +40,9 @@ public interface CatalogReferencePersistencePort {
      * Resolves a cosm reference by its stable slug.
      *
      * @param slug the cosm slug stored in the referencing entity tables
-     * @return the reference carrying the cosm id and its display name, if found
+     * @return the reference carrying the cosm id, its display name and its products, if found
      */
-    Optional<CatalogReference> findCosmBySlug(String slug);
+    Optional<CatalogEntryReference> findCosmBySlug(String slug);
 
     Optional<CatalogReference> findPublicationByCodexId(String codexId);
 

@@ -25,7 +25,13 @@
 
 package de.paladinsinn.torg.codex.api.security;
 
+import de.paladinsinn.torg.codex.domain.access.OwnedProducts;
 import de.paladinsinn.torg.codex.domain.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.ConditionalBlockProcessor;
+import de.paladinsinn.torg.codex.domain.markup.EntityReferenceProcessor;
+import de.paladinsinn.torg.codex.domain.markup.GameTokenProcessor;
+import de.paladinsinn.torg.codex.domain.markup.MarkdownProcessor;
+import de.paladinsinn.torg.codex.domain.markup.RawHtmlProcessor;
 import de.paladinsinn.torg.codex.domain.markup.TorgMarkupService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,9 +39,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,7 +76,7 @@ class CurrentUserCensorFactoryTest {
 
     @Test
     void create_passesResolverOwnedProductsIntoCensor() {
-        when(resolver.resolve()).thenReturn(Set.of("core-rulebook", "sourcebook-aysle"));
+        when(resolver.current()).thenReturn(OwnedProducts.of(Set.of("core-rulebook", "sourcebook-aysle")));
         when(markupService.render(any(), any())).thenReturn("rendered");
 
         Censor censor = factory.create();
@@ -80,8 +90,8 @@ class CurrentUserCensorFactoryTest {
     }
 
     @Test
-    void create_withEmptyOwnership_passesEmptySet() {
-        when(resolver.resolve()).thenReturn(Set.of());
+    void create_withoutOwnedProducts_passesTheFreeTier() {
+        when(resolver.current()).thenReturn(OwnedProducts.anonymous());
         when(markupService.render(any(), any())).thenReturn("rendered");
 
         factory.create().apply("raw");
@@ -89,7 +99,36 @@ class CurrentUserCensorFactoryTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Set<String>> captor = ArgumentCaptor.forClass(Set.class);
         verify(markupService).render(eq("raw"), captor.capture());
-        assertThat(captor.getValue()).isEmpty();
+        assertThat(captor.getValue()).containsExactly(OwnedProducts.FREE_TIER);
+    }
+
+    @Test
+    void create_forAnOwnerWithoutExplicitCoreAuthority_passesTheEffectiveFreeTier() {
+        when(resolver.current()).thenReturn(OwnedProducts.of(Set.of("sourcebook-aysle")));
+        when(markupService.render(any(), any())).thenReturn("rendered");
+
+        factory.create().apply("raw");
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Set<String>> captor = ArgumentCaptor.forClass(Set.class);
+        verify(markupService).render(eq("raw"), captor.capture());
+        assertThat(captor.getValue()).containsExactlyInAnyOrder("sourcebook-aysle", OwnedProducts.FREE_TIER);
+    }
+
+    @Test
+    void ownerWithoutExplicitCoreAuthorityGetsCoreGatedOutputInPipelineOrder() {
+        SecurityContextHolder.getContext().setAuthentication(UsernamePasswordAuthenticationToken.authenticated(
+                "owner", null, List.of(new SimpleGrantedAuthority("ROLE_sourcebook-aysle"))));
+        TorgMarkupService pipeline = new TorgMarkupService(new ConditionalBlockProcessor(), new EntityReferenceProcessor(),
+                new RawHtmlProcessor(), new GameTokenProcessor(), new MarkdownProcessor());
+        try {
+            String rendered = new CurrentUserCensorFactory(new ProductOwnershipResolver(), pipeline).create()
+                    .apply("<IF:core-rulebook>**Core** passage</IF><IF:!core-rulebook>Upsell</IF>");
+
+            assertThat(rendered).contains("<strong>Core</strong> passage").doesNotContain("Upsell");
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     @Test

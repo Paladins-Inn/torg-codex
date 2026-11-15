@@ -23,6 +23,16 @@ interface ArticleRepository {
 }
 
 
+interface CatalogReferenceEntityMapper {
+	{method}  {abstract} +toCosmReference ( cosm : Cosm ) : CatalogEntryReference
+}
+
+
+class CatalogReferenceEntityMapperImpl {
+	{method} +toCosmReference ( cosm : Cosm ) : CatalogEntryReference
+}
+
+
 enum ClearanceLevel {
 	{field} +ALPHA
 	{field} +BETA
@@ -165,7 +175,7 @@ class ItemEntityMapperImpl {
 
 
 interface ItemRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
@@ -188,7 +198,6 @@ class JpaCatalogReferenceAdapter {
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
 	{method} -toPublicationReference ( publication : Publication ) : CatalogPublicationReference
-	{method} -toReference ( cosm : Cosm ) : CatalogReference
 	{method} -toReference ( publication : Publication ) : CatalogReference
 }
 
@@ -216,6 +225,7 @@ class JpaMiracleListPersistenceAdapter {
 
 class JpaMiraclePersistenceAdapter {
 	{method} +findAll () : List
+	{method} +findAllById ( ids : Collection ) : List
 	{method} +findByCosm ( cosm : String ) : List
 	{method} +findById ( id : UUID ) : Optional
 }
@@ -244,6 +254,7 @@ class JpaPowerListPersistenceAdapter {
 
 class JpaPowerPersistenceAdapter {
 	{method} +findAll () : List
+	{method} +findAllById ( ids : Collection ) : List
 	{method} +findByCosm ( cosm : String ) : List
 	{method} +findById ( id : UUID ) : Optional
 }
@@ -279,6 +290,7 @@ class JpaSpellListPersistenceAdapter {
 
 class JpaSpellPersistenceAdapter {
 	{method} +findAll () : List
+	{method} +findAllById ( ids : Collection ) : List
 	{method} +findByCosm ( cosm : String ) : List
 	{method} +findById ( id : UUID ) : Optional
 }
@@ -364,7 +376,7 @@ interface MiracleListRepository {
 
 
 interface MiracleRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
 	{method}  {abstract} +findByProduct ( product : String ) : List
@@ -422,7 +434,7 @@ interface PerkGroupRepository {
 
 
 interface PerkRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByContradiction ( contradiction : boolean ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findByCosmAndProduct ( cosm : String , product : String ) : List
@@ -496,7 +508,7 @@ interface PowerListRepository {
 
 
 interface PowerRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
 	{method}  {abstract} +findByProduct ( product : String ) : List
@@ -575,7 +587,7 @@ class RaceEntityMapperImpl {
 
 
 interface RaceRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByMajor ( major : boolean ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
@@ -612,7 +624,7 @@ class ShardEntityMapperImpl {
 
 
 interface ShardRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
@@ -679,7 +691,7 @@ interface SpellListRepository {
 
 
 interface SpellRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
 	{method}  {abstract} +findByProduct ( product : String ) : List
@@ -752,7 +764,7 @@ class ThreatEntityMapperImpl {
 
 
 interface ThreatRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findByCosmAndProduct ( cosm : String , product : String ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
@@ -833,7 +845,7 @@ class VehicleEntityMapperImpl {
 
 
 interface VehicleRepository {
-	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : String ) : List
+	{method}  {abstract} +findByClearanceLevel ( clearanceLevel : ClearanceLevel ) : List
 	{method}  {abstract} +findByCosm ( cosm : String ) : List
 	{method}  {abstract} +findByNameContainingIgnoreCase ( namePart : String ) : List
 	{method}  {abstract} +findByNameIgnoreCase ( name : String ) : Optional
@@ -856,6 +868,7 @@ class VehicleWeapon {
 Article --|>  TorgEntity
 ArticleEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 ArticleEntityMapperImpl ..|>  ArticleEntityMapper
+CatalogReferenceEntityMapperImpl ..|>  CatalogReferenceEntityMapper
 Cosm --|>  TorgEntity
 CosmEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 CosmEntityMapperImpl ..|>  CosmEntityMapper
@@ -865,6 +878,7 @@ ItemEntityMapperImpl -->  ValueObjectMapper : valueObjectMapper
 ItemEntityMapperImpl ..|>  ItemEntityMapper
 JpaArticlePersistenceAdapter *--  ArticleEntityMapper : mapper
 JpaArticlePersistenceAdapter *--  ArticleRepository : repository
+JpaCatalogReferenceAdapter *--  CatalogReferenceEntityMapper : mapper
 JpaCatalogReferenceAdapter *--  CosmRepository : cosmRepository
 JpaCatalogReferenceAdapter *--  PublicationRepository : publicationRepository
 JpaCosmPersistenceAdapter *--  CosmEntityMapper : mapper

@@ -1,4 +1,5 @@
 *** xref:09_architecture_decisions/index.adoc[]
+**** xref:09_architecture_decisions/019_domain-level-drm.adoc[]
 **** xref:09_architecture_decisions/017_spring-boot-structured-logging.adoc[]
 **** xref:09_architecture_decisions/016_markup-domain-service.adoc[]
 **** xref:09_architecture_decisions/015_application-integration-boundaries.adoc[]

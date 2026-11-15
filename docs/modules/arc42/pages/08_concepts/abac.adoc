@@ -22,6 +22,34 @@ The access level to threats could depend on the owner of the threat.
 The Torg Codex has to have a DRM mainly governed by ownership of certain IP.
 
 
+== Product-Ownership Policy of the Torg Codex
+
+The Torg Codex implements its DRM as an attribute-based policy decided in the domain core ({adr-019}):
+
+Subject attribute:: the caller's _effective owned products_: the codex ids of the caller's `ROLE_<codex-id>`
+authorities united with the free tier `core-rulebook`, which every caller owns, anonymous or authenticated.
+Resource attribute:: the products (codex ids) a catalog entry is assigned to.
+Action:: reading catalog entries (lists, cosm-filtered lists, single entries and embedded references).
+
+The pure domain policy `CatalogAccessPolicy` decides, in this order:
+
+.The product-ownership policy
+[source,text]
+----
+Hide (as if missing) and report
+  if: resource.products is empty                      // fail-closed
+Allow access
+  if: resource.products INTERSECTS subject.ownedProducts
+Show the purchase teaser (id, name, type, required products)
+  otherwise
+----
+
+No role grants an implicit bypass: administrators, organisers and judges are subject to the same rule. The policy
+applies to the 14 product-bound catalog areas; articles, publications and tags are public reference data, whose
+in-text `<IF:…>` passages are nevertheless rendered with the same effective owned products. The resulting HTTP
+contract and the single ownership mechanism are described in xref:08_concepts/torg_data/role-mapping.adoc[].
+
+
 
 == Example Policy
 
@@ -55,6 +83,7 @@ Flexibility to adapt policies as roles and projects evolve.
 
 == Summary
 
-ABAC could implement an ownership model and act as DRM system for intellectual property access of the Torg Eternity data.
+ABAC implements the ownership model that acts as the DRM system for intellectual property access of the Torg Eternity
+data: the product-ownership policy above, enforced centrally in the domain and application core ({adr-019}).
 
 <<<

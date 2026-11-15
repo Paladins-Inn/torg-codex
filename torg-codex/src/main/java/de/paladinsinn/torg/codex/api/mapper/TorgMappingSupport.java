@@ -28,8 +28,10 @@ package de.paladinsinn.torg.codex.api.mapper;
 import de.paladinsinn.torg.codex.api.dto.CosmRefDto;
 import de.paladinsinn.torg.codex.api.dto.DifficultyNumberDto;
 import de.paladinsinn.torg.codex.api.dto.PublicationRefDto;
+import de.paladinsinn.torg.codex.api.dto.RequiredProductDto;
 import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
 import de.paladinsinn.torg.codex.domain.markup.Censor;
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
 import de.paladinsinn.torg.codex.data.model.DifficultyNumber;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Context;
@@ -109,6 +111,28 @@ public class TorgMappingSupport {
                     .ifPresent(p -> result.add(new PublicationRefDto(p.id(), p.name())));
         }
         return Collections.unmodifiableList(result);
+    }
+
+    /**
+     * Converts the codex ids granting access to a teased entry into {@link RequiredProductDto}s,
+     * sorted by codex id. Unknown codex ids are kept with a {@code null} publication.
+     */
+    @Named("requiredProducts")
+    public List<RequiredProductDto> toRequiredProducts(Set<String> codexIds) {
+        if (codexIds == null || codexIds.isEmpty()) return List.of();
+        return codexIds.stream()
+                .filter(Objects::nonNull)
+                .sorted()
+                .map(codexId -> new RequiredProductDto(codexId, catalogReferenceQuery.findPublicationByCodexId(codexId)
+                        .map(p -> new PublicationRefDto(p.id(), p.name()))
+                        .orElse(null)))
+                .toList();
+    }
+
+    /** Converts a catalog area into its stable tag (e.g. {@code spell-list}). */
+    @Named("areaTag")
+    public String toAreaTag(EntityType area) {
+        return area == null ? null : area.tag();
     }
 
     /** Converts a {@link DifficultyNumber} embeddable to its DTO. */

@@ -24,10 +24,9 @@
  */
 
 package de.paladinsinn.torg.codex.api.controller;
-import de.paladinsinn.torg.codex.api.dto.PerkDetailDto;
 import de.paladinsinn.torg.codex.api.dto.PerkSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.PerkMapper;
-import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.RestrictedCatalogQuery;
 import de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory;
 import de.paladinsinn.torg.codex.domain.markup.Censor;
 import de.paladinsinn.torg.codex.domain.model.Perk;
@@ -42,20 +41,18 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PerkController {
-    private final CatalogQuery<Perk> catalogQuery;
+    private final RestrictedCatalogQuery<Perk> catalogQuery;
     private final PerkMapper mapper;
     private final CurrentUserCensorFactory censorFactory;
+    private final CatalogAccessResponses responses;
     @GetMapping
     public List<PerkSummaryDto> list(@RequestParam(required = false) String cosm) {
         final var results = cosm != null ? catalogQuery.findByCosm(cosm) : catalogQuery.findAll();
         return results.stream().map(mapper::toSummary).toList();
     }
     @GetMapping("/{id}")
-    public ResponseEntity<PerkDetailDto> getById(@PathVariable UUID id) {
+    public ResponseEntity<?> getById(@PathVariable UUID id) {
         final Censor censor = censorFactory.create();
-        return catalogQuery.findById(id)
-                .map(e -> mapper.toDetail(e, censor))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return responses.toResponse(catalogQuery.findById(id), e -> mapper.toDetail(e, censor));
     }
 }

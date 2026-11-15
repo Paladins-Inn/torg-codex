@@ -24,10 +24,9 @@
  */
 
 package de.paladinsinn.torg.codex.api.controller;
-import de.paladinsinn.torg.codex.api.dto.CosmDetailDto;
 import de.paladinsinn.torg.codex.api.dto.CosmSummaryDto;
 import de.paladinsinn.torg.codex.api.mapper.CosmMapper;
-import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
+import de.paladinsinn.torg.codex.application.port.in.RestrictedCatalogQuery;
 import de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory;
 import de.paladinsinn.torg.codex.domain.markup.Censor;
 import de.paladinsinn.torg.codex.domain.model.Cosm;
@@ -42,19 +41,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CosmController {
-    private final CatalogQuery<Cosm> catalogQuery;
+    private final RestrictedCatalogQuery<Cosm> catalogQuery;
     private final CosmMapper mapper;
     private final CurrentUserCensorFactory censorFactory;
+    private final CatalogAccessResponses responses;
     @GetMapping
     public List<CosmSummaryDto> list() {
         return catalogQuery.findAll().stream().map(mapper::toSummary).toList();
     }
     @GetMapping("/{id}")
-    public ResponseEntity<CosmDetailDto> getById(@PathVariable UUID id) {
+    public ResponseEntity<?> getById(@PathVariable UUID id) {
         final Censor censor = censorFactory.create();
-        return catalogQuery.findById(id)
-                .map(e -> mapper.toDetail(e, censor))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return responses.toResponse(catalogQuery.findById(id), e -> mapper.toDetail(e, censor));
     }
 }

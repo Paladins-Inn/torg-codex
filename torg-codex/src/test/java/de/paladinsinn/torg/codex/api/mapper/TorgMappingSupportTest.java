@@ -6,6 +6,9 @@ package de.paladinsinn.torg.codex.api.mapper;
 
 import de.paladinsinn.torg.codex.application.port.in.CatalogReference;
 import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
+import de.paladinsinn.torg.codex.api.dto.PublicationRefDto;
+import de.paladinsinn.torg.codex.api.dto.RequiredProductDto;
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashSet;
@@ -13,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,6 +26,8 @@ class TorgMappingSupportTest {
     private final Map<String, CatalogReference> cosms = Map.of(
             "core-earth", new CatalogReference(UUID.randomUUID(), "Core Earth"),
             "tharkold", new CatalogReference(UUID.randomUUID(), "Tharkold"));
+    private final Map<String, CatalogReference> publications = Map.of(
+            "sourcebook-aysle", new CatalogReference(UUID.randomUUID(), "Aysle Sourcebook"));
     private final CatalogReferenceQuery references = new CatalogReferenceQuery() {
         @Override
         public Optional<CatalogReference> findCosmBySlug(String slug) {
@@ -30,7 +36,7 @@ class TorgMappingSupportTest {
 
         @Override
         public Optional<CatalogReference> findPublicationByCodexId(String codexId) {
-            return Optional.empty();
+            return Optional.ofNullable(publications.get(codexId));
         }
 
         @Override
@@ -70,5 +76,26 @@ class TorgMappingSupportTest {
         assertThat(support.foldSlugs(Set.of("miracles"))).isEqualTo("miracles");
         assertThat(support.foldSlugs(Set.of("miracles", "exemplar-of-light")))
                 .isEqualTo("exemplar-of-light, miracles");
+    }
+
+    @Test
+    void mapsRequiredProductsSortedWithResolvedOrNullPublications() {
+        final UUID aysleId = publications.get("sourcebook-aysle").id();
+
+        assertThat(support.toRequiredProducts(new TreeSet<>(Set.of("unpublished-thing", "sourcebook-aysle"))))
+                .containsExactly(
+                        new RequiredProductDto("sourcebook-aysle", new PublicationRefDto(aysleId, "Aysle Sourcebook")),
+                        new RequiredProductDto("unpublished-thing", null));
+        assertThat(support.toRequiredProducts(Set.of("b-product", "a-product")))
+                .extracting(RequiredProductDto::codexId)
+                .containsExactly("a-product", "b-product");
+        assertThat(support.toRequiredProducts(null)).isEmpty();
+    }
+
+    @Test
+    void mapsCatalogAreasToTheirStableTags() {
+        assertThat(support.toAreaTag(EntityType.SPELL_LIST)).isEqualTo("spell-list");
+        assertThat(support.toAreaTag(EntityType.GROUP)).isEqualTo("group");
+        assertThat(support.toAreaTag(null)).isNull();
     }
 }

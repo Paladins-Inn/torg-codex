@@ -14,7 +14,7 @@ standard Boot logging starter. A separate Logstash encoder dependency or custom
 encoder configuration must not be used. This replaces the former LogstashEncoder
 prescription; see xref:09_architecture_decisions/017_spring-boot-structured-logging.adoc[ADR-017].
 
-Production console configuration in `application.yml`:
+Production console configuration in `application.yaml` of the `torg-codex` module:
 
 [source,yaml]
 ----
@@ -41,6 +41,24 @@ does not prove that the configured output preserves structured fields.
   "event.action": "user-created"
 }
 ----
+
+=== Catalog entries without product assignment (DRM)
+
+The domain-level DRM ({adr-019}) hides catalog entries without any product assignment from every caller. Each
+encounter (lists, cosm-filtered lists, single entries, embedded references and cosm reference resolution) is
+reported once, without deduplication across requests, by `CatalogAccessObservabilityAdapter`:
+
+[cols="1,3",options="header"]
+|===
+| Aspect | Value
+| Level | `WARN`
+| Message | `Catalog entry without product assignment hidden by DRM: area=…, id=…, name=…`
+| Structured fields | `catalogArea` (area tag, e.g. `spell-list`), `entryId`, `entryName`
+| Forbidden content | caller identity, principal, authorities, owned products, API keys
+|===
+
+`StructuredLoggingTest` parses the emitted ECS JSON of this warning under the production configuration and verifies
+the structured fields and the absence of caller data.
 
 == 📊 Monitoring
 
@@ -76,6 +94,14 @@ scrape_configs:
       - targets: ['localhost:8080']
 ----
 
+=== Catalog DRM counter
+
+Every encounter of a catalog entry without product assignment increments the counter
+`torg.codex.catalog.entries.without.products` (Prometheus:
+`torg_codex_catalog_entries_without_products_total`). Its only tag is `area` (one of the 14 catalog area tags),
+keeping the cardinality bounded; entry ids, names and caller data are never used as tags. The counter is
+monotonic per application instance: use its increase over time, not its absolute value, to detect current data gaps.
+
 == 🚨 Alerting
 
 Alerting generates notifications based on defined thresholds in metrics, enabling rapid responses to potential issues.
@@ -98,6 +124,23 @@ groups:
         annotations:
           summary: "High error rate detected"
           description: "More than 5 errors per second in the last 60 seconds"
+----
+
+* Catalog entries without product assignment are hidden from every caller (fail-closed DRM) and need a data fix:
+
+[source,yaml]
+----
+groups:
+  - name: torg-codex-drm
+    rules:
+      - alert: CatalogEntriesWithoutProducts
+        expr: sum by (area) (increase(torg_codex_catalog_entries_without_products_total[15m])) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Catalog entries without product assignment in area {{ $labels.area }}"
+          description: "Entries are hidden from every caller (fail-closed DRM). Fix the catalog data."
 ----
 
 * Alertmanager handles routing and escalation (e.g. email, Slack).

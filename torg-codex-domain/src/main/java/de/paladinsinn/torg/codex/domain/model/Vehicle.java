@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -54,5 +56,10 @@ public record Vehicle(
     String price,
     List<VehicleWeapon> weaponry,
     String text
-) {
+) implements ProductBoundEntry {
+
+    @Override
+    public EntityType entityType() {
+        return EntityType.VEHICLE;
+    }
 }

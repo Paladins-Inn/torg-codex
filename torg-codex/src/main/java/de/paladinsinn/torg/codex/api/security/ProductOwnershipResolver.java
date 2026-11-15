@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.api.security;
 
+import de.paladinsinn.torg.codex.application.port.out.CallerProductsPort;
+import de.paladinsinn.torg.codex.domain.access.OwnedProducts;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,9 +49,13 @@ import java.util.stream.Collectors;
  * <p>This is the correct, principal-type-agnostic logic previously implemented only in the
  * never-wired {@code SecuredMarkupService}; it is the sole collaborator through which
  * {@link CurrentUserCensorFactory} determines product ownership.
+ *
+ * <p>It also implements the application's {@link CallerProductsPort} (ADR-019): {@link #current()}
+ * returns the caller's effective ownership, which always includes the free tier, for the
+ * domain-level entry access decisions. Composition wires it through that interface type only.
  */
 @Component
-public class ProductOwnershipResolver {
+public class ProductOwnershipResolver implements CallerProductsPort {
 
     private static final String ROLE_PREFIX = "ROLE_";
 
@@ -69,5 +75,14 @@ public class ProductOwnershipResolver {
                 .filter(authority -> authority.startsWith(ROLE_PREFIX))
                 .map(authority -> authority.substring(ROLE_PREFIX.length()))
                 .collect(Collectors.toUnmodifiableSet());
+    }
+
+    /**
+     * @return the effective products of the current request's caller: the resolved codex ids
+     *         united with the free tier ({@link OwnedProducts#FREE_TIER})
+     */
+    @Override
+    public OwnedProducts current() {
+        return OwnedProducts.of(resolve());
     }
 }

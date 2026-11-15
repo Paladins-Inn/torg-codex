@@ -25,12 +25,16 @@
 
 package de.paladinsinn.torg.codex.api.security;
 
+import de.paladinsinn.security.NotLoggedInUserDetails;
+import de.paladinsinn.torg.codex.application.port.out.CallerProductsPort;
+import de.paladinsinn.torg.codex.domain.access.OwnedProducts;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import java.util.List;
 
@@ -147,5 +151,68 @@ class ProductOwnershipResolverTest {
         assertThat(resolver.resolve())
                 .as("resolve() returns an unmodifiable set (no side effects, no leaking mutation)")
                 .isUnmodifiable();
+    }
+
+    @Test
+    void resolverIsTheCallerProductsPort() {
+        assertThat(resolver).isInstanceOf(CallerProductsPort.class);
+    }
+
+    @Test
+    void current_withoutAuthentication_isTheFreeTier() {
+        SecurityContextHolder.clearContext();
+
+        assertThat(resolver.current()).isEqualTo(OwnedProducts.anonymous());
+    }
+
+    @Test
+    void current_forTheNotLoggedInPrincipal_isTheFreeTier() {
+        var anonymous = new AnonymousAuthenticationToken(
+                "key", NotLoggedInUserDetails.INSTANCE, NotLoggedInUserDetails.INSTANCE.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(anonymous);
+
+        assertThat(resolver.current().codexIds()).containsExactly(OwnedProducts.FREE_TIER);
+    }
+
+    @Test
+    void current_withOnlyTheDriveThruUserRole_ownsNoProductBeyondTheFreeTier() {
+        var auth = UsernamePasswordAuthenticationToken.authenticated(
+                "user", null, List.of(new SimpleGrantedAuthority("ROLE_DRIVETHRU_USER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        OwnedProducts owned = resolver.current();
+
+        assertThat(owned.codexIds()).contains(OwnedProducts.FREE_TIER);
+        assertThat(owned.ownsAnyOf(java.util.Set.of("sourcebook-aysle"))).isFalse();
+    }
+
+    @Test
+    void current_forAnAysleOwnerWithoutCoreAuthority_includesTheFreeTier() {
+        var auth = UsernamePasswordAuthenticationToken.authenticated(
+                "user", null, List.of(new SimpleGrantedAuthority("ROLE_sourcebook-aysle")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        assertThat(resolver.current().codexIds())
+                .containsExactlyInAnyOrder("sourcebook-aysle", OwnedProducts.FREE_TIER);
+    }
+
+    @Test
+    void current_isPrincipalTypeIndependent() {
+        var authorities = List.of(new SimpleGrantedAuthority("ROLE_sourcebook-aysle"));
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated("user", null, authorities));
+        OwnedProducts fromUsernamePassword = resolver.current();
+
+        var testing = new TestingAuthenticationToken(new Object(), null, authorities);
+        testing.setAuthenticated(true);
+        SecurityContextHolder.getContext().setAuthentication(testing);
+        OwnedProducts fromTestingToken = resolver.current();
+
+        assertThat(fromTestingToken).isEqualTo(fromUsernamePassword);
+    }
+
+    @Test
+    void freeProductIdOfTheAnonymousPrincipalIsTheDomainFreeTier() {
+        assertThat(NotLoggedInUserDetails.FREE_PRODUCT_ID).isSameAs(OwnedProducts.FREE_TIER);
     }
 }

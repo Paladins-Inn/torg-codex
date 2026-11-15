@@ -27,8 +27,9 @@ package de.paladinsinn.torg.codex.data.adapter.out.persistence;
 
 import de.paladinsinn.torg.codex.application.port.in.CatalogReference;
 import de.paladinsinn.torg.codex.application.port.in.CatalogPublicationReference;
+import de.paladinsinn.torg.codex.application.port.out.CatalogEntryReference;
 import de.paladinsinn.torg.codex.application.port.out.CatalogReferencePersistencePort;
-import de.paladinsinn.torg.codex.data.model.Cosm;
+import de.paladinsinn.torg.codex.data.mapper.CatalogReferenceEntityMapper;
 import de.paladinsinn.torg.codex.data.model.Publication;
 import de.paladinsinn.torg.codex.data.repository.CosmRepository;
 import de.paladinsinn.torg.codex.data.repository.PublicationRepository;
@@ -43,17 +44,20 @@ public final class JpaCatalogReferenceAdapter implements CatalogReferencePersist
 
     private final CosmRepository cosmRepository;
     private final PublicationRepository publicationRepository;
+    private final CatalogReferenceEntityMapper mapper;
 
     public JpaCatalogReferenceAdapter(
             CosmRepository cosmRepository,
-            PublicationRepository publicationRepository) {
+            PublicationRepository publicationRepository,
+            CatalogReferenceEntityMapper mapper) {
         this.cosmRepository = cosmRepository;
         this.publicationRepository = publicationRepository;
+        this.mapper = mapper;
     }
 
     @Override
-    public Optional<CatalogReference> findCosmBySlug(String slug) {
-        return cosmRepository.findBySlug(slug).map(this::toReference);
+    public Optional<CatalogEntryReference> findCosmBySlug(String slug) {
+        return cosmRepository.findBySlug(slug).map(mapper::toCosmReference);
     }
 
     @Override
@@ -66,10 +70,6 @@ public final class JpaCatalogReferenceAdapter implements CatalogReferencePersist
         return publicationRepository.findByProductId(productId).stream()
                 .map(this::toPublicationReference)
                 .toList();
-    }
-
-    private CatalogReference toReference(Cosm cosm) {
-        return new CatalogReference(cosm.getId(), cosm.getName());
     }
 
     private CatalogReference toReference(Publication publication) {

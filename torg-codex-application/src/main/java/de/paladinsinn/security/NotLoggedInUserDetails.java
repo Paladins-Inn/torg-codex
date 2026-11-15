@@ -25,6 +25,7 @@
 
 package de.paladinsinn.security;
 
+import de.paladinsinn.torg.codex.domain.access.OwnedProducts;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
@@ -58,10 +59,10 @@ public final class NotLoggedInUserDetails implements UserDetails, DriveThruPubli
     public static final String USERNAME = "Not Logged In";
 
     /**
-     * The single codex product accessible without a DriveThruRPG account.
-     * All other products require login.
+     * The single codex product accessible without a DriveThruRPG account; the domain free tier
+     * {@link OwnedProducts#FREE_TIER}. All other products require login.
      */
-    public static final String FREE_PRODUCT_ID = "core-rulebook";
+    public static final String FREE_PRODUCT_ID = OwnedProducts.FREE_TIER;
 
     /** Singleton instance – reuse this instead of constructing new objects. */
     public static final NotLoggedInUserDetails INSTANCE = new NotLoggedInUserDetails();

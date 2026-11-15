@@ -25,6 +25,8 @@
 
 package de.paladinsinn.torg.codex.domain.model;
 
+import de.paladinsinn.torg.codex.domain.markup.EntityType;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -45,5 +47,25 @@ public record SpellList(
     String text,
     String notes,
     String disableIf
-) {
+) implements ProductBoundEntry, ReferencesEntries<SpellList> {
+
+    @Override
+    public EntityType entityType() {
+        return EntityType.SPELL_LIST;
+    }
+
+    @Override
+    public EntityType referencedType() {
+        return EntityType.SPELL;
+    }
+
+    @Override
+    public List<UUID> referencedEntries() {
+        return spells == null ? List.of() : spells;
+    }
+
+    @Override
+    public SpellList withReferencedEntries(List<UUID> referencedEntries) {
+        return new SpellList(id, name, clearanceLevel, products, cosms, unlockingPerks, referencedEntries, text, notes, disableIf);
+    }
 }
