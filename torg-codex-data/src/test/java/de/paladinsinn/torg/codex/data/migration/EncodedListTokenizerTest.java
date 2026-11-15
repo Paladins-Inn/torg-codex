@@ -33,6 +33,40 @@ class EncodedListTokenizerTest {
         assertThat(convert("prefix ['a']")).isEmpty();
     }
 
+    @Test
+    void recoversEscapedAndMixedQuotes() {
+        assertThat(convert("['it\\'s escaped']")).hasValue("it's escaped");
+        assertThat(convert("['single', \"double\"]")).hasValue("- single\n- double");
+        assertThat(convert("[\"say \\\"hi\\\"\"]")).hasValue("say \"hi\"");
+    }
+
+    @Test
+    void toleratesSurroundingWhitespaceAndKeepsSourceOrder() {
+        assertThat(convert("  [ 'b' ,\n  'a' ,'c' ]  ")).hasValue("- b\n- a\n- c");
+        assertThat(convert("[ ]")).hasValue("");
+    }
+
+    @Test
+    void rejectsMalformedLists() {
+        assertThat(convert("['a' 'b']")).isEmpty();
+        assertThat(convert("[1, 2]")).isEmpty();
+        assertThat(convert("['a'] trailing")).isEmpty();
+        assertThat(convert("['a'], ['b']")).isEmpty();
+        assertThat(convert("['dangling\\']")).isEmpty();
+        assertThat(convert("[")).isEmpty();
+        assertThat(convert(null)).isEmpty();
+    }
+
+    @Test
+    void convertedValuesAreNotConvertedAgain() {
+        for (String encoded : java.util.List.of("['only one']", "['a', 'b']", "[]",
+                "[\"has 'inner' quote\", 'contains a, comma']", "['[Perk:foo]', '*formatted*']")) {
+            String converted = convert(encoded).orElseThrow();
+
+            assertThat(EncodedListTokenizer.parse(converted)).as("second conversion of %s", encoded).isEmpty();
+        }
+    }
+
     private java.util.Optional<String> convert(String value) {
         return EncodedListTokenizer.parse(value).map(EncodedListTokenizer::toMarkdown);
     }

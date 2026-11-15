@@ -113,7 +113,7 @@ Phases:
 ## R4: Parsing the encoded list values in SQL
 
 **Decision**: Use a generic PostgreSQL `regexp_split_to_table` over the encoded value rather than
-enumerating the 20 combinations found in the public data set.
+enumerating the 20 combinations found in the measured data set.
 
 Shape of the migrate step, per entity table:
 
@@ -131,8 +131,9 @@ ON CONFLICT DO NOTHING;
 
 **Rationale**:
 
-- The public free-tier data set contains 62 encoded rows in 20 distinct combinations, but the
-  **proprietary data set is git-ignored and cannot be inspected here**. Hard-coding the 20 known
+- The full data set measured on 2026-09-12 contains 62 encoded rows in 20 distinct combinations
+  (the public free-tier data set loads only publications). The **proprietary data set is git-ignored
+  and may change with every delivery**. Hard-coding the 20 known
   combinations would silently leave proprietary rows broken. A generic parser handles any
   combination.
 - The encoded format is uniform and verified: `['slug', 'slug', ...]` — square brackets, single
@@ -249,8 +250,8 @@ SC-005a and is the cheapest way to prove no existing result changed.
 **Alternatives considered**:
 
 - **Rely on characterization fixtures alone**: Rejected. Fixtures prove observed behaviour but not
-  the folding edge cases (duplicates, unresolvable slugs), which the public data set does not
-  exercise.
+  the folding edge cases (duplicates, unresolvable slugs), which the measured data does not
+  exercise and the public data set cannot exercise at all.
 
 ---
 

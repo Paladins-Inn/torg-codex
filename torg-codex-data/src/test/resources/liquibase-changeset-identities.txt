@@ -1,0 +1,12 @@
+# Identities (file|id|author) of Liquibase changesets that have been applied to a database.
+# Liquibase identifies a changeset by file, id and author, so none of these may ever change.
+# Append new changesets once released; never edit or remove an existing line (constitution Principle IV).
+changelog/torg-data-entity.yaml|1|codex
+load/torg-data-load.yaml|2|codex
+load/torg-free-load.yaml|free-1|codex
+changelog/data-fix-lists.yaml|data-fix-lists|klenkes74 (with codex)
+changelog/data-fix-lists.yaml|2026-09-13-001-expand|klenkes74 (with codex)
+changelog/data-fix-lists.yaml|2026-09-13-002-migrate-references|klenkes74 (with codex)
+changelog/data-fix-lists.yaml|2026-09-13-003-migrate-prose|klenkes74 (with codex)
+changelog/data-fix-lists.yaml|2026-09-13-004-contract|klenkes74 (with codex)
+changelog/2026-11-14-001-migrate.yaml|2026-11-14-001-migrate|klenkes74 (with copilot)

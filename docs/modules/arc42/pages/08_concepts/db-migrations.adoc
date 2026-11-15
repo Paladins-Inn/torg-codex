@@ -113,10 +113,10 @@ appv2 -down-> appv3
 [cols="^.^1,<.<9",frame="topbot",grid="rows"]
 |===
 | ✅ | Always add new columns as *nullable* or with a default value in the Expand phase.
-| ✅ | Keep the Expand and Contract changesets in **separate releases** (separate Git tags / deployments).
+| ✅ | Keep the Expand and Contract changesets in **separate releases** (separate Git tags / deployments), unless an accepted ADR invokes the exception of constitution Principle IV (see below).
 | ✅ | Execute `db-updater` *before* deploying the new application version.
 | ✅ | Ensure all old instances are terminated *before* running the Contract changeset.
-| ✅ | Each Liquibase changeset must be *idempotent* — never modify an already-applied changeset.
+| ✅ | Each Liquibase changeset must be *idempotent* — never modify an already-applied changeset, including its identity (file, `id`, `author`). `LiquibaseChangelogGuardTest` checks the file hashes and an append-only list of applied identities.
 | ❌ | Never rename a column directly — use Expand (add new) → Migrate → Contract (drop old).
 | ❌ | Never change the data type of an existing column in a single step.
 | ❌ | Never add a `NOT NULL` constraint without a default value while old instances are still running.
@@ -169,9 +169,12 @@ The *Expand* phase is the enabler: it guarantees that both v1 and v2 are compati
 
 == Feature-scoped Exception: Catalog List Repair
 
-ADR-018 documents one bounded exception to the normal three-deployment rule. The catalog
-list repair has no production installation that requires mixed-version operation, so its
-Expand, Migrate, and Contract changesets execute in one deployment.
+Constitution v3.1.0 (Principle IV) allows all three phases in one deployment only if an accepted
+ADR documents that no installation depends on rolling updates and accepts the service
+interruption, and the contract changesets run strictly after the migrate changesets they depend
+on. {adr-018} is the first use of this exception: the catalog list repair has no production
+installation that requires mixed-version operation, so its Expand, Migrate, and Contract
+changesets execute in one deployment.
 
 The ordered changesets are consolidated in `data-fix-lists.yaml`, included by
 `db.changelog-master.yaml` only after all public and optional proprietary data imports:
@@ -185,6 +188,11 @@ The ordered changesets are consolidated in `data-fix-lists.yaml`, included by
 This exception does not weaken the general rule above. The contract changeset remains last,
 so a failed backfill prevents destructive changes. Liquibase records every contained
 changeset in `DATABASECHANGELOG`; the consolidated file becomes immutable once released.
+
+NOTE: The first changeset of the file, `data-fix-lists`, does not follow the
+`<ISO-date>-<sequence>-<phase>` naming convention and mixes expand, migrate and contract steps.
+It is applied and therefore immutable; {adr-018} records the deviation. New changesets follow the
+convention.
 
 == 📚 Further Reading and References
 

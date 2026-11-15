@@ -79,7 +79,7 @@ The association between a list and a perk that unlocks it, stored as a perk slug
 
 ### 1.6 Prose Field (repaired in place, no schema change)
 
-| Entity | Table | Column | Encoded rows (public data) |
+| Entity | Table | Column | Encoded rows (full data set, 2026-09-12) |
 |--------|-------|--------|----------------------------|
 | `Item` | `torg_item` | `additional_features` | 93 of 979 |
 | `Threat` | `torg_threat` | `quote` | 3 of 1101 |

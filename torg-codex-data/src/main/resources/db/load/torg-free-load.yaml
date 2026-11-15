@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: "free-1"
-      author: klenkes74 (with codex)
+      author: codex
       changes:
         - loadData:
             tableName: torg_publication

@@ -11,7 +11,7 @@
 **Scope**: A full scan of the shipped catalog data found encoded list values in three distinct
 families of fields. All three are in scope:
 
-| Family | Affected content | Rows (public data) | Defect |
+| Family | Affected content | Rows (full data set, measured 2026-09-12) | Defect |
 |--------|------------------|--------------------|--------|
 | Cosm reference | Cosm of perks, miracle lists and power lists | 62 | Entry matches no cosm filter |
 | Unlocking-perk reference | Unlocking perk of miracle lists | 5 | Entry matches no unlocking-perk lookup |
@@ -400,6 +400,8 @@ cosms, and that the count of entries per cosm matches the source data.
   scan of the shipped data found no case where a list literal is embedded inside longer text.
 - The prose conversion is delivered as a post-load migration step rather than by editing the shipped
   data files, by explicit user decision, so that separately delivered data is converted too.
-- The row counts given for prose fields (93 item, 3 threat, 1 spell list) are measured on the
-  publicly available data set. A separately delivered data set is expected to contain further
-  affected rows, which is why the conversion derives its result from the stored value (FR-027).
+- All row counts in this specification (62 cosm, 5 unlocking-perk and 97 prose values, of which 93
+  item, 3 threat and 1 spell list) are measured on the full, separately delivered (proprietary) data
+  set. The publicly available free-tier data set loads only publications and contains no affected
+  rows. Further deliveries may contain additional affected rows, which is why the conversion derives
+  its result from the stored value (FR-027).

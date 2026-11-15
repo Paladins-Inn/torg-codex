@@ -23,8 +23,8 @@ description: "Implementation tasks for multi-cosm assignment and encoded-list re
 
 **Purpose**: Record the architecture decision and prepare the ordered Liquibase entry points before implementation.
 
-- [ ] T001 Create ADR-018 for multi-valued slug references, the same-release migration exception, and encoded-list prose repair in `docs/modules/arc42/pages/09_architecture_decisions/018_multi-valued-references-and-encoded-list-repair.adoc`
-- [ ] T002 [P] Register ADR-018 in `docs/modules/arc42/pages/09_architecture_decisions/_nav.adoc` and `docs/modules/arc42/pages/09_architecture_decisions/_include.adoc`
+- [X] T001 Create ADR-018 for multi-valued slug references, the same-release migration exception, and encoded-list prose repair in `docs/modules/arc42/pages/09_architecture_decisions/018_multi-valued-references-and-encoded-list-repair.adoc` Done 2026-11-15: accepted retroactively, including the recorded deviations.
+- [X] T002 [P] Register ADR-018 in `docs/modules/arc42/pages/09_architecture_decisions/_nav.adoc` and `docs/modules/arc42/pages/09_architecture_decisions/_include.adoc` Also registered in `index.adoc` and `.github/copilot-instructions.md`.
 - [X] T003 Add the ordered `data-fix-lists.yaml` changelog after all data loads in `torg-codex-data/src/main/resources/db/changelog/db.changelog-master.yaml`
 
 ---
@@ -35,14 +35,14 @@ description: "Implementation tasks for multi-cosm assignment and encoded-list re
 
 **Critical**: No user-story implementation starts until this phase is complete.
 
-- [ ] T004 [P] Replace `String cosm` with `Set<String> cosms` in `torg-codex-domain/src/main/java/de/paladinsinn/torg/codex/domain/model/Item.java`, `Perk.java`, `Shard.java`, `Threat.java`, and `Vehicle.java`
-- [ ] T005 [P] Replace `String cosm` with `Set<String> cosms` and `String unlockingPerk` with `Set<String> unlockingPerks` in `torg-codex-domain/src/main/java/de/paladinsinn/torg/codex/domain/model/MiracleList.java`, `PowerList.java`, and `SpellList.java`
-- [ ] T006 [P] Add eager `cosms` element collections with explicit collection tables, join columns, value columns, and set semantics to `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/model/Item.java`, `Perk.java`, `Shard.java`, `Threat.java`, and `Vehicle.java`
-- [ ] T007 [P] Add eager `cosms` and `unlockingPerks` element collections to `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/model/MiracleList.java`, `PowerList.java`, and `SpellList.java`
-- [ ] T008 Update the eight MapStruct persistence mappers for collection-based domain/entity conversion in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/mapper/ItemEntityMapper.java`, `MiracleListEntityMapper.java`, `PerkEntityMapper.java`, `PowerListEntityMapper.java`, `ShardEntityMapper.java`, `SpellListEntityMapper.java`, `ThreatEntityMapper.java`, and `VehicleEntityMapper.java`
-- [X] T009 Create the eight cosm and three unlocking-perk collection tables, composite primary keys, owner foreign keys with cascade delete, and slug indexes in `torg-codex-data/src/main/resources/db/changelog/data-fix-lists.yaml`
-- [X] T010 Add generic, deduplicating backfill changesets for scalar and encoded-list cosm and unlocking-perk values in `torg-codex-data/src/main/resources/db/changelog/data-fix-lists.yaml`
-- [X] T011 Add contract changesets that drop all eight legacy `cosm` columns and all three legacy `unlocking_perk` columns only after successful backfill in `torg-codex-data/src/main/resources/db/changelog/data-fix-lists.yaml`
+- [X] T004 [P] Replace `String cosm` with `Set<String> cosms` in `torg-codex-domain/src/main/java/de/paladinsinn/torg/codex/domain/model/Item.java`, `Perk.java`, `Shard.java`, `Threat.java`, and `Vehicle.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T005 [P] Replace `String cosm` with `Set<String> cosms` and `String unlockingPerk` with `Set<String> unlockingPerks` in `torg-codex-domain/src/main/java/de/paladinsinn/torg/codex/domain/model/MiracleList.java`, `PowerList.java`, and `SpellList.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T006 [P] Add eager `cosms` element collections with explicit collection tables, join columns, value columns, and set semantics to `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/model/Item.java`, `Perk.java`, `Shard.java`, `Threat.java`, and `Vehicle.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T007 [P] Add eager `cosms` and `unlockingPerks` element collections to `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/model/MiracleList.java`, `PowerList.java`, and `SpellList.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T008 Update the eight MapStruct persistence mappers for collection-based domain/entity conversion in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/mapper/ItemEntityMapper.java`, `MiracleListEntityMapper.java`, `PerkEntityMapper.java`, `PowerListEntityMapper.java`, `ShardEntityMapper.java`, `SpellListEntityMapper.java`, `ThreatEntityMapper.java`, and `VehicleEntityMapper.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T009 Create the eight cosm and three unlocking-perk collection tables, composite primary keys, owner foreign keys with cascade delete, and slug indexes in `torg-codex-data/src/main/resources/db/changelog/data-fix-lists.yaml` **(Applied in `5decc7f` and immutable — never edit; fix defects only with a new forward changeset.)**
+- [X] T010 Add generic, deduplicating backfill changesets for scalar and encoded-list cosm and unlocking-perk values in `torg-codex-data/src/main/resources/db/changelog/data-fix-lists.yaml` **(Applied in `5decc7f` and immutable — never edit; fix defects only with a new forward changeset.)**
+- [X] T011 Add contract changesets that drop all eight legacy `cosm` columns and all three legacy `unlocking_perk` columns only after successful backfill in `torg-codex-data/src/main/resources/db/changelog/data-fix-lists.yaml` **(Applied in `5decc7f` and immutable — never edit; fix defects only with a new forward changeset.)**
 
 **Checkpoint**: Domain records, JPA entities, MapStruct persistence mapping, and database storage consistently use slug sets; user-story work can proceed.
 
@@ -56,13 +56,13 @@ description: "Implementation tasks for multi-cosm assignment and encoded-list re
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Add PostgreSQL integration coverage for multi-cosm, single-cosm, absent-cosm, duplicate, and unused-cosm filtering in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/equivalence/PersistenceEquivalenceIT.java`
+- [X] T012 [P] [US1] Add PostgreSQL integration coverage for multi-cosm, single-cosm, absent-cosm, duplicate, and unused-cosm filtering with seeded rows in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/liquibase/MultiValueReferenceIT.java`
 - [ ] T013 [P] [US1] Add API characterization cases proving one known entry is returned under each assigned cosm without changing censoring in `torg-codex/src/test/java/de/paladinsinn/torg/codex/characterization/CharacterizationReplayTest.java`
 
 ### Implementation for User Story 1
 
-- [ ] T014 [US1] Replace scalar cosm predicates with `:cosm MEMBER OF entity.cosms` for all cosm queries, including combined product predicates, in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/repository/ItemRepository.java`, `MiracleListRepository.java`, `PerkRepository.java`, `PowerListRepository.java`, `ShardRepository.java`, `SpellListRepository.java`, `ThreatRepository.java`, and `VehicleRepository.java`
-- [ ] T015 [US1] Verify unchanged `findByCosm(String)` port flow and adjust only persistence adapter mapping needed for collection-backed results in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/adapter/out/persistence/JpaItemPersistenceAdapter.java`, `JpaMiracleListPersistenceAdapter.java`, `JpaPerkPersistenceAdapter.java`, `JpaPowerListPersistenceAdapter.java`, `JpaShardPersistenceAdapter.java`, `JpaSpellListPersistenceAdapter.java`, `JpaThreatPersistenceAdapter.java`, and `JpaVehiclePersistenceAdapter.java`
+- [X] T014 [US1] Replace scalar cosm predicates with `:cosm MEMBER OF entity.cosms` for all cosm queries, including combined product predicates, in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/repository/ItemRepository.java`, `MiracleListRepository.java`, `PerkRepository.java`, `PowerListRepository.java`, `ShardRepository.java`, `SpellListRepository.java`, `ThreatRepository.java`, and `VehicleRepository.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T015 [US1] Verify unchanged `findByCosm(String)` port flow and adjust only persistence adapter mapping needed for collection-backed results in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/adapter/out/persistence/JpaItemPersistenceAdapter.java`, `JpaMiracleListPersistenceAdapter.java`, `JpaPerkPersistenceAdapter.java`, `JpaPowerListPersistenceAdapter.java`, `JpaShardPersistenceAdapter.java`, `JpaSpellListPersistenceAdapter.java`, `JpaThreatPersistenceAdapter.java`, and `JpaVehiclePersistenceAdapter.java` (Delivered in `5decc7f`; verified 2026-11-15.)
 
 **Checkpoint**: Cosm-filter behavior is independently functional and satisfies the P1 MVP.
 
@@ -76,13 +76,13 @@ description: "Implementation tasks for multi-cosm assignment and encoded-list re
 
 ### Tests for User Story 2
 
-- [ ] T016 [P] [US2] Create mapper tests for empty, single known, single unknown, multiple known, mixed unknown, duplicate, and iteration-order cases in `torg-codex/src/test/java/de/paladinsinn/torg/codex/api/mapper/TorgMappingSupportTest.java`
+- [X] T016 [P] [US2] Create mapper tests for empty, single known, single unknown, multiple known, mixed unknown, duplicate, and iteration-order cases in `torg-codex/src/test/java/de/paladinsinn/torg/codex/api/mapper/TorgMappingSupportTest.java` (Delivered in `5decc7f`; verified 2026-11-15.)
 - [ ] T017 [P] [US2] Add response-contract replay assertions for unchanged single-cosm fields and readable multi-cosm fields in `torg-codex/src/test/java/de/paladinsinn/torg/codex/characterization/CharacterizationReplayTest.java`
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Implement `Set<String>` cosm folding with slug resolution, raw unknown-slug fallback, alphabetical display sorting, comma joining, and null identity for multi-value results in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/mapper/TorgMappingSupport.java`
-- [ ] T019 [US2] Route all eight summary and detail mapper cosm fields through the collection folding helper in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/mapper/ItemMapper.java`, `MiracleListMapper.java`, `PerkMapper.java`, `PowerListMapper.java`, `ShardMapper.java`, `SpellListMapper.java`, `ThreatMapper.java`, and `VehicleMapper.java`
+- [X] T018 [US2] Implement `Set<String>` cosm folding with slug resolution, raw unknown-slug fallback, alphabetical display sorting, comma joining, and null identity for multi-value results in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/mapper/TorgMappingSupport.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T019 [US2] Route all eight summary and detail mapper cosm fields through the collection folding helper in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/mapper/ItemMapper.java`, `MiracleListMapper.java`, `PerkMapper.java`, `PowerListMapper.java`, `ShardMapper.java`, `SpellListMapper.java`, `ThreatMapper.java`, and `VehicleMapper.java` (Delivered in `5decc7f`; verified 2026-11-15.)
 
 **Checkpoint**: Multi-cosm output is readable and stable while the public DTO contract remains unchanged.
 
@@ -96,14 +96,14 @@ description: "Implementation tasks for multi-cosm assignment and encoded-list re
 
 ### Tests for User Story 3
 
-- [ ] T020 [P] [US3] Create tokenizer tests for all quote, escape, comma, newline, empty, malformed, partial-list, and already-Markdown cases in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/migration/EncodedListTokenizerTest.java`
-- [ ] T021 [P] [US3] Create Liquibase custom-change tests for item additional features, threat quotes, spell-list notes, byte preservation, and second-run idempotency in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/migration/ProseListToMarkdownChangeTest.java`
+- [X] T020 [P] [US3] Create tokenizer tests for all quote, escape, comma, newline, empty, malformed, partial-list, already-Markdown and re-conversion cases in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/migration/EncodedListTokenizerTest.java`
+- [X] T021 [P] [US3] Create Liquibase custom-change integration tests on seeded rows for item additional features, threat quotes, spell-list notes, byte preservation, and second-run idempotency in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/migration/ProseListToMarkdownChangeIT.java`
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Implement a complete-value encoded-list tokenizer that preserves statement contents and returns no match for malformed or partial literals in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/migration/EncodedListTokenizer.java`
-- [ ] T023 [US3] Implement the Liquibase `CustomTaskChange` that converts one statement to plain text, multiple statements to source-ordered Markdown bullets, an empty list to empty text, and updates only changed rows in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/migration/ProseListToMarkdownChange.java`
-- [X] T024 [US3] Register prose repair for `torg_item.additional_features`, `torg_threat.quote`, and `torg_spell_list.notes` after data load and reference backfill in `torg-codex-data/src/main/resources/db/changelog/data-fix-lists.yaml`
+- [X] T022 [US3] Implement a complete-value encoded-list tokenizer that preserves statement contents and returns no match for malformed or partial literals in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/migration/EncodedListTokenizer.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T023 [US3] Implement the Liquibase `CustomTaskChange` that converts one statement to plain text, multiple statements to source-ordered Markdown bullets, an empty list to empty text, and updates only changed rows in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/migration/ProseListToMarkdownChange.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T024 [US3] Register prose repair for `torg_item.additional_features`, `torg_threat.quote`, and `torg_spell_list.notes` after data load and reference backfill in `torg-codex-data/src/main/resources/db/changelog/data-fix-lists.yaml` **(Applied in `5decc7f` and immutable — never edit; fix defects only with a new forward changeset.)**
 
 **Checkpoint**: All three prose fields are repaired in storage and continue through the existing markup pipeline unchanged.
 
@@ -117,14 +117,14 @@ description: "Implementation tasks for multi-cosm assignment and encoded-list re
 
 ### Tests for User Story 4
 
-- [ ] T025 [P] [US4] Add PostgreSQL integration tests for lookup by each unlocking-perk assignment, unknown slugs, and duplicate suppression in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/equivalence/PersistenceEquivalenceIT.java`
-- [ ] T026 [P] [US4] Extend folding tests for empty, single, multiple, duplicate, unknown, and iteration-order unlocking-perk sets in `torg-codex/src/test/java/de/paladinsinn/torg/codex/api/mapper/TorgMappingSupportTest.java`
+- [X] T025 [P] [US4] Add PostgreSQL integration tests on seeded rows for lookup by each unlocking-perk assignment, unknown slugs, and duplicate suppression in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/liquibase/MultiValueReferenceIT.java`
+- [X] T026 [P] [US4] Extend folding tests for empty, single, multiple, duplicate, unknown, and iteration-order unlocking-perk sets in `torg-codex/src/test/java/de/paladinsinn/torg/codex/api/mapper/TorgMappingSupportTest.java` (Delivered in `5decc7f`; verified 2026-11-15.)
 
 ### Implementation for User Story 4
 
-- [ ] T027 [US4] Replace scalar unlocking-perk predicates with `:perk MEMBER OF entity.unlockingPerks` in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/repository/MiracleListRepository.java`, `PowerListRepository.java`, and `SpellListRepository.java`
-- [ ] T028 [US4] Implement deterministic unlocking-perk slug folding for zero, one, and many assignments in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/mapper/TorgMappingSupport.java`
-- [ ] T029 [US4] Route miracle-list, power-list, and spell-list detail DTO fields through the unlocking-perk folding helper in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/mapper/MiracleListMapper.java`, `PowerListMapper.java`, and `SpellListMapper.java`
+- [X] T027 [US4] Replace scalar unlocking-perk predicates with `:perk MEMBER OF entity.unlockingPerks` in `torg-codex-data/src/main/java/de/paladinsinn/torg/codex/data/repository/MiracleListRepository.java`, `PowerListRepository.java`, and `SpellListRepository.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T028 [US4] Implement deterministic unlocking-perk slug folding for zero, one, and many assignments in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/mapper/TorgMappingSupport.java` (Delivered in `5decc7f`; verified 2026-11-15.)
+- [X] T029 [US4] Route miracle-list, power-list, and spell-list detail DTO fields through the unlocking-perk folding helper in `torg-codex/src/main/java/de/paladinsinn/torg/codex/api/mapper/MiracleListMapper.java`, `PowerListMapper.java`, and `SpellListMapper.java` (Delivered in `5decc7f`; verified 2026-11-15.)
 
 **Checkpoint**: Multi-perk lookup and presentation work independently for all three list types.
 
@@ -138,13 +138,13 @@ description: "Implementation tasks for multi-cosm assignment and encoded-list re
 
 ### Tests for User Story 5
 
-- [ ] T030 [US5] Extend full PostgreSQL migration coverage with collection-table schema, 62 cosm records, 5 unlocking-perk records, 97 prose values, unknown-reference preservation, removed legacy columns, and idempotency assertions in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/liquibase/LiquibaseImportIT.java`
-- [ ] T031 [P] [US5] Update persisted-data comparison expectations for normalized cosm and unlocking-perk sets plus repaired prose in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/equivalence/PersistedDataSnapshotComparisonTest.java`
+- [X] T030 [US5] Verify the migration in two parts: (a) public CI, seeded rows: collection-table behaviour, duplicate rejection and a changelog re-run without changes in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/liquibase/MultiValueReferenceIT.java`, plus a full-changelog re-run and a generic "every assignment is found" check in `LiquibaseImportIT.java`; (b) full proprietary data only, guarded by `assumeTrue` when `db/load/torg-data-load.yaml` is absent: 54 perks, 3 miracle lists and 1 power list with several cosms (58 + 3 + 1 = 62 encoded rows; 4 encoded perk rows held a single cosm), 5 miracle lists with several unlocking perks, and a known multi-cosm perk in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/liquibase/LiquibaseImportIT.java`. The existing count checks of `LiquibaseImportIT` that need proprietary data are guarded the same way.
+- [X] T031 [P] [US5] Update persisted-data comparison expectations for normalized cosm and unlocking-perk sets plus repaired prose in `torg-codex-data/src/test/java/de/paladinsinn/torg/codex/data/equivalence/PersistedDataSnapshotComparisonTest.java` (Covered by the generic domain/entity round-trip of all areas, which includes the cosm and unlocking-perk sets; no expectation change needed.)
 
 ### Implementation for User Story 5
 
-- [X] T032 [US5] Regenerate and review the Liquibase baseline checksums for the master file and consolidated changelog in `torg-codex-data/src/test/resources/liquibase-changelog-manifest.sha256`
-- [ ] T033 [US5] Validate and, if required, harden backfill guards so fresh loads, upgrades, duplicate input values, unknown slugs, and repeated execution produce the same normalized state in `torg-codex-data/src/main/resources/db/changelog/data-fix-lists.yaml`
+- [X] T032 [US5] Regenerate and review the Liquibase baseline checksums for the master file and consolidated changelog in `torg-codex-data/src/test/resources/liquibase-changelog-manifest.sha256` Re-baselined on 2026-11-15 to restore the applied identities of changesets `1`, `2` and `free-1`; `LiquibaseChangelogGuardTest` also verifies `liquibase-changeset-identities.txt` (append-only).
+- [X] T033 [US5] Verify the applied backfill with the T030 tests; if a defect is found, fix it with a new forward changeset `<ISO-date>-<sequence>-migrate.yaml`, never by editing `torg-codex-data/src/main/resources/db/changelog/data-fix-lists.yaml`. Verified 2026-11-15: no defect found.
 
 **Checkpoint**: The migration is safe for fresh and existing installations and needs no encoded source-data workaround.
 
@@ -155,10 +155,10 @@ description: "Implementation tasks for multi-cosm assignment and encoded-list re
 **Purpose**: Confirm compatibility, documentation alignment, performance, architecture boundaries, and the full delivery workflow.
 
 - [X] T034 Recapture and review only contract-approved changes in `torg-codex/src/test/resources/characterization/`
-- [ ] T035 [P] Update the persistence and domain class diagrams for set-valued cosm and unlocking-perk fields in `docs/modules/arc42/images/uml/classes/torg-codex-data.puml` and `docs/modules/arc42/images/uml/classes/torg-codex-domain.puml`
+- [X] T035 [P] Review the persistence and domain class diagrams `docs/modules/arc42/images/uml/classes/torg-codex-data.puml` and `torg-codex-domain.puml`; they are regenerated by the `plantuml-generator-maven-plugin` during the build, so no manual edit is made.
 - [X] T036 [P] Add migration operation and compatibility notes to the relevant architecture documentation under `docs/modules/arc42/pages/`
-- [ ] T037 Run the focused mapper, tokenizer, data-module, and Testcontainers checks documented in `specs/004-multi-cosm-assignment/quickstart.md`
-- [ ] T038 Run `./mvnw clean verify` from the repository root and resolve compilation, Checkstyle, architecture-test, unit-test, integration-test, and Hibernate validation failures
+- [X] T037 Run the focused mapper, tokenizer, data-module, and Testcontainers checks documented in `specs/004-multi-cosm-assignment/quickstart.md` (Run 2026-11-15: tokenizer, guard, data-module and Testcontainers checks, also without the proprietary data.)
+- [X] T038 Run `./mvnw clean verify` from the repository root and resolve compilation, Checkstyle, architecture-test, unit-test, integration-test, and Hibernate validation failures (Passed 2026-11-15 without ignored failures.)
 - [ ] T039 Execute and record the manual API and SQL smoke checks from `specs/004-multi-cosm-assignment/quickstart.md`
 
 ---

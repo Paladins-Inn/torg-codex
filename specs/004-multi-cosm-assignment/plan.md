@@ -60,9 +60,10 @@ the game data is proprietary and git-ignored, so the migration must be data-agno
 externally visible behaviour must remain compatible; zero Checkstyle violations
 
 **Scale/Scope**: 19 cosms; 8 catalog entity types affected by cosms, 3 by unlocking perks, 3 by
-prose repair. Public free-tier data set: 62 encoded cosm rows across 20 distinct combinations with
-at most 7 cosms per entry; 5 encoded unlocking-perk rows; 97 encoded prose values of which 45 hold a
-single statement. Unknown additional volume in the proprietary data set.
+prose repair. Full proprietary data set (measured 2026-09-12; the public free-tier data set loads
+only publications and contains no affected rows): 62 encoded cosm rows across 20 distinct
+combinations with at most 7 cosms per entry; 5 encoded unlocking-perk rows; 97 encoded prose values
+of which 45 hold a single statement.
 
 ## Constitution Check
 
@@ -73,14 +74,14 @@ single statement. Unknown additional volume in the proprietary data set.
 | I. Hexagonal Architecture & Clean Ports | Domain stays free of Spring/JPA; separate persistence and domain models; MapStruct for all layer conversion; `torg-codex-data` persistence-only; boundaries enforced by architecture tests | PASS | PASS |
 | II. Self-Contained Systems & Async Integration | No new inter-system coupling; no new messaging | PASS (n/a) | PASS (n/a) |
 | III. Standardized REST APIs & OpenAPI | Classic REST retained; thin controllers; summary/detail DTOs; media-type versioning | PASS | PASS |
-| IV. Zero-Downtime Evolutionary Migrations | Expand/Migrate/Contract split; `<ISO-date>-<sequence>-<phase>` naming; applied changesets never altered; `db-updater` executes | PASS | **DEVIATION** — see Complexity Tracking |
+| IV. Zero-Downtime Evolutionary Migrations | Expand/Migrate/Contract split; `<ISO-date>-<sequence>-<phase>` naming; applied changesets never altered; `db-updater` executes | PASS | **PASS via the Principle IV exception** (constitution v3.1.0, ADR-018); naming deviation of `data-fix-lists` and the reverted identity change recorded in ADR-018 — see Complexity Tracking |
 | V. Multi-Tier Security & DRM Censorship | Single censoring mechanism untouched; no repository, mapper or controller bypasses censoring | PASS | PASS |
 | VI. Deterministic Markdown Pipeline | Markup pipeline and its rendering order untouched | PASS (n/a) | PASS — see gate notes |
 | VII. Production Observability | No change to logging, metrics, or alerting surface | PASS (n/a) | PASS (n/a) |
 | VIII. Test-First & Integration Verification | Automated coverage for the schema update and the bug fix; Testcontainers for `*IT`; git sign-off | PASS | PASS |
-| ADR-001 Architecture Decision Records | Architecture-level change requires an accepted ADR | PASS — ADR-018 planned (research R7) | PASS |
+| ADR-001 Architecture Decision Records | Architecture-level change requires an accepted ADR | PASS — ADR-018 planned (research R7) | **Late**: merged in `5decc7f` before acceptance; ADR-018 accepted retroactively on 2026-11-15 |
 | Four-Module Reactor ownership | Changes land in the correct module for each concern | PASS | PASS |
-| Proprietary Fixtures | Code and tests must work against the public free-tier fixture set | PASS | PASS |
+| Proprietary Fixtures | Code and tests must work against the public free-tier fixture set | PASS | PASS — public CI uses seeded rows; count checks against the full data set (62/5/97) run only when the proprietary data is present |
 
 ### Gate notes
 
@@ -97,9 +98,13 @@ single statement. Unknown additional volume in the proprietary data set.
 - **Principle IV**: This release ships **Expand + Migrate + Contract in one deployment**. By explicit
   user decision (clarification 2026-09-12) the legacy `cosm` and `unlocking_perk` columns are dropped
   in the same release as the backfill, because no production installation depends on a rolling
-  update. This is a deliberate deviation from the mandated three-deployment split and is recorded in
-  Complexity Tracking below. Changeset naming still follows `<ISO-date>-<sequence>-<phase>`, the
-  existing CSV `loadData` changesets stay untouched, and `data-fix-lists.yaml` runs after them.
+  update. Constitution v3.1.0 allows this through the ADR-bound Principle IV exception, invoked by
+  ADR-018; see Complexity Tracking below. The changesets `2026-09-13-001-expand` …
+  `2026-09-13-004-contract` follow `<ISO-date>-<sequence>-<phase>`. The earlier changeset
+  `data-fix-lists` does not and mixes expand, migrate and contract steps; it is applied and
+  therefore immutable, and ADR-018 records the deviation. The existing CSV `loadData` changesets
+  stay untouched — including their identities (file, id, author), which `LiquibaseChangelogGuardTest`
+  verifies — and `data-fix-lists.yaml` runs after them.
   The contract changeset MUST run after all migrate
   changesets within the same changelog so a failed backfill aborts before any column is dropped
   (FR-015). The prose repair is a `customChange` rather than SQL, but a `customChange` is still a
@@ -114,12 +119,13 @@ single statement. Unknown additional volume in the proprietary data set.
   where the entire value is an encoded list. Because the emitted Markdown is a plain `- ` bullet list
   with no Torg markup constructs, it flows through the existing pipeline deterministically.
 - **Principle VIII**: Coverage combines new unit tests for the presentation folding edge cases and
-  for the encoded-list tokenizer (which the public data set only partially exercises), the
-  Testcontainers-backed `LiquibaseImportIT` for the migration including an idempotency re-run, and
+  for the encoded-list tokenizer (which the full data set only partially exercises and the public
+  data set not at all), Testcontainers-backed integration tests on seeded rows for the migration
+  including an idempotency re-run, count checks against the full data set where present, and
   recaptured characterization fixtures for API regression. See [quickstart.md](./quickstart.md).
 - **Proprietary fixtures**: All three migrations derive their results from the stored values rather
-  than enumerating the combinations visible in the public data (FR-027), so proprietary rows are
-  converted too (research R4, R9, R11).
+  than enumerating the combinations visible in the measured data (FR-027), so every delivered data
+  set is converted (research R4, R9, R11).
 
 **Result**: One documented deviation (Principle IV) and one documented complexity (the first
 `customChange`), both recorded with justification in Complexity Tracking. No other violations.
@@ -207,5 +213,7 @@ deliberately preserved — which is the clearest evidence that the hexagonal bou
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|--------------------------------------|
-| **Principle IV** — the Contract phase (dropping the legacy `cosm` and `unlocking_perk` columns) ships in the **same deployment** as Expand + Migrate, instead of a separate later release. | Explicit user decision (clarification 2026-09-12, FR-014, FR-020): no backward compatibility is required. The system has no production installation that needs a rolling update, so a side-by-side window buys nothing. Keeping the columns would leave two overlapping representations of the same fact, which invites divergence and forces every future reader to know which one is authoritative. | Deferring the drop to a later release was rejected because it keeps dead, unread columns in eleven tables across an unbounded interval, and because the `ddl-auto: validate` schema check plus the domain records would have to keep carrying the legacy fields solely to satisfy a rollout scenario that cannot occur. The deviation is bounded: it applies to this feature only, Principle IV remains binding for all future schema changes, and FR-015 requires the contract changeset to run after the backfill so a failed migration aborts before any data is dropped. |
+| **Principle IV** — the Contract phase (dropping the legacy `cosm` and `unlocking_perk` columns) ships in the **same deployment** as Expand + Migrate, instead of a separate later release. Since 2026-11-15 this is covered by the ADR-bound Principle IV exception of constitution v3.1.0, invoked by ADR-018. | Explicit user decision (clarification 2026-09-12, FR-014, FR-020): no backward compatibility is required. The system has no production installation that needs a rolling update, so a side-by-side window buys nothing. Keeping the columns would leave two overlapping representations of the same fact, which invites divergence and forces every future reader to know which one is authoritative. | Deferring the drop to a later release was rejected because it keeps dead, unread columns in eleven tables across an unbounded interval, and because the `ddl-auto: validate` schema check plus the domain records would have to keep carrying the legacy fields solely to satisfy a rollout scenario that cannot occur. The deviation is bounded: it applies to this feature only, Principle IV remains binding for all future schema changes, and FR-015 requires the contract changeset to run after the backfill so a failed migration aborts before any data is dropped. |
 | **First `customChange` in the repository** — prose repair is implemented as a Java `CustomTaskChange` rather than a SQL changeset, with no existing precedent in this codebase. | The 97 affected values cannot be parsed safely in SQL: 12 contain `, ` inside a statement, 3 mix `'` and `"` delimiters, one embeds a literal `"` inside a single-quoted statement, and one contains a newline (research R10). Any regex or `split_part` approach corrupts data. A `customChange` gives a real tokenizer with unit tests while remaining a checksummed Liquibase changeset. | Editing the CSV files was rejected because the bulk of the data is proprietary and delivered separately, so CSV edits would fix only the public subset (clarification 2026-09-12). A pure-SQL migration was rejected on the measured evidence above. Repairing at read time in the markup pipeline was rejected because it hides broken data indefinitely and pays the cost on every request. |
+| **Principle IV naming** — the applied changeset `data-fix-lists` does not follow `<ISO-date>-<sequence>-<phase>` and mixes expand (`addColumn`), migrate (`update`) and contract (`addNotNullConstraint`, `addUniqueConstraint`) steps. | It was released before the deviation was noticed; applied changesets are immutable, including their id. | Renaming or splitting it was rejected because it would alter an applied changeset and make existing databases run it again. Recorded in ADR-018; all later changesets follow the convention. |
+| **Principle IV immutability (reverted)** — commit `5decc7f` changed the `author` of the applied changesets `1`, `2` and `free-1`. | None — it was an accidental breach that made existing databases re-run them. | Reverted on 2026-11-15 to the applied identities; `LiquibaseChangelogGuardTest` now verifies an append-only list of applied changeset identities. Recorded in ADR-018. |

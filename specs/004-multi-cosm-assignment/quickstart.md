@@ -72,10 +72,11 @@ Against a database that has the changelog applied:
 SELECT count(*) FROM torg_perk_cosms WHERE cosm LIKE '[%' OR cosm LIKE '%]';
 -- expected: 0
 
--- The 62 previously broken rows are expanded (public free-tier data set)
+-- The 62 previously broken rows are expanded (full proprietary data set only; 0 on public data)
 SELECT count(*) FROM (
   SELECT perk_id FROM torg_perk_cosms GROUP BY perk_id HAVING count(*) > 1
-) multi;                                                      -- expected: 58
+) multi;                                                      -- expected: 54
+-- (58 encoded perk rows; 4 of them named a single cosm in list form and now hold one cosm)
 
 -- The legacy column is gone from all eight tables (SC-008, FR-014)
 SELECT count(*) FROM information_schema.columns
@@ -104,7 +105,7 @@ SELECT count(*) FROM torg_miracle_list_unlocking_perks
  WHERE perk_slug LIKE '[%' OR perk_slug LIKE '%]';
 -- expected: 0   (repeat for torg_power_list_unlocking_perks, torg_spell_list_unlocking_perks)
 
--- The 5 previously broken miracle lists are expanded (public free-tier data set)
+-- The 5 previously broken miracle lists are expanded (full proprietary data set only; 0 on public data)
 SELECT count(*) FROM (
   SELECT list_id FROM torg_miracle_list_unlocking_perks
    GROUP BY list_id HAVING count(*) > 1

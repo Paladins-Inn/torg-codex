@@ -1,0 +1,114 @@
+:adr-title: Multi-Valued References and Encoded-List Repair
+:adr-state: Accepted
+:adr-date: 2026-11-15
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 018
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+The imported catalog data stored stringified Python list literals such as
+`['core-earth', 'tharkold']` in single-valued columns. Three families of fields were affected,
+measured on the full (proprietary) data set; the public free-tier data set contains no affected
+rows:
+
+* cosm references of perks, miracle lists and power lists (62 rows): the entries matched no cosm
+  filter;
+* unlocking-perk references of miracle lists (5 rows): the lists matched no unlocking-perk lookup;
+* prose fields (item additional features, threat quotes, spell-list notes; 97 values): readers saw
+  the encoded literal verbatim.
+
+The implementation (feature `004-multi-cosm-assignment`) was merged in commit `5decc7f` before this
+record existed. This ADR documents the decision retroactively, including the deviations from the
+constitution that occurred.
+
+== Decision
+
+=== Multi-valued references
+
+Cosm and unlocking-perk references are sets of stable slugs. The eight catalog entity types with a
+cosm reference store them in `torg_<entity>_cosms`; miracle, power and spell lists store unlocking
+perks in `torg_<entity>_unlocking_perks`. Both use JPA `@ElementCollection`s mirroring the existing
+`products` collections, and the domain records carry `Set<String> cosms` and
+`Set<String> unlockingPerks`. Repositories filter with `:value MEMBER OF entity.collection`; the
+driving and driven port signatures (`findByCosm(String)`) are unchanged.
+
+=== Unchanged response shape
+
+The REST fields keep their shape ({adr-008}):
+
+* `cosm`: one cosm yields its id and display name as before; several cosms yield a `null` id and
+  their display names sorted and joined with `, `; no cosm yields `null`. Unknown slugs are
+  surfaced as-is. Since {adr-019}, a cosm without products is surfaced like an unknown slug.
+* `unlockingPerk`: zero, one or several perk slugs, sorted and joined with `, `; never translated
+  into display names.
+
+=== Prose repair
+
+A Liquibase `customChange` (`ProseListToMarkdownChange` with `EncodedListTokenizer`) converts every
+value that consists entirely of an encoded list: one statement becomes plain text, several become
+a Markdown bullet list in source order, an empty list becomes empty text. Every other value stays
+byte-identical. The conversion derives its result from the stored value, so separately delivered
+data is converted too.
+
+=== Migration
+
+The changesets in `data-fix-lists.yaml` run after all data loads: `data-fix-lists` (cosm slugs),
+`2026-09-13-001-expand` (collection tables), `2026-09-13-002-migrate-references` (deduplicating
+backfill), `2026-09-13-003-migrate-prose` and `2026-09-13-004-contract` (drops the legacy columns).
+The contract changeset runs after the migrate changesets, so a failed backfill aborts before any
+column is dropped.
+
+== Deviations
+
+The following deviations occurred and are accepted. They are applied and therefore immutable; they
+are not a precedent beyond what the constitution allows.
+
+* *Single-deployment migration*: expand, migrate and contract shipped in one deployment, requiring
+  a short service interruption, because no installation depends on rolling updates. Constitution
+  v3.1.0 adds an explicit, ADR-bound exception to Principle IV for exactly this situation.
+* *Changeset naming*: the changeset `data-fix-lists` does not follow
+  `<ISO-date>-<sequence>-<phase>` and mixes expand (`addColumn`), migrate (`update`) and contract
+  (`addNotNullConstraint`, `addUniqueConstraint`) steps. It cannot be renamed without altering an
+  applied changeset.
+* *Late acceptance*: the implementation was merged before this ADR was accepted ({adr-001}).
+* *Altered changeset identities*: the same commit changed the `author` of the applied changesets
+  `1`, `2` and `free-1`, so existing databases would have run them again. This was reverted to the
+  applied identities on 2026-11-15; `LiquibaseChangelogGuardTest` now verifies an append-only list
+  of applied changeset identities.
+
+== Rejected alternatives
+
+* *Keeping the single-valued columns with comma-separated values*: unqueryable and the root cause.
+* *A new collection field in the API*: breaks existing consumers; the field shape was kept by
+  explicit decision.
+* *Editing the shipped CSV files*: covers only the public subset, not separately delivered data.
+* *SQL-only prose repair*: statements contain commas, mixed quote delimiters and newlines, which
+  regular expressions corrupt.
+* *Repairing prose at read time*: hides broken data and costs time on every request.
+
+== Consequences
+
+* Entries valid in several cosms are found under every cosm; lists are found under every
+  unlocking perk.
+* Readers no longer see encoded list literals.
+* Future breaking schema changes follow the three-deployment rule unless an accepted ADR invokes
+  the Principle IV exception.
+* Applied changesets, including their file, id and author, are guarded against modification.
+
+<<<

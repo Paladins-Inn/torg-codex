@@ -23,6 +23,7 @@ import de.kaiserpfalz.liquibase.DatabaseChangeLogRepository;
 import de.paladinsinn.torg.codex.data.repository.ThreatRepository;
 import de.paladinsinn.torg.codex.data.repository.SpellRepository;
 import de.paladinsinn.torg.codex.data.repository.PerkRepository;
+import liquibase.integration.spring.SpringLiquibase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +35,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration test that starts the full Spring Boot context against a real
@@ -47,6 +52,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>Changeset id:1 – schema creation ({@code torg-data-entity.yml})</li>
  *   <li>Changeset id:2 – CSV data load ({@code torg-data-load.yml})</li>
  * </ul>
+ *
+ * <p>Checks that need the separately delivered (proprietary, git-ignored) catalog data are skipped
+ * when it is absent, so the test also runs against the public free-tier data set.
  */
 @SpringBootTest
 @Testcontainers
@@ -85,6 +93,16 @@ class LiquibaseImportIT {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private SpringLiquibase liquibase;
+
+    /** The proprietary data load; only present in fully checked-out local working copies. */
+    private static final Path PROPRIETARY_LOAD = Path.of("src", "main", "resources", "db", "load", "torg-data-load.yaml");
+
+    private static void assumeProprietaryData() {
+        assumeTrue(Files.exists(PROPRIETARY_LOAD), "proprietary catalog data is not available");
+    }
+
     // -----------------------------------------------------------------------
     // Tests: Liquibase metadata
     // -----------------------------------------------------------------------
@@ -110,6 +128,7 @@ class LiquibaseImportIT {
     @Test
     @DisplayName("Changeset 2 (data load) was executed successfully")
     void changeset2_dataLoadWasApplied() {
+        assumeProprietaryData();
         List<DatabaseChangeLog> logs = changeLogRepository.findByChangesetId("2");
 
         assertThat(logs)
@@ -173,6 +192,7 @@ class LiquibaseImportIT {
     @Test
     @DisplayName("Threat data was imported (at least 100 threats expected)")
     void threats_dataWasImported() {
+        assumeProprietaryData();
         long count = threatRepository.count();
         assertThat(count)
                 .as("At least 100 threats must have been imported via CSV")
@@ -182,6 +202,7 @@ class LiquibaseImportIT {
     @Test
     @DisplayName("Spell data was imported (at least 50 spells expected)")
     void spells_dataWasImported() {
+        assumeProprietaryData();
         long count = spellRepository.count();
         assertThat(count)
                 .as("At least 50 spells must have been imported via CSV")
@@ -191,6 +212,7 @@ class LiquibaseImportIT {
     @Test
     @DisplayName("Perk data was imported (at least 100 perks expected)")
     void perks_dataWasImported() {
+        assumeProprietaryData();
         long count = perkRepository.count();
         assertThat(count)
                 .as("At least 100 perks must have been imported via CSV")
@@ -217,7 +239,55 @@ class LiquibaseImportIT {
         assertThat(encodedCosms).isZero();
         assertThat(encodedPerks).isZero();
         assertThat(legacyColumns).isZero();
+    }
+
+    @Test
+    @DisplayName("Every cosm assignment is found by the cosm filter (SC-002)")
+    void everyCosmAssignmentIsFoundByTheFilter() {
+        for (Map<String, Object> assignment : jdbcTemplate.queryForList("SELECT perk_id, cosm FROM torg_perk_cosms")) {
+            assertThat(perkRepository.findByCosm((String) assignment.get("cosm")))
+                    .as("perks of %s", assignment.get("cosm"))
+                    .anySatisfy(perk -> assertThat(perk.getId()).isEqualTo(assignment.get("perk_id")));
+        }
+    }
+
+    @Test
+    @DisplayName("The previously encoded references of the full data set are expanded (SC-001, SC-002, SC-009, SC-010)")
+    void fullDataSetReferencesAreExpanded() {
+        assumeProprietaryData();
+
+        assertThat(multiValued("torg_perk_cosms", "perk_id"))
+                .as("54 of the 58 encoded perk rows named several cosms; 4 named a single cosm in list form")
+                .isEqualTo(54);
+        assertThat(multiValued("torg_miracle_list_cosms", "list_id")).isEqualTo(3);
+        assertThat(multiValued("torg_power_list_cosms", "list_id")).isEqualTo(1);
+        assertThat(multiValued("torg_miracle_list_unlocking_perks", "list_id")).isEqualTo(5);
+        assertThat(jdbcTemplate.queryForList(
+                "SELECT cosm FROM torg_perk_cosms WHERE perk_id = '959f00d3-1692-4d2f-8682-407dd5214b1a' ORDER BY cosm",
+                String.class))
+                .containsExactly("aysle", "core-earth", "cyberpapacy", "living-land", "nile-empire", "orrorsh");
         assertThat(perkRepository.findByCosm("core-earth")).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Running the full changelog again changes neither the history nor the data (FR-007, SC-012)")
+    void rerunningTheChangelogChangesNothing() throws Exception {
+        String snapshot = "SELECT (SELECT count(*) FROM databasechangelog) || ':' || "
+                + "(SELECT count(*) FROM torg_perk_cosms) || ':' || "
+                + "(SELECT count(*) FROM torg_miracle_list_unlocking_perks) || ':' || "
+                + "(SELECT coalesce(md5(string_agg(coalesce(additional_features, ''), '|' ORDER BY id)), '') FROM torg_item)";
+        String before = jdbcTemplate.queryForObject(snapshot, String.class);
+
+        liquibase.afterPropertiesSet();
+
+        assertThat(jdbcTemplate.queryForObject(snapshot, String.class)).isEqualTo(before);
+    }
+
+    private int multiValued(String table, String owner) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM (SELECT " + owner + " FROM " + table + " GROUP BY " + owner + " HAVING count(*) > 1) multi",
+                Integer.class);
+        return count == null ? 0 : count;
     }
 
     @Test

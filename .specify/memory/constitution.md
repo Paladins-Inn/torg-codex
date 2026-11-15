@@ -1,6 +1,31 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 3.0.0 -> 3.1.0 (MINOR: ADR-bound exception procedure added to Principle IV;
+no rule removed, and everything compliant under 3.0.0 stays compliant)
+
+Modified principles:
+- IV. Zero-Downtime Evolutionary Database Migrations
+  - Added an exception: expand, migrate and contract MAY ship in one deployment only when an
+    accepted ADR documents that no installation depends on rolling updates and accepts the
+    service interruption, and contract changesets run strictly after the migrate changesets
+    they depend on within the same changelog.
+  - Clarified that applied changesets are immutable including their identity (file, id, author).
+
+Added sections: none
+Removed sections: none
+
+Authority: Explicit user approval on 2026-11-15 (remediation C3, option A of the
+004-multi-cosm-assignment analysis), recorded in accepted ADR-018, which documents the
+single-deployment migration of feature 004 as the first use of this exception.
+Dependent artifacts: specs/004-multi-cosm-assignment/plan.md Complexity Tracking references
+this version; templates need no change.
+Follow-up TODOs: none.
+-->
+
+<!--
+Sync Impact Report
+==================
 Version change: 2.1.0 -> 3.0.0 (MAJOR: required logging technology replaced)
 
 Modified principles:
@@ -180,8 +205,13 @@ All synchronous APIs exposed by the application MUST be implemented as classic R
 ### IV. Zero-Downtime Evolutionary Database Migrations
 Database schema changes MUST follow the Parallel Change / Expand-and-Contract pattern to ensure non-disruptive rolling updates and canary deployments (ADR-004, ADR-011, concept: db-migrations).
 - Breaking schema changes MUST be split across separate deployments: Phase 1 (Expand with nullable/default fields) -> Phase 2 (Migrate/backfill) -> Phase 3 (Contract/drop old structures).
+- Exception: all three phases MAY ship in one deployment only if an accepted ADR documents that no
+  installation depends on rolling updates and accepts the resulting service interruption, and the
+  contract changesets run in the same changelog strictly after the migrate changesets they depend
+  on, so that a failed migration aborts before any structure is dropped. The exception does not
+  relax the naming or immutability rules (ADR-018).
 - Migrations MUST be defined as Liquibase changesets under `torg-codex-data/src/main/resources/db` with naming format `<ISO-date>-<sequence>-<phase>` (e.g., `2024-06-01-001-expand`).
-- Applied Liquibase changesets MUST NEVER be altered.
+- Applied Liquibase changesets MUST NEVER be altered, including their identity (file, `id` and `author`).
 - Application runtime runs with `ddl-auto: validate`; schema modifications are executed exclusively by `db-updater` prior to application rollouts.
 
 ### V. Multi-Tier Security, DRM Censorship & Data Protection
@@ -248,4 +278,4 @@ All new features, schema updates, external integrations, and bug fixes MUST incl
 - Amendments require an approved Architecture Decision Record (ADR) and updates to `docs/modules/arc42`.
 - All PRs, code reviews, and AI-generated plans MUST verify compliance with this constitution.
 
-**Version**: 3.0.0 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-11-14
+**Version**: 3.1.0 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-11-15
