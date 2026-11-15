@@ -50,7 +50,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @Import(de.paladinsinn.torg.codex.TestcontainersConfiguration.class)
 @SpringBootTest
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes"})
 class CharacterizationFixtureCaptureTest {
     @Autowired
     private ApplicationContext applicationContext;
@@ -70,6 +70,7 @@ class CharacterizationFixtureCaptureTest {
     @Test
     void captureAllCatalogFixturesWhenEnabled() throws Exception {
         assumeTrue(Boolean.getBoolean("characterization.capture"));
+        ProprietaryCatalogData.assumePresent();
 
         for (CatalogArea area : CatalogArea.values()) {
             captureFixturesFor(area);

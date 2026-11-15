@@ -60,6 +60,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
  *
  * <p>This assertion lives directly in test code (not merely a stored snapshot), so it fails loudly
  * if the single-mechanism ownership-resolution consolidation is ever reverted.
+ *
+ * <p>The Aysle cosm is proprietary data, so this test is skipped when that data is absent (public
+ * CI). {@code CatalogDrmDifferentialTest#censoringDiffersBetweenOwnershipStatesOnSeededContent}
+ * proves the same ownership difference on seeded data in every build.
  */
 @Import(de.paladinsinn.torg.codex.TestcontainersConfiguration.class)
 @SpringBootTest
@@ -92,6 +96,7 @@ class CensoringDifferentialTest {
 
     @Test
     void aysleWorldLawsDifferBetweenAnonymousAndOwner() throws Exception {
+        ProprietaryCatalogData.assumePresent();
         String anonymousWorldLaws = worldLaws(get(AYSLE_COSM_DETAIL_PATH));
         String ownerWorldLaws = worldLaws(get(AYSLE_COSM_DETAIL_PATH).with(SOURCEBOOK_AYSLE_OWNER));
 

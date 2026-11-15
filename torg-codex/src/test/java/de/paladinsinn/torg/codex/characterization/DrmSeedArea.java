@@ -54,9 +54,6 @@ public enum DrmSeedArea {
     /** The cosm slug of every cosm-filterable seeded entry. */
     public static final String COSM = "drm-cosm";
 
-    /** A referenced id that is never inserted. */
-    public static final UUID MISSING_CHILD = UUID.fromString("d7a00000-00ff-4000-8000-000000000099");
-
     /** The seeded public article with a core-gated passage. */
     public static final UUID ARTICLE = UUID.fromString("d7a00000-000f-4000-8000-000000000001");
 
@@ -71,6 +68,12 @@ public enum DrmSeedArea {
 
     /** Text only rendered for callers not owning the free tier. */
     public static final String UPSELL_PASSAGE = "DRM-UPSELL-PASSAGE";
+
+    /** Text only rendered for owners of {@code sourcebook-aysle}. */
+    public static final String AYSLE_OWNER_PASSAGE = "DRM-AYSLE-OWNER-ONLY";
+
+    /** Text only rendered for callers not owning {@code sourcebook-aysle}. */
+    public static final String AYSLE_TEASER_PASSAGE = "DRM-AYSLE-TEASER";
 
     private final int index;
     private final String collection;

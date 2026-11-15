@@ -236,6 +236,31 @@ class CatalogDrmDifferentialTest {
         assertThat(text).contains(DrmSeedArea.CORE_PASSAGE).doesNotContain(DrmSeedArea.UPSELL_PASSAGE);
     }
 
+    /**
+     * Constitution Principle V test-adequacy rule on seeded data, so it also runs in public CI:
+     * the same accessible entry renders genuinely different gated passages for an anonymous
+     * caller and an owner of {@code sourcebook-aysle}.
+     */
+    @ParameterizedTest
+    @EnumSource(DrmSeedArea.class)
+    void censoringDiffersBetweenOwnershipStatesOnSeededContent(DrmSeedArea area) throws Exception {
+        String anonymous = String.valueOf(json(perform(get(area.detailPath(Variant.CORE)))).get("text"));
+        String owner = String.valueOf(json(perform(get(area.detailPath(Variant.CORE)).with(AYSLE_OWNER))).get("text"));
+
+        assertThat(anonymous).contains(DrmSeedArea.AYSLE_TEASER_PASSAGE).doesNotContain(DrmSeedArea.AYSLE_OWNER_PASSAGE);
+        assertThat(owner).contains(DrmSeedArea.AYSLE_OWNER_PASSAGE).doesNotContain(DrmSeedArea.AYSLE_TEASER_PASSAGE);
+        assertThat(owner).isNotEqualTo(anonymous);
+    }
+
+    @org.junit.jupiter.api.Test
+    void publicArticleRendersOwnershipSpecificPassages() throws Exception {
+        String anonymous = String.valueOf(json(perform(get("/api/articles/" + DrmSeedArea.ARTICLE))).get("text"));
+        String owner = String.valueOf(json(perform(get("/api/articles/" + DrmSeedArea.ARTICLE).with(AYSLE_OWNER))).get("text"));
+
+        assertThat(anonymous).contains(DrmSeedArea.AYSLE_TEASER_PASSAGE).doesNotContain(DrmSeedArea.AYSLE_OWNER_PASSAGE);
+        assertThat(owner).contains(DrmSeedArea.AYSLE_OWNER_PASSAGE).doesNotContain(DrmSeedArea.AYSLE_TEASER_PASSAGE);
+    }
+
     @org.junit.jupiter.api.Test
     void publicArticleRendersCoreGatedPassagesWithTheEffectiveFreeTier() throws Exception {
         for (RequestPostProcessor caller : List.of(AYSLE_OWNER, DRIVETHRU_USER_ONLY)) {
@@ -312,7 +337,7 @@ class CatalogDrmDifferentialTest {
         return meterRegistry.get(CatalogAccessObservabilityAdapter.COUNTER_NAME).tag("area", area.tag()).counter().count();
     }
 
-    private static Map<String, Object> nullPublication(String codexId) {
+    private static Map<String, Object> nullPublication(@SuppressWarnings("SameParameterValue") String codexId) {
         Map<String, Object> product = new LinkedHashMap<>();
         product.put("codexId", codexId);
         product.put("publication", null);

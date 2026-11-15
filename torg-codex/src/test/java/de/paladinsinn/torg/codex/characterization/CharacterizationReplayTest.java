@@ -64,6 +64,7 @@ class CharacterizationReplayTest {
 
     @TestFactory
     List<DynamicTest> replaysEveryCapturedFixture() throws Exception {
+        ProprietaryCatalogData.assumePresent();
         return CharacterizationFixtureSupport.fixtureFiles().stream()
                 .map(path -> DynamicTest.dynamicTest(path.toString(), () -> assertFixture(path)))
                 .toList();
