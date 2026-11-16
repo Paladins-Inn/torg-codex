@@ -74,10 +74,16 @@ import de.paladinsinn.torg.codex.web.codex.model.TableViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.TableViewModel.ColumnHeaderViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.TeaserViewModel;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
+import de.paladinsinn.torg.codex.web.notification.CsrfViewModel;
+import de.paladinsinn.torg.codex.web.notification.WebNotificationSupport;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -98,6 +104,9 @@ public class CodexViewMapper {
 
     private final CurrentUserCensorFactory censorFactory;
 
+    @Setter(onMethod_ = @Autowired(required = false))
+    private WebNotificationSupport notificationSupport;
+
     public boolean isSignedIn(final Authentication authentication) {
         return authentication != null
                 && authentication.isAuthenticated()
@@ -106,7 +115,18 @@ public class CodexViewMapper {
     }
 
     public NavContextViewModel toNavContext(final CatalogArea activeArea, final Authentication authentication) {
-        return NavContextViewModel.create(activeArea, isSignedIn(authentication));
+        boolean signedIn = isSignedIn(authentication);
+        NavContextViewModel nav = NavContextViewModel.create(activeArea, signedIn);
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
+            var request = attrs.getRequest();
+            if (signedIn) {
+                nav = nav.withCsrf(CsrfViewModel.fromRequest(request));
+            }
+            if (notificationSupport != null) {
+                nav = nav.withToastRegion(notificationSupport.buildReaderToastRegion(request, signedIn));
+            }
+        }
+        return nav;
     }
 
     public HomeViewModel toHomeViewModel(final CodexHomeOverview overview, final Authentication authentication) {

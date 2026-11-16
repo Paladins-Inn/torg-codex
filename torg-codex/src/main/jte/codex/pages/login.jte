@@ -1,6 +1,6 @@
 @param de.paladinsinn.torg.codex.web.codex.model.AuthPageViewModel model
 
-@template.codex.layout.page(title = "Sign In", nav = model.nav(), content = @`
+@template.codex.layout.page(title = "Sign In", nav = model.nav(), csrf = model.csrf(), content = @`
     <div class="row justify-content-center my-4">
         <div class="col-12 col-md-8 col-lg-5">
             @if(model.signedOutBanner())
@@ -28,6 +28,9 @@
                         Enter your personal DriveThruRPG Application Key to unlock all Torg: Eternity publications in your DriveThruRPG library for this session.
                     </p>
                     <form action="/login" method="post">
+                        @if(model.csrf() != null)
+                            <input type="hidden" name="${model.csrf().parameterName()}" value="${model.csrf().token()}">
+                        @endif
                         <div class="mb-3">
                             <label for="apiKey" class="form-label fw-semibold">DriveThruRPG Application Key</label>
                             <input type="password"

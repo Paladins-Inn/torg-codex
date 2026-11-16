@@ -1,6 +1,6 @@
 @param de.paladinsinn.torg.codex.web.codex.model.AuthPageViewModel model
 
-@template.codex.layout.page(title = "Sign Out", nav = model.nav(), content = @`
+@template.codex.layout.page(title = "Sign Out", nav = model.nav(), csrf = model.csrf(), content = @`
     <div class="row justify-content-center my-5">
         <div class="col-12 col-md-8 col-lg-5">
             <div class="card border-0 shadow-sm">
@@ -15,6 +15,9 @@
                             Signing out clears your active DriveThruRPG library session on this browser and returns the codex to free-tier Core Rulebook access.
                         </p>
                         <form action="/logout" method="post" class="d-grid gap-2">
+                            @if(model.csrf() != null)
+                                <input type="hidden" name="${model.csrf().parameterName()}" value="${model.csrf().token()}">
+                            @endif
                             <button type="submit" class="btn btn-danger">
                                 <i class="bi bi-box-arrow-right me-1"></i>Sign Out
                             </button>

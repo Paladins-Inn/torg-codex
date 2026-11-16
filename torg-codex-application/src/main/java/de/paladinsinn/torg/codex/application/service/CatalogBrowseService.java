@@ -589,6 +589,10 @@ public final class CatalogBrowseService implements CatalogBrowseQuery {
     private Map<String, List<LinkedEntryRef>> resolveEmbeddedReferences(
             final CatalogCategoryDescriptor<? extends CatalogEntry> rawDescriptor,
             final CatalogEntry entry) {
+        if (rawDescriptor.area() == CatalogArea.PERK_GROUP) {
+            List<LinkedEntryRef> perks = resolvePerkGroupMembers(entry);
+            return perks.isEmpty() ? Map.of() : Map.of("Perks", perks);
+        }
         CatalogCategoryDescriptor<CatalogEntry> descriptor = (CatalogCategoryDescriptor<CatalogEntry>) rawDescriptor;
         Map<String, List<LinkedEntryRef>> result = new LinkedHashMap<>();
         for (DetailSectionDescriptor<CatalogEntry> section : descriptor.detailSections()) {
@@ -625,6 +629,21 @@ public final class CatalogBrowseService implements CatalogBrowseQuery {
             }
         }
         return Map.copyOf(result);
+    }
+
+    private List<LinkedEntryRef> resolvePerkGroupMembers(final CatalogEntry group) {
+        List<? extends CatalogEntry> accessible = requireSource(CatalogArea.PERK).peekAll();
+        Map<UUID, String> slugs = CatalogSlugs.resolveCanonicalSlugs(
+                accessible, CatalogEntry::id, CatalogEntry::slug);
+        CatalogCategoryDescriptor<Perk> descriptor = CatalogCategoryRegistry.forArea(CatalogArea.PERK, Perk.class);
+        return accessible.stream()
+                .filter(Perk.class::isInstance)
+                .map(Perk.class::cast)
+                .filter(perk -> descriptor.extractDirectGroupingKeys(perk, GroupingDimension.PERK_GROUP)
+                        .contains(group.slug()))
+                .sorted(Comparator.comparing(Perk::name, String.CASE_INSENSITIVE_ORDER).thenComparing(Perk::id))
+                .map(perk -> new LinkedEntryRef(perk.id(), perk.name(), slugs.get(perk.id()), CatalogArea.PERK))
+                .toList();
     }
 
     private Map<String, Publication> publicationsByCodexId() {

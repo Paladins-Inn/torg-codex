@@ -17,6 +17,7 @@ participant  "ProviderManager"            as mgr     <<AuthenticationManager>>
 participant  "DriveThruAuthenticationProvider" as prov <<AuthenticationProvider>>
 participant  "DriveThruRPGService"        as svc     <<@Service, @Cacheable>>
 participant  "DriveThruRPGClient"         as http    <<RestClient Proxy>>
+participant  "CatalogReferenceQuery"     as refs
 boundary     "DriveThruRPG API"           as api
 
 client ->> filter : HTTP\n Authorization: ApiKey <key>
@@ -42,11 +43,14 @@ svc -->> prov     : DrivethruToken
 deactivate svc
 
 prov ->> svc      : getIdsOfOwnedProducts(token)
-svc ->> http      : getOrderProducts(token, page, 50, 0, 0, 0)
+svc ->> http      : getOrderProducts(token, page, 200, 0, 0, 0)
 http ->> api      : GET /api/vBeta/order_products?library=true\n Accept: application/vnd.api+json\n Authorization: token (raw JWT)
 api -->> http     : {links, meta, data: [{attributes: {productId, customerId, ...}}]}
 http -->> svc     : JsonApiCollectionDocument<OwnedProduct>
 svc -->> prov     : product ids
+
+prov ->> refs     : findPublicationsByProductIds(distinct ids)
+refs -->> prov    : publication references (one SQL query)
 
 prov -->> mgr     : ApiKeyAuthenticationToken\n  .authenticated(userDetails)
 deactivate prov
@@ -68,10 +72,13 @@ und erhält `AuthTokenResponse` (`token`, `refreshToken`, `refreshTokenTTL` als
 Unix-Zeitstempel in Sekunden).
 Die Bibliotheksabfrage fordert mit `Accept: application/vnd.api+json` das
 JSON:API-Dokument `OrderProductListResponse` (`links`, `meta`, `data`) über
-`GET /order_products?library=true&page=<n>&pageSize=50&archived=0&getChecksum=0&getFilters=0`
+`GET /order_products?library=true&page=<n>&pageSize=200&archived=0&getChecksum=0&getFilters=0`
 an. Das JWT wird unverändert im `Authorization`-Header gesendet.
+Eine serverseitig reduzierte Seitengroesse aus `meta.itemsPerPage` wird bei
+Folgeabfragen beruecksichtigt; die API-Spezifikation nennt keine maximale Groesse.
 Die Seitennavigation folgt `links.next` und endet, sobald `data` leer ist oder
-`links.next` fehlt (`null`).
+`links.next` fehlt (`null`). Fehlt das gesamte `links`-Objekt, wird anhand der
+effektiven Seitengroesse weitergeblaettert.
 Bei HTTP 401 wird einmalig versucht, die Sitzung über `POST /auth/refresh`
 (`Cookie: refreshToken=<refreshToken>`) zu erneuern, sofern ein noch gültiges
 Refresh-Token vorliegt; schlägt dies fehl oder ist das Refresh-Token abgelaufen,
@@ -87,34 +94,59 @@ Liefert `OrderProductAttributes` eine `customerId`, wird diese übernommen; bei
 leerer Bibliothek fällt der Spring-Security-Benutzername auf eine lokale zufällige
 UUID zurück (`getCustomerId()` bleibt dann `null`). Die Freischaltung bleibt
 unverändert: Produkt-IDs (`productId`) werden über die Publikationsreferenzen in
-`ROLE_<codex-id>`-Authorities übersetzt.
+`ROLE_<codex-id>`-Authorities übersetzt. Alle unterschiedlichen Produkt-IDs
+werden gemeinsam in einer SQL-Projektionsabfrage aufgeloest; lokalisierte
+Ausgaben werden beruecksichtigt und Publikationen dedupliziert. Bei einer
+leeren Bibliothek entfaellt diese Abfrage.
 Application Key und Tokens werden weder als Benutzername verwendet noch protokolliert.
 Technische HTTP-/Protokollfehler werden von ungültigen Zugangsdaten unterschieden
 und protokollieren auf `WARN` neben `statusCode` auch `exceptionClass` und
 `causeClass` (ohne Nachrichten, Header oder Antworttexte); die Login-Seite antwortet
 bei technischen Fehlern mit HTTP 503 statt HTTP 401.
 
-== Session-lokaler Login-Cache
+== Asynchrone Browser-Anmeldung, Generationsschutz und 12-Stunden-Bibliothekscache ({adr-023})
 
 `ApiKeySessionAuthentication` wird explizit von `TorgCodexSecurityConfig` als Bean
-bereitgestellt und von Login-Controller und API-Key-Filter gemeinsam verwendet.
-Erst nach vollstaendig erfolgreicher Token- und Bibliotheksabfrage werden
-Principal und Produkt-Authorities im `SecurityContext` der aktuellen HTTP-Session
-gespeichert und sofort fuer die Anfrage wirksam. Weitere Anfragen mit demselben
-Key oder ohne Authorization-Header verwenden dieses Ergebnis; auch erneute
-Formularanmeldungen fuehren keine erneute Bibliotheksabfrage aus.
+bereitgestellt und unterscheidet zwei Einstiegspfade:
 
-Zur Wiedererkennung speichert der Cache einen SHA-256-Fingerprint statt eines
-zusaetzlichen Klartext-Keys. Gleichzeitige Login-Anfragen derselben Session
-werden serialisiert. Bei einer neuen erfolgreichen Anmeldung wird die
-Session-ID gewechselt. Ein anderer Key erfordert eine neue Authentifizierung;
-Fehler werden nicht gecacht. Logout und Session-Ablauf entfernen das Ergebnis.
-Es gibt keinen sessionsuebergreifenden Token- oder Besitzlisten-Cache;
-oeffentliche Produkt- und Verlagsdaten duerfen weiterhin gecacht werden.
-Die optionale Integration im Filter laesst dessen stateless Standardverhalten
-fuer andere Anwendungen unveraendert.
+* **Interaktive Browser-Anmeldung (`POST /login`) & manuelles Nachladen (`POST /library/reload`)**:
+  Der übermittelte API-Key wird synchron über `DriveThruRPGService.getToken(...)` geprüft
+  (`401` bei ungültigem Key, `503` bei Nichterreichbarkeit, ohne Hintergrundtask).
+  Nach gültigem Token rotiert die Session-ID sowie das CSRF-Token (`CompositeSessionAuthenticationStrategy`).
+  In der `HttpSession` werden ausschließlich der nicht-umkehrbare SHA-256-Digest (`ApiKeyFingerprint`)
+  sowie eine bereinigte Token-Kopie (`DrivethruToken.sessionCopy()`, `applicationKey == null`) abgelegt.
+  Liegt im In-Memory-Cache `"drivethru.library"` (Caffeine, Standard-TTL `12h`, maximal `1000` Einträge,
+  `libraryCacheKeyGenerator`) bereits ein vollständiger `DriveThruLibrarySnapshot` für diesen Digest vor,
+  werden alle Publikationen in einer Bulk-Abfrage sofort freigeschaltet und eine einzelne `SUCCESS`-Toast-Meldung
+  (`"Publications Ready"`) gesendet ({adr-024}).
+  Bei einem Cache-Miss startet die Sitzung sofort mit Free-Tier-Zugriff (`core-rulebook`), während
+  `DriveThruLibrarySynchronizer` die Seiten sequenziell im begrenzten `drivethruSyncExecutor` nachlädt,
+  pro Batch die `ROLE_<codex-id>`-Authorities monoton vereinigt und den unveränderlichen `SecurityContext`
+  generationsgeprüft über `GenerationAwareSecurityContextRepository` ersetzt. Erst der vollständig erfolgreiche
+  Durchlauf schreibt über `@CachePut` (`LibraryLoadCoordinator`) in `"drivethru.library"`.
+  Logout (`POST /logout`) beendet Session-Berechtigungen und offene SSE-Streams sofort, invalidiert den
+  `"drivethru.library"`-Cache jedoch **nicht**. Läuft beim manuellen Nachladen (`POST /library/reload`) das
+  Refresh-Token ab, bleiben bestehende Session-Rechte und gültige Cache-Einträge erhalten (`REAUTH_REQUIRED` +
+  persistenter `ERROR`-Toast mit Verweis auf `/login`), da kein Klartext-API-Key für einen erneuten
+  `/auth_key`-Austausch gespeichert wird.
+* **Zustandslose REST-Aufrufe (`Authorization: ApiKey <key>` auf `/api/**`)**:
+  Bleiben vollständig synchron pro Einzelanfrage (ohne Session-Erzeugung bei zustandslosen Aufrufen) und
+  nutzen über `DriveThruAuthenticationProvider` -> `LibraryLoadCoordinator.loadCoordinated(...)` (`@Cacheable`)
+  denselben `"drivethru.library"`-Cache, sodass Folgeaufrufe innerhalb von 12 Stunden null `/order_products`-Anfragen
+  auslösen. Öffentliche Produkt- und Verlags-Caches (`"drivethru.product"`, `"drivethru.publisher"`) behalten ihre
+  bisherige Semantik.
 
 == Login-Diagnose auf DEBUG
+
+Jede neue Authentifizierung schreibt vor dem ersten Token-Aufruf das INFO-Ereignis
+`event.action=drivethru-auth-started`. Es wird im Produktionsbetrieb ausschließlich als ECS JSON auf der Konsole
+ausgegeben (Dateilogging erfolgt nur in den Profilen `dev` und `test`).
+Die Observation `drivethru.authentication` umfasst den gesamten Ablauf als
+Span `drivethru authenticate`. HTTP-Laufzeiten und Aufrufanzahlen stehen als
+`drivethru.http.client.duration` und `drivethru.http.client.requests` nach
+`operation` und `outcome` zur Verfuegung, auch bei Fehlern und Wiederholungen.
+Details zu Export, Datenschutz und Metriknamen siehe
+xref:08_concepts/observability.adoc[Observability].
 
 Die INFO-Meldung `drivethru-auth-rejected` allein unterscheidet nicht zwischen
 einem abgelehnten Token-Austausch und einer nach Token-Erneuerung weiterhin

@@ -40,6 +40,19 @@
                     <i class="bi ${nav.signedIn() ? "bi-unlock-fill" : "bi-book"} me-1"></i>${nav.authStatusTag()}
                 </span>
                 @if(nav.signedIn())
+                    <form method="post"
+                          action="/library/reload"
+                          hx-post="/library/reload"
+                          hx-target="#codex-toast-container"
+                          hx-swap="beforeend"
+                          class="d-inline">
+                        @if(nav.csrf() != null)
+                            <input type="hidden" name="${nav.csrf().parameterName()}" value="${nav.csrf().token()}">
+                        @endif
+                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reload Library
+                        </button>
+                    </form>
                     <a class="btn btn-sm btn-outline-light" href="/logout">
                         <i class="bi bi-box-arrow-right me-1"></i>Sign Out
                     </a>

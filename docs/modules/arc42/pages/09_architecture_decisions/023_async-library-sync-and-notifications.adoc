@@ -1,0 +1,99 @@
+:adr-title: Asynchronous Library Synchronization, Generic Toast Notifications, Digest-Keyed Caching, and Request Observability
+:adr-state: Accepted
+:adr-date: 2026-11-16
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 023
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+Reader sign-in on Torg Codex authenticates against DriveThruRPG ({adr-007}, {adr-015}) and resolves owned publications into `ROLE_<codex-id>` Spring Security authorities consumed by the domain-level DRM and markup censoring pipeline ({adr-019}). For players and game masters with large DriveThruRPG libraries, synchronous pagination across `/order_products` during `POST /login` blocks the login response for multiple minutes, repeats expensive upstream calls after every sign-out, and previously retained the cleartext application key inside the session token.
+
+At the same time, introducing asynchronous background state transitions and state-changing browser endpoints (`/login`, `/logout`, manual library reload, and notification acknowledgments) requires non-blocking user feedback across both the public reader UI and `/admin` layouts ({adr-020}, {adr-021}), standard browser CSRF/CORS protection, quantitative page latency telemetry, and structured request-boundary logs aligned with {adr-017} and {adr-022}.
+
+== Decision
+
+We adopt an integrated architecture for asynchronous DriveThruRPG library synchronization, generic user notifications, digest-keyed caching, browser request protection, and request observability:
+
+1. **Asynchronous Post-Token Sign-In and Incremental Monotonic Entitlements**:
+   * Reader `POST /login` synchronously validates the submitted API key via DriveThruRPG token exchange (`401` on invalid credentials, `503` on upstream unavailability, with zero background tasks started).
+   * Once a valid token is obtained, the session is established immediately with free-tier (`core-rulebook`) access (or full cached entitlements on a cache hit) and redirects without awaiting `/order_products` pagination.
+   * Uncached library pages stream sequentially on a bounded `TaskExecutor` (`drivethruSyncExecutor`). Each completed batch bulk-resolves catalog publications and atomically replaces the immutable `DriveThruUserDetails` -> `ApiKeyAuthenticationToken` -> `SecurityContext` with the monotonic union of `ROLE_<codex-id>` authorities so all access checks continue through the single unified ownership mechanism ({adr-019}).
+   * `GenerationAwareSecurityContextRepository` guards both worker batch writes and request-end `SecurityContext` saves with a per-run generation and batch counter so stale requests never overwrite newer batches, resurrect logged-out sessions, or supersede a newer login. Stateless `Authorization: ApiKey` requests on `/api/**` retain full single-request ownership resolution.
+2. **Key-Free Session Tokens and Refresh-Only Background Renewal**:
+   * Active `HttpSession` state and background worker closures never retain the cleartext API key. Sessions store only `ApiKeyFingerprint` (lowercase hex SHA-256 of the stripped API key) and `DrivethruToken#sessionCopy()` (`applicationKey == null`).
+   * Background synchronization and manual `POST /library/reload` renew expired access tokens exclusively via the refresh token (`/auth/refresh`). If renewal fails when no application key is present, existing session entitlements and valid cached snapshots remain intact, session sync status transitions to `REAUTH_REQUIRED`, and a sticky `error` toast prompts the user to sign in again.
+3. **Generic Event-Driven Toast Notification Subsystem ({adr-024})**:
+   * Detailed in {adr-024}: framework-free notification ports and domain-agnostic models (`NotificationTarget` supporting both `SessionChannel` and `AllAuthenticatedUsers` broadcast for future `/admin` use, `UserNotificationRequested`, `UserNotificationCommand`, `UserNotificationQuery`, `UserNotificationStorePort`, `UserNotificationService`) reside in `torg-codex-application` and propagate in-process via Spring Events (`ApplicationEventPublisher` / `@EventListener`).
+   * Open browser pages subscribe to a session-derived Server-Sent Events (`SseEmitter`) stream (`GET /notifications/stream` and `GET /admin/notifications/stream`, `text/event-stream`, configurable `sse-timeout` defaulting to `30m`); a Spring `@EventListener` immediately pushes newly emitted JTE toast fragments to active emitters with zero periodic polling requests, backed by non-destructive session buffering + UUID acknowledgment (`POST .../notifications/ack`) and `sessionStorage` deduplication across redirects.
+4. **Digest-Keyed 12-Hour In-Memory Library Cache**:
+   * Complete, token-free `DriveThruLibrarySnapshot` values are cached in a dedicated Caffeine cache (`"drivethru.library"`, configurable default `12h` expire-after-write, `1000` maximum entries) via Spring `@Cacheable` (normal load) and `@CachePut` (streaming reload) keyed exclusively by `libraryCacheKeyGenerator` (`ApiKeyFingerprint`), serialized per digest by `LibraryLoadCoordinator`.
+   * Failed, aborted, or superseded runs throw before normal return and never populate or overwrite valid cache entries. User sign-out terminates session entitlements immediately without evicting `"drivethru.library"`. Existing `"drivethru.product"` and `"drivethru.publisher"` caches keep their semantics unchanged.
+5. **Browser UI CSRF and Restrictive CORS Protection**:
+   * Browser UI security enables `HttpSessionCsrfTokenRepository` with Spring Security's default XOR request handler and a composite session-ID + CSRF rotation strategy on login (clearing on logout), exempting only stateless `/api/**` endpoints. Deferred token resolution keeps anonymous catalog `GET` views session-free.
+   * Restrictive UI CORS (`torg.codex.web.cors.allowed-origins`, empty/same-origin by default) rejects disallowed cross-origin browser requests with `403 Forbidden` prior to state mutation while leaving `/api/**` and `/actuator/**` CORS behavior unchanged.
+6. **Single User-Page Timing Metric and Tiered Request Boundary Logging**:
+   * User-facing reader pages record invocation counts and handler durations under a single Micrometer timer `torg.codex.web.page` with identical bounded tag keys (`page`, `class`, `method`, `exception`) via `@Timed` (`management.observations.annotations.enabled=true`) on the seven controller page handlers plus explicit `LogoutTimingFilter` timing on `POST /logout` (`page=logout-submit`).
+   * `UserRequestLoggingFilter` (ordered after `ServerHttpObservationFilter` and before `FilterChainProxy`) emits paired native ECS logs ({adr-017}, {adr-022}): `DEBUG` start and `INFO` completion for user requests (including `/api/**` and security-terminated `401`/`403`/logout outcomes), `TRACE` start and `TRACE` completion for automated toast SSE-stream/ack control requests, and zero logs for static assets or `/actuator/**`, never logging raw paths, query strings, credentials, tokens, fingerprints, or `ROLE_<codex-id>` sets.
+
+== Benefits for {system}
+
+* **Immediate Login Responsiveness**: Reader sign-in completes right after token validation (`< 3 s`) regardless of DriveThruRPG library pagination latency, while returning logins within 12 hours issue zero `/order_products` calls.
+* **Defense-in-Depth Secret & Browser Protection**: Eliminates cleartext API keys from `HttpSession` state and cache keys, and closes cross-site request forgery / cross-origin gaps across all browser state changes without breaking stateless `/api/**` clients.
+* **Reusable Cross-Surface UX Without Polling**: Any feature or background workflow can push typed notifications via Spring Events and `SseEmitter` to reader or `/admin` users with zero idle HTTP polling traffic and without coupling application logic to JTE, htmx, or Bootstrap.
+* **Low-Noise Production Telemetry**: Operations gets bounded Prometheus page latency series (`torg_codex_web_page_seconds_*`) and clean `INFO` completion logs unpolluted by background notification streams/acknowledgments or false `WARN`/`ERROR` domain alerts.
+
+== Consequences and Challenges
+
+* **Handler-Scoped Page Metric**: Declarative `@Timed` measures controller handler execution (plus `LogoutFilter` on sign-out) rather than post-handler JTE template streaming; full HTTP lifecycle latency continues to be reported by Spring Boot's `http.server.requests`.
+* **Explicit Re-Sign-In After Refresh Expiry**: Because cleartext API keys are stripped from session state, manual library reloads after upstream refresh-token expiry cannot silently re-exchange the key and instead prompt the user to sign in again while preserving current session access.
+* **SSE Connection & Concurrency Discipline**: Open `SseEmitter` streams must be closed cleanly on logout, timeout, and session destruction, and session context updates, cache commits, and logout invalidation must coordinate strictly through `GenerationAwareSecurityContextRepository` and `LibraryLoadCoordinator` to avoid lost batches or stale cache writes.
+
+== Evaluated Options
+
+=== Option 1: Token-First Session Login, Spring-Events + `SseEmitter` Notification Push, Digest-Keyed Caffeine Cache, Framework CSRF/CORS, and Single `@Timed` Page Meter (Selected)
+
+* **Pros**: Satisfies hexagonal boundaries ({adr-005}, {adr-015}), single DRM authority derivation ({adr-019}), Hypermedia/Bootstrap UI conventions ({adr-020}, {adr-021}), and Operations-First ECS logging ({adr-017}, {adr-022}) using standard Spring Boot capabilities with zero periodic browser polling, external brokers, or persistent tables.
+* **Cons**: Requires careful generation tracking across concurrent servlet requests, `SseEmitter` registrations, and background workers.
+
+=== Option 2: Synchronous Login with Cleartext API Key Retained in Session
+
+* **Pros**: Simpler single-threaded control flow and silent key re-exchange on token expiry.
+* **Cons**: Multi-minute login stalls for large libraries; retains raw user credentials in session memory.
+
+=== Option 3: Periodic HTTP Polling with Separate Handler and End-to-End Page Metrics
+
+* **Pros**: Stateless short HTTP polls without long-lived `SseEmitter` connections; separate render vs. handler timers.
+* **Cons**: Continuous idle polling chatter from every open browser tab; adds multi-second notification latency; splits page latency across duplicate meter families.
+
+== Further Reading
+
+* {adr-005}
+* {adr-007}
+* {adr-015}
+* {adr-017}
+* {adr-019}
+* {adr-020}
+* {adr-021}
+* {adr-022}
+* {adr-024}
+* xref:05_building_block_view/level2_drivethrurpg_security_userservice.adoc[]
+* xref:08_concepts/observability.adoc[]
+* xref:08_concepts/data-protection.adoc[]
+
+<<<

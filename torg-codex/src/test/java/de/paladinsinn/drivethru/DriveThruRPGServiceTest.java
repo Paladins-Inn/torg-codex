@@ -20,6 +20,9 @@ import de.paladinsinn.security.ApiKeyAuthenticationToken;
 import de.paladinsinn.security.DriveThruAuthenticationProvider;
 import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
 import de.paladinsinn.torg.codex.domain.model.CatalogProduct;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,8 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.authentication.BadCredentialsException;
 
 import java.util.Optional;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.List;
@@ -58,7 +63,7 @@ class DriveThruRPGServiceTest {
     private static final String ACCESS_TOKEN = "wiremock-jwt-bearer-token-777";
     private static final String JSON_API = "application/vnd.api+json";
     private static final long VALID_REFRESH_TTL = 4102444800L;
-    private static final int PAGE_SIZE = 50;
+    private static final int PAGE_SIZE = 200;
     private static final int UNAUTHORIZED = 401;
     private static final int FORBIDDEN = 403;
     private static final int NOT_FOUND = 404;
@@ -66,6 +71,7 @@ class DriveThruRPGServiceTest {
 
     private DriveThruRPGService service;
     private DriveThruRPGClient client;
+    private SimpleMeterRegistry meterRegistry;
     private final ListAppender<ILoggingEvent> appender = new ListAppender<>();
     private final Logger serviceLogger = (Logger) LoggerFactory.getLogger(DriveThruRPGService.class);
     private final Logger providerLogger = (Logger) LoggerFactory.getLogger(DriveThruAuthenticationProvider.class);
@@ -76,7 +82,8 @@ class DriveThruRPGServiceTest {
     void setUp(final WireMockRuntimeInfo wireMock) {
         DriveThruProperties properties = new DriveThruProperties();
         properties.setBaseUrl(wireMock.getHttpBaseUrl() + "/api/vBeta");
-        client = new DriveThruRPGClientConfig().driveThruRPGClient(properties);
+        meterRegistry = new SimpleMeterRegistry();
+        client = new DriveThruRPGClientConfig().driveThruRPGClient(properties, meterRegistry);
         service = new DriveThruRPGService(client);
         originalServiceLevel = serviceLogger.getLevel();
         originalProviderLevel = providerLogger.getLevel();
@@ -94,6 +101,7 @@ class DriveThruRPGServiceTest {
         serviceLogger.setLevel(originalServiceLevel);
         providerLogger.setLevel(originalProviderLevel);
         appender.stop();
+        meterRegistry.close();
     }
 
     @Test
@@ -120,19 +128,21 @@ class DriveThruRPGServiceTest {
                 .withHeader("Authorization", equalTo(ACCESS_TOKEN))
                 .withHeader("Accept", containing(JSON_API))
                 .withQueryParam("page", equalTo("1"))
-                .withQueryParam("pageSize", equalTo("50"))
+                .withQueryParam("pageSize", equalTo("200"))
                 .withQueryParam("archived", equalTo("0"))
                 .withQueryParam("library", equalTo("true"))
                 .withQueryParam("getChecksum", equalTo("0"))
                 .withQueryParam("getFilters", equalTo("0"))
                 .withQueryParam("fields", absent()));
+        assertMetrics("token-exchange", "success", 1);
+        assertMetrics("library-page", "success", 1);
     }
 
     @Test
     void readsMultiplePagesFollowingJsonApiNextLinksAndStopsWhenNextIsNull() throws Exception {
         String firstPage = orderProductCollectionJson(
                 IntStream.rangeClosed(1, PAGE_SIZE).boxed().toList(),
-                "/api/vBeta/order_products?page=2&pageSize=50");
+                "/api/vBeta/order_products?page=2&pageSize=200");
         String secondPage = orderProductCollectionJson(List.of(999001), null);
         stubFor(get(urlPathEqualTo("/api/vBeta/order_products")).atPriority(1)
                 .withQueryParam("page", equalTo("1"))
@@ -147,6 +157,42 @@ class DriveThruRPGServiceTest {
         assertThat(service.getIdsOfOwnedProducts(service.getToken(API_KEY)))
                 .containsExactlyElementsOf(expected);
         verify(2, getRequestedFor(urlPathEqualTo("/api/vBeta/order_products")));
+        assertMetrics("library-page", "success", 2);
+    }
+
+    @Test
+    void respectsServerPageSizeCapsWithoutSkippingProducts() throws Exception {
+        String firstPage = orderProductCollectionJson(List.of(1, 2), "/api/vBeta/order_products?page=2&pageSize=2")
+                .replace("\"itemsPerPage\":200", "\"itemsPerPage\":2");
+        stubFor(get(urlPathEqualTo("/api/vBeta/order_products")).atPriority(1)
+                .withQueryParam("page", equalTo("1"))
+                .willReturn(aResponse().withHeader("Content-Type", JSON_API).withBody(firstPage)));
+        stubFor(get(urlPathEqualTo("/api/vBeta/order_products")).atPriority(1)
+                .withQueryParam("page", equalTo("2"))
+                .withQueryParam("pageSize", equalTo("2"))
+                .willReturn(aResponse().withHeader("Content-Type", JSON_API)
+                        .withBody(orderProductCollectionJson(List.of(3), null))));
+
+        assertThat(service.getIdsOfOwnedProducts(service.getToken(API_KEY))).containsExactly(1, 2, 3);
+        verify(2, getRequestedFor(urlPathEqualTo("/api/vBeta/order_products")));
+    }
+
+    @Test
+    void usesServerPageSizeWhenPaginationLinksAreMissing() throws Exception {
+        stubFor(get(urlPathEqualTo("/api/vBeta/order_products")).atPriority(1)
+                .withQueryParam("page", equalTo("1"))
+                .willReturn(aResponse().withHeader("Content-Type", JSON_API)
+                        .withBody("""
+                                {"meta":{"itemsPerPage":2,"currentPage":1},"data":[
+                                  {"attributes":{"productId":1}},{"attributes":{"productId":2}}]}
+                                """)));
+        stubFor(get(urlPathEqualTo("/api/vBeta/order_products")).atPriority(1)
+                .withQueryParam("page", equalTo("2"))
+                .withQueryParam("pageSize", equalTo("2"))
+                .willReturn(aResponse().withHeader("Content-Type", JSON_API)
+                        .withBody(orderProductCollectionJson(List.of(), null))));
+
+        assertThat(service.getIdsOfOwnedProducts(service.getToken(API_KEY))).containsExactly(1, 2);
     }
 
     @Test
@@ -228,13 +274,16 @@ class DriveThruRPGServiceTest {
         verify(1, postRequestedFor(urlPathEqualTo("/api/vBeta/auth/refresh")));
         verify(2, getRequestedFor(urlPathEqualTo("/api/vBeta/order_products"))
                 .withQueryParam("page", equalTo("1")));
+        assertMetrics("token-refresh", "success", 1);
+        assertMetrics("library-page", "error", 1);
+        assertMetrics("library-page", "success", 1);
     }
 
     @Test
     void fallsBackToApplicationKeyExchangeWhenRefreshTokenIsRejectedOnLaterPage() throws Exception {
         String firstPage = orderProductCollectionJson(
                 IntStream.rangeClosed(1, PAGE_SIZE).boxed().toList(),
-                "/api/vBeta/order_products?page=2&pageSize=50");
+                "/api/vBeta/order_products?page=2&pageSize=200");
         stubFor(post(urlPathEqualTo("/api/vBeta/auth_key")).atPriority(1)
                 .inScenario("fallback-renewal").whenScenarioStateIs("Started")
                 .willReturn(aResponse().withHeader("Content-Type", "application/json")
@@ -304,6 +353,60 @@ class DriveThruRPGServiceTest {
                 .willReturn(aResponse().withStatus(NOT_FOUND)));
         assertThat(service.getProduct("999999")).isEmpty();
         assertThat(service.getPublisher("999999")).isEmpty();
+        assertMetrics("product", "success", 2);
+        assertMetrics("product", "error", 1);
+        assertMetrics("publisher", "success", 1);
+        assertMetrics("publisher", "error", 1);
+    }
+
+    @Test
+    void measuresTransportTimeoutsWithoutAddingCredentialsToMetricTags(final WireMockRuntimeInfo wireMock) {
+        DriveThruProperties properties = new DriveThruProperties();
+        properties.setBaseUrl(wireMock.getHttpBaseUrl() + "/api/vBeta");
+        properties.setReadTimeout(Duration.ofMillis(50));
+        DriveThruRPGService slowService = new DriveThruRPGService(
+                new DriveThruRPGClientConfig().driveThruRPGClient(properties, meterRegistry));
+        stubFor(post(urlPathEqualTo("/api/vBeta/auth_key")).atPriority(1)
+                .willReturn(aResponse().withFixedDelay(300).withBody(API_KEY)));
+
+        assertThatThrownBy(() -> slowService.getToken(API_KEY)).isInstanceOf(AuthenticationServiceException.class);
+        assertMetrics("token-exchange", "error", 1);
+        assertThat(meterRegistry.getMeters()).allSatisfy(meter -> {
+            assertThat(meter.getId().getTags()).extracting(tag -> tag.getKey()).containsExactly("operation", "outcome");
+            assertThat(meter.getId().toString()).doesNotContain(API_KEY, ACCESS_TOKEN, "applicationKey", "http://");
+        });
+    }
+
+    @Test
+    void exportsPrometheusDurationAndRequestCount(final WireMockRuntimeInfo wireMock) throws Exception {
+        DriveThruProperties properties = new DriveThruProperties();
+        properties.setBaseUrl(wireMock.getHttpBaseUrl() + "/api/vBeta");
+        PrometheusMeterRegistry prometheus = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        try {
+            DriveThruRPGService measured = new DriveThruRPGService(
+                    new DriveThruRPGClientConfig().driveThruRPGClient(properties, prometheus));
+            measured.getToken(API_KEY);
+
+            assertThat(prometheus.scrape())
+                    .contains("drivethru_http_client_duration_seconds_count{operation=\"token-exchange\",outcome=\"success\"} 1",
+                            "drivethru_http_client_duration_seconds_sum{operation=\"token-exchange\",outcome=\"success\"}",
+                            "drivethru_http_client_requests_total{operation=\"token-exchange\",outcome=\"success\"} 1")
+                    .doesNotContain(API_KEY, ACCESS_TOKEN, "applicationKey", "http://");
+        } finally {
+            prometheus.close();
+        }
+    }
+
+    @Test
+    void measuresIndividualOrderProductRequests() {
+        stubFor(get(urlPathEqualTo("/api/vBeta/order_products/123")).willReturn(
+                aResponse().withHeader("Content-Type", JSON_API)
+                        .withBody("{\"data\":{\"id\":\"123\",\"type\":\"OrderProduct\","
+                                + "\"attributes\":{\"productId\":216248}}}")));
+
+        assertThat(client.getOrderProduct(ACCESS_TOKEN, 123).getAttributes())
+                .hasValueSatisfying(product -> assertThat(product.getId()).isEqualTo(216248));
+        assertMetrics("order-product", "success", 1);
     }
 
     @Test
@@ -339,6 +442,7 @@ class DriveThruRPGServiceTest {
     void rejectsAnInvalidApplicationKey() {
         assertThatThrownBy(() -> service.getToken("deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"))
                 .isInstanceOf(NoValidTokenException.class);
+        assertMetrics("token-exchange", "error", 1);
     }
 
     @Test
@@ -350,6 +454,7 @@ class DriveThruRPGServiceTest {
                 .isInstanceOf(AuthenticationServiceException.class)
                 .hasMessageNotContaining(API_KEY)
                 .hasNoCause();
+        assertMetrics("token-exchange", "error", 1);
         assertThat(appender.list).anySatisfy(event -> {
             assertThat(event.getLevel()).isEqualTo(Level.WARN);
             assertThat(event.getFormattedMessage()).isEqualTo("DriveThruRPG token request failed.");
@@ -452,6 +557,117 @@ class DriveThruRPGServiceTest {
         });
     }
 
+    @Test
+    void streamsBatchesImmediatelyBeforeRequestingNextPageAndDeduplicatesSnapshot() throws Exception {
+        DrivethruToken token = new DrivethruToken();
+        token.setAccessToken("wiremock-streaming-bearer-token");
+        List<DriveThruLibraryBatch> receivedBatches = new java.util.ArrayList<>();
+
+        DriveThruLibrarySnapshot snapshot = service.streamOwnedProductBatches(token, batch -> {
+            receivedBatches.add(batch);
+            if (batch.pageNumber() == 1) {
+                verify(1, getRequestedFor(urlPathEqualTo("/api/vBeta/order_products")));
+                assertThat(batch.productIds()).containsExactly(216248);
+                assertThat(batch.customerId()).isEqualTo("424242");
+            }
+        });
+
+        assertThat(receivedBatches).hasSize(2);
+        assertThat(receivedBatches.get(1).pageNumber()).isEqualTo(2);
+        assertThat(receivedBatches.get(1).productIds()).containsExactly(284210, 216248);
+        assertThat(snapshot.productIds()).containsExactly(216248, 284210);
+        assertThat(snapshot.customerId()).isEqualTo("424242");
+        assertThat(snapshot.loadedAt()).isNotNull();
+        assertThatThrownBy(() -> snapshot.productIds().add(999))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertMetrics("library-page", "success", 2);
+    }
+
+    @Test
+    void streamingHandlesEmptyLibrariesServerCapsMissingLinksAndPartialOrSupersededFailures() throws Exception {
+        stubFor(get(urlPathEqualTo("/api/vBeta/order_products")).atPriority(1)
+                .withHeader("Authorization", equalTo("empty-bearer"))
+                .willReturn(aResponse().withHeader("Content-Type", JSON_API)
+                        .withBody(orderProductCollectionJson(List.of(), null))));
+
+        DrivethruToken emptyToken = new DrivethruToken();
+        emptyToken.setAccessToken("empty-bearer");
+        List<DriveThruLibraryBatch> emptyBatches = new java.util.ArrayList<>();
+        DriveThruLibrarySnapshot emptySnapshot = service.streamOwnedProductBatches(emptyToken, emptyBatches::add);
+        assertThat(emptyBatches).isEmpty();
+        assertThat(emptySnapshot.productIds()).isEmpty();
+        assertThat(emptySnapshot.customerId()).isNull();
+
+        stubFor(get(urlPathEqualTo("/api/vBeta/order_products")).atPriority(1)
+                .withHeader("Authorization", equalTo("partial-fail-bearer"))
+                .withQueryParam("page", equalTo("1"))
+                .willReturn(aResponse().withHeader("Content-Type", JSON_API)
+                        .withBody(orderProductCollectionJson(
+                                List.of(216248), "/api/vBeta/order_products?page=2&pageSize=200"))));
+        stubFor(get(urlPathEqualTo("/api/vBeta/order_products")).atPriority(1)
+                .withHeader("Authorization", equalTo("partial-fail-bearer"))
+                .withQueryParam("page", equalTo("2"))
+                .willReturn(aResponse().withStatus(UNAVAILABLE)));
+
+        DrivethruToken failingToken = new DrivethruToken();
+        failingToken.setAccessToken("partial-fail-bearer");
+        List<DriveThruLibraryBatch> partialBatches = new java.util.ArrayList<>();
+        assertThatThrownBy(() -> service.streamOwnedProductBatches(failingToken, partialBatches::add))
+                .isInstanceOf(AuthenticationServiceException.class);
+        assertThat(partialBatches).singleElement()
+                .extracting(DriveThruLibraryBatch::productIds)
+                .isEqualTo(List.of(216248));
+
+        DrivethruToken supersededToken = new DrivethruToken();
+        supersededToken.setAccessToken("wiremock-streaming-bearer-token");
+        assertThatThrownBy(() -> service.streamOwnedProductBatches(supersededToken, batch -> {
+            throw new SupersededSyncException("superseded after batch 1");
+        })).isInstanceOf(SupersededSyncException.class);
+    }
+
+    @Test
+    void sessionCopyRenewalIsRefreshOnlyAndNeverReExchangesMissingApplicationKey() throws Exception {
+        stubFor(get(urlPathEqualTo("/api/vBeta/order_products")).atPriority(1)
+                .withHeader("Authorization", equalTo("expired-session-jwt"))
+                .willReturn(aResponse().withStatus(UNAUTHORIZED)));
+        stubFor(post(urlPathEqualTo("/api/vBeta/auth/refresh")).atPriority(1)
+                .withHeader("Cookie", equalTo("refreshToken=rejected-refresh-token"))
+                .willReturn(aResponse().withStatus(UNAUTHORIZED)));
+
+        DrivethruToken original = service.getToken(API_KEY);
+        meterRegistry.clear();
+
+        DrivethruToken missingRefresh = original.sessionCopy();
+        missingRefresh.setAccessToken("expired-session-jwt");
+        missingRefresh.setRefreshToken(null);
+        assertThatThrownBy(() -> service.streamOwnedProductBatches(missingRefresh, batch -> { }))
+                .isInstanceOf(NoValidTokenException.class);
+
+        DrivethruToken expiredRefresh = original.sessionCopy();
+        expiredRefresh.setAccessToken("expired-session-jwt");
+        expiredRefresh.setRefreshTokenTTL(1L);
+        assertThatThrownBy(() -> service.streamOwnedProductBatches(expiredRefresh, batch -> { }))
+                .isInstanceOf(NoValidTokenException.class);
+
+        DrivethruToken rejectedRefresh = original.sessionCopy();
+        rejectedRefresh.setAccessToken("expired-session-jwt");
+        rejectedRefresh.setRefreshToken("rejected-refresh-token");
+        assertThatThrownBy(() -> service.streamOwnedProductBatches(rejectedRefresh, batch -> { }))
+                .isInstanceOf(NoValidTokenException.class);
+
+        verify(1, postRequestedFor(urlPathEqualTo("/api/vBeta/auth_key")));
+        verify(1, postRequestedFor(urlPathEqualTo("/api/vBeta/auth/refresh")));
+    }
+
+    private void assertMetrics(final String operation, final String outcome, final int count) {
+        String[] tags = {"operation", operation, "outcome", outcome};
+        assertThat(meterRegistry.get(DriveThruRPGClientConfig.REQUEST_COUNT).tags(tags).counter().count())
+                .isEqualTo(count);
+        var timer = meterRegistry.get(DriveThruRPGClientConfig.REQUEST_DURATION).tags(tags).timer();
+        assertThat(timer.count()).isEqualTo(count);
+        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
+    }
+
     private static String orderProductCollectionJson(final List<Integer> productIds, final String nextLink) {
         String items = productIds.stream()
                 .map(id -> "{\"id\":\"/api/vBeta/order_products/" + id + "\","
@@ -463,7 +679,7 @@ class DriveThruRPGServiceTest {
                 .collect(Collectors.joining(","));
         String nextJson = nextLink == null ? "null" : "\"" + nextLink + "\"";
         return "{\"links\":{\"self\":\"/api/vBeta/order_products\",\"next\":" + nextJson + "},"
-                + "\"meta\":{\"itemsPerPage\":50,\"currentPage\":1},"
+                + "\"meta\":{\"itemsPerPage\":" + PAGE_SIZE + ",\"currentPage\":1},"
                 + "\"data\":[" + items + "]}";
     }
 }

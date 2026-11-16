@@ -22,6 +22,19 @@ enum AccessDecision {
 }
 
 
+class AdminNotificationController {
+	{method} +acknowledgeToasts ( ids : List , request : HttpServletRequest , response : HttpServletResponse ) : ResponseEntity
+	{method} +streamToasts ( request : HttpServletRequest , response : HttpServletResponse ) : Object
+}
+
+
+class AllAuthenticatedUsers {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
 interface AreaSource {
 	{method}  {abstract} +area () : CatalogArea
 	{method}  {static} +articles ( query : CatalogQuery ) : AreaSource
@@ -172,6 +185,7 @@ class Attributes {
 class AuthPageViewModel {
 	{field} -errorMessage : String
 	{field} -signedOutBanner : boolean
+	{method} +csrf () : CsrfViewModel
 	{method} +equals ( o : Object ) : boolean
 	{method} +errorMessage () : String
 	{method} +hashCode () : int
@@ -290,6 +304,7 @@ class CatalogBrowseService {
 	{method} -publicationsByCodexId () : Map
 	{method} -requireSource ( area : CatalogArea ) : AreaSource
 	{method} -resolveEmbeddedReferences ( rawDescriptor : CatalogCategoryDescriptor , entry : CatalogEntry ) : Map
+	{method} -resolvePerkGroupMembers ( group : CatalogEntry ) : List
 	{method} -resolvePublications ( codexIds : Set ) : List
 	{method} -resolveSingleCanonicalSlug ( source : AreaSource , entry : CatalogEntry ) : String
 	{method} -sortEntries ( entries : List , rawDescriptor : CatalogCategoryDescriptor , sortKey : String , direction : SortDirection ) : List
@@ -502,6 +517,7 @@ interface CatalogReferencePersistencePort {
 	{method}  {abstract} +findCosmBySlug ( slug : String ) : Optional
 	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method}  {abstract} +findPublicationsByProductId ( productId : int ) : List
+	{method}  {abstract} +findPublicationsByProductIds ( productIds : Set ) : List
 }
 
 
@@ -509,6 +525,7 @@ interface CatalogReferenceQuery {
 	{method}  {abstract} +findCosmBySlug ( slug : String ) : Optional
 	{method}  {abstract} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method}  {abstract} +findPublicationsByProductId ( productId : int ) : List
+	{method}  {abstract} +findPublicationsByProductIds ( productIds : Set ) : List
 }
 
 
@@ -516,6 +533,7 @@ class CatalogReferenceQueryService {
 	{method} +findCosmBySlug ( slug : String ) : Optional
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
+	{method} +findPublicationsByProductIds ( productIds : Set ) : List
 	{method} -visibleReference ( cosm : CatalogEntryReference ) : Optional
 }
 
@@ -609,6 +627,18 @@ class Censor {
 }
 
 
+class Classification {
+	{field} -fallbackCompletionRoute : String
+	{field} -startRoute : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +fallbackCompletionRoute () : String
+	{method} +hashCode () : int
+	{method} +startRoute () : String
+	{method} +tier () : RequestTier
+	{method} +toString () : String
+}
+
+
 enum ClearanceLevel {
 	{field} +ALPHA
 	{field} +BETA
@@ -634,12 +664,20 @@ class ClearanceLevelConverter {
 
 
 class CodexAuthController {
+	{field} {static} -AUTH_FAILED_TITLE : String
 	{field} {static} -INVALID_KEY_MESSAGE : String
+	{field} {static} -SERVICE_UNAVAILABLE_TITLE : String
+	{field} {static} -UNAVAILABLE_MESSAGE : String
 	{field} {static} -log : Logger
 	{field} -sessionAuthentication : ApiKeySessionAuthentication
-	{method} +login ( logoutParam : String , authentication : Authentication , response : HttpServletResponse , model : Model ) : String
-	{method} +logoutPage ( authentication : Authentication , response : HttpServletResponse , model : Model ) : String
+	{field} -synchronizer : DriveThruLibrarySynchronizer
+	{method} -buildAuthPageModel ( authentication : Authentication , request : HttpServletRequest , errorMessage : String , signedOutBanner : boolean ) : AuthPageViewModel
+	{method} +login ( logoutParam : String , authentication : Authentication , request : HttpServletRequest , response : HttpServletResponse , model : Model ) : String
+	{method} +logoutPage ( authentication : Authentication , request : HttpServletRequest , response : HttpServletResponse , model : Model ) : String
 	{method} +performLogin ( apiKey : String , currentAuthentication : Authentication , request : HttpServletRequest , response : HttpServletResponse , model : Model ) : String
+	{method}  {static} -redirectAnonymousReload ( htmxRequest : boolean , response : HttpServletResponse ) : String
+	{method} +reloadLibrary ( authentication : Authentication , request : HttpServletRequest , response : HttpServletResponse , model : Model ) : String
+	{method}  {static} -resolveSafeRefererPath ( request : HttpServletRequest ) : String
 }
 
 
@@ -676,6 +714,12 @@ class CodexHomeOverview {
 	{method} +ownedPublications () : List
 	{method} +toString () : String
 	{method} +unlockedPercentage () : double
+}
+
+
+class CodexNotificationController {
+	{method} +acknowledgeToasts ( ids : List , request : HttpServletRequest , response : HttpServletResponse ) : ResponseEntity
+	{method} +streamToasts ( request : HttpServletRequest , response : HttpServletResponse ) : Object
 }
 
 
@@ -905,6 +949,20 @@ class CosmSummaryDto {
 	{method} +name () : String
 	{method} +publications () : List
 	{method} +toString () : String
+}
+
+
+class CsrfViewModel {
+	{field} -headerName : String
+	{field} -parameterName : String
+	{field} -token : String
+	{method} +equals ( o : Object ) : boolean
+	{method}  {static} +fromRequest ( request : HttpServletRequest ) : CsrfViewModel
+	{method} +hashCode () : int
+	{method} +headerName () : String
+	{method} +parameterName () : String
+	{method} +toString () : String
+	{method} +token () : String
 }
 
 
@@ -1253,6 +1311,21 @@ class HomeViewModel {
 }
 
 
+class InMemoryUserNotificationStoreAdapter {
+	{field} {static} -DESTROYED_TOMBSTONE_CAPACITY : int
+	{field} -authenticatedChannels : Set
+	{field} -destroyedChannels : Cache
+	{field} -eventPublisher : ApplicationEventPublisher
+	{field} -queues : Map
+	{method} +acknowledge ( channelId : String , notificationIds : Set ) : void
+	{method} +authenticatedChannels () : Set
+	{method} +clear ( channelId : String ) : void
+	{method} +enqueue ( channelId : String , notification : UserNotification ) : void
+	{method} +pending ( channelId : String , limit : int ) : List
+	{method} +registerAuthenticatedChannel ( channelId : String ) : void
+}
+
+
 class Item {
 	{field} +additionalFeatures : String
 	{field} +ammo : String
@@ -1412,6 +1485,7 @@ class JpaCatalogReferenceAdapter {
 	{method} +findCosmBySlug ( slug : String ) : Optional
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
+	{method} +findPublicationsByProductIds ( productIds : Set ) : List
 	{method} -toPublicationReference ( publication : Publication ) : CatalogPublicationReference
 	{method} -toReference ( publication : Publication ) : CatalogReference
 }
@@ -1556,6 +1630,14 @@ class LinkedEntryViewModel {
 	{method} +name () : String
 	{method} +targetArea () : CatalogArea
 	{method} +toString () : String
+}
+
+
+class LogoutTimingFilter {
+	{field} {static} +PAGE_METER : String
+	{field} -meterRegistry : MeterRegistry
+	{method} #doFilterInternal ( request : HttpServletRequest , response : HttpServletResponse , filterChain : FilterChain ) : void
+	{method}  {static} -isLogoutSubmission ( request : HttpServletRequest ) : boolean
 }
 
 
@@ -1825,12 +1907,16 @@ class NavContextViewModel {
 	{method} +activeArea () : CatalogArea
 	{method} +authStatusTag () : String
 	{method}  {static} +create ( activeArea : CatalogArea , signedIn : boolean ) : NavContextViewModel
+	{method} +csrf () : CsrfViewModel
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +isSectionActive ( section : NavigationSection ) : boolean
 	{method} +sections () : List
 	{method} +signedIn () : boolean
 	{method} +toString () : String
+	{method} +toastRegion () : ToastRegionViewModel
+	{method} +withCsrf ( resolvedCsrf : CsrfViewModel ) : NavContextViewModel
+	{method} +withToastRegion ( resolvedRegion : ToastRegionViewModel ) : NavContextViewModel
 }
 
 
@@ -1867,6 +1953,71 @@ class NotFoundViewModel {
 	{method} +nav () : NavContextViewModel
 	{method} +title () : String
 	{method} +toString () : String
+}
+
+
+class NotificationAction {
+	{field} -label : String
+	{field} -targetPath : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +kind () : NotificationActionKind
+	{method} +label () : String
+	{method}  {static} +navigateUrl ( label : String , targetPath : String ) : NotificationAction
+	{method}  {static} +reloadCurrentPage ( label : String ) : NotificationAction
+	{method} +targetPath () : String
+	{method} +toString () : String
+}
+
+
+enum NotificationActionKind {
+	{field} +NAVIGATE_URL
+	{field} +RELOAD_CURRENT_PAGE
+}
+
+
+class NotificationConfiguration {
+	{field} {static} -DEFAULT_SYNC_CORE_THREADS : int
+	{field} {static} -DEFAULT_SYNC_QUEUE_CAPACITY : int
+	{method} +driveThruLibrarySynchronizer ( driveThruRPGService : DriveThruRPGService , catalogReferenceQuery : CatalogReferenceQuery , syncExecutor : TaskExecutor , eventPublisher : ApplicationEventPublisher , observationRegistry : ObjectProvider , libraryLoadCoordinator : ObjectProvider ) : DriveThruLibrarySynchronizer
+	{method} +drivethruSyncExecutor ( coreSize : int , queueCapacity : int ) : ThreadPoolTaskExecutor
+	{method} +notificationEventBridge ( notificationCommand : UserNotificationCommand ) : NotificationEventBridge
+	{method} +notificationSessionListener ( storePort : UserNotificationStorePort , sseBroadcaster : SseNotificationBroadcaster ) : NotificationSessionListener
+	{method} +sseNotificationBroadcaster ( notificationQuery : UserNotificationQuery , toastMapper : ToastViewModelMapper , templateEngine : TemplateEngine , sseTimeout : Duration ) : SseNotificationBroadcaster
+	{method} +userNotificationService ( storePort : UserNotificationStorePort ) : UserNotificationService
+	{method} +userNotificationStorePort ( eventPublisher : ApplicationEventPublisher ) : UserNotificationStorePort
+	{method} +webNotificationSupport ( notificationQuery : UserNotificationQuery , storePort : UserNotificationStorePort , toastMapper : ToastViewModelMapper , sseBroadcaster : SseNotificationBroadcaster ) : WebNotificationSupport
+}
+
+
+class NotificationEventBridge {
+	{method} +onNotificationRequested ( event : UserNotificationRequested ) : void
+}
+
+
+class NotificationSessionListener {
+	{method} +cleanupSession ( session : HttpSession ) : void
+	{method} +sessionDestroyed ( event : HttpSessionEvent ) : void
+}
+
+
+enum NotificationSeverity {
+	{field} +ERROR
+	{field} +INFO
+	{field} +SUCCESS
+	{field} +WARNING
+}
+
+
+enum NotificationSurface {
+	{field} +ADMIN
+	{field} +CODEX
+}
+
+
+interface NotificationTarget {
+	{method}  {static} +allAuthenticatedUsers () : NotificationTarget
+	{method}  {static} +session ( channelId : String ) : NotificationTarget
 }
 
 
@@ -2578,6 +2729,7 @@ interface PublicationRepository {
 	{method}  {abstract} +findByProductId ( productId : int ) : List
 	{method}  {abstract} +findByThirdParty ( thirdParty : String ) : List
 	{method}  {abstract} +findByThirdPartyIsNull () : List
+	{method}  {abstract} +findReferencesByProductIds ( productIds : Set ) : List
 }
 
 
@@ -2742,6 +2894,13 @@ class RenderedProseSection {
 }
 
 
+enum RequestTier {
+	{field} +BACKGROUND_CONTROL
+	{field} +EXCLUDED
+	{field} +USER_REQUEST
+}
+
+
 class RequiredProductDto {
 	{field} -codexId : String
 	{method} +codexId () : String
@@ -2831,6 +2990,15 @@ class SanitizedHtml {
 	{method} +hashCode () : int
 	{method} +html () : String
 	{method} +isEmpty () : boolean
+	{method} +toString () : String
+}
+
+
+class SessionChannel {
+	{field} -channelId : String
+	{method} +channelId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
 	{method} +toString () : String
 }
 
@@ -3210,6 +3378,19 @@ class SpellSummaryDto {
 }
 
 
+class SseNotificationBroadcaster {
+	{field} -registrationsByChannel : Map
+	{field} -sseTimeout : Duration
+	{field} -templateEngine : TemplateEngine
+	{method} +activeEmitterCount ( channelId : String ) : int
+	{method} +closeChannel ( channelId : String ) : void
+	{method} +onNotificationPublished ( event : UserNotificationPublished ) : void
+	{method} -removeRegistration ( channelId : String , registration : EmitterRegistration ) : void
+	{method} -renderToasts ( surface : NotificationSurface , toasts : List ) : String
+	{method} +subscribe ( channelId : String , surface : NotificationSurface ) : SseEmitter
+}
+
+
 class TableCellViewModel {
 	{field} -href : String
 	{field} -text : String
@@ -3569,6 +3750,92 @@ class ThreatSummaryDto {
 }
 
 
+class ToastActionView {
+	{field} -kind : String
+	{field} -label : String
+	{field} -targetPath : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +kind () : String
+	{method} +label () : String
+	{method} +targetPath () : String
+	{method} +toString () : String
+}
+
+
+class ToastContent {
+	{field} -id : String
+	{field} -message : String
+	{field} -notificationId : String
+	{field} -title : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : String
+	{method} +message () : String
+	{method} +notificationId () : String
+	{method} +title () : String
+	{method} +toString () : String
+}
+
+
+class ToastPresentation {
+	{field} -ariaLive : String
+	{field} -ariaRole : String
+	{field} -autoHide : boolean
+	{field} -delayMs : int
+	{field} -iconCss : String
+	{field} -severityKey : String
+	{method} +ariaLive () : String
+	{method} +ariaRole () : String
+	{method} +autoHide () : boolean
+	{method} +delayMs () : int
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +iconCss () : String
+	{method} +severityKey () : String
+	{method} +toString () : String
+}
+
+
+class ToastRegionViewModel {
+	{field} -ackEndpoint : String
+	{field} -streamEndpoint : String
+	{method} +ackEndpoint () : String
+	{method}  {static} +empty () : ToastRegionViewModel
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +initialToasts () : List
+	{method} +streamEndpoint () : String
+	{method} +toString () : String
+}
+
+
+class ToastViewModel {
+	{method} +action () : ToastActionView
+	{method} +content () : ToastContent
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +presentation () : ToastPresentation
+	{method} +toString () : String
+}
+
+
+interface ToastViewModelMapper {
+	{field} {static} +AUTO_DISMISS_DELAY_MS : int
+	{method} +toActionView ( action : NotificationAction ) : ToastActionView
+	{method} +toContent ( notification : UserNotification ) : ToastContent
+	{method} +toPresentation ( severity : NotificationSeverity ) : ToastPresentation
+	{method}  {abstract} +toViewModel ( notification : UserNotification ) : ToastViewModel
+	{method}  {abstract} +toViewModels ( notifications : List ) : List
+}
+
+
+class ToastViewModelMapperImpl {
+	{method} +toViewModel ( notification : UserNotification ) : ToastViewModel
+	{method} +toViewModels ( notifications : List ) : List
+}
+
+
 class TorgCodexApplication {
 	{method}  {static} +main ( args : String[] ) : void
 }
@@ -3580,9 +3847,16 @@ class TorgCodexDataApplication {
 
 
 class TorgCodexSecurityConfig {
+	{field} {static} -UI_CORS_HEADERS : List
+	{field} {static} -UI_CORS_METHODS : List
 	{field} {static} -log : Logger
-	{method} +apiKeySessionAuthentication ( authenticationManager : AuthenticationManager ) : ApiKeySessionAuthentication
-	{method} +torgCodexSecurityFilterChain ( http : HttpSecurity , authenticationManager : AuthenticationManager , sessionAuthentication : ApiKeySessionAuthentication ) : SecurityFilterChain
+	{field} -meterRegistry : ObjectProvider
+	{method} +apiKeySessionAuthentication ( authenticationManager : AuthenticationManager , csrfTokenRepository : HttpSessionCsrfTokenRepository , contextRepository : GenerationAwareSecurityContextRepository , driveThruRPGService : ObjectProvider , synchronizer : ObjectProvider , observationRegistry : ObjectProvider ) : ApiKeySessionAuthentication
+	{method} +csrfTokenRepository () : HttpSessionCsrfTokenRepository
+	{method} +generationAwareSecurityContextRepository () : GenerationAwareSecurityContextRepository
+	{method}  {static} -isNonBrowserEndpoint ( request : HttpServletRequest ) : boolean
+	{method} +torgCodexSecurityFilterChain ( http : HttpSecurity , authenticationManager : AuthenticationManager , sessionAuthentication : ApiKeySessionAuthentication , csrfTokenRepository : HttpSessionCsrfTokenRepository , contextRepository : GenerationAwareSecurityContextRepository , uiCorsConfigurationSource : CorsConfigurationSource ) : SecurityFilterChain
+	{method} +uiCorsConfigurationSource ( corsProperties : WebCorsProperties ) : CorsConfigurationSource
 }
 
 
@@ -3614,6 +3888,120 @@ class TorgMappingSupport {
 
 class TorgMarkupService {
 	{method} +render ( rawText : String , ownedProducts : Set ) : String
+}
+
+
+class UserNotification {
+	{field} -createdAt : Instant
+	{field} -id : UUID
+	{field} -message : String
+	{field} -title : String
+	{method} +action () : NotificationAction
+	{method} +createdAt () : Instant
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +id () : UUID
+	{method} +message () : String
+	{method} +severity () : NotificationSeverity
+	{method} +title () : String
+	{method} +toString () : String
+}
+
+
+interface UserNotificationCommand {
+	{method} +dispatch ( target : NotificationTarget , severity : NotificationSeverity , title : String , message : String , action : NotificationAction ) : List
+	{method}  {abstract} +notifyAllAuthenticated ( severity : NotificationSeverity , title : String , message : String , action : NotificationAction ) : List
+	{method} +notifyError ( channelId : String , title : String , message : String ) : UserNotification
+	{method} +notifyError ( channelId : String , title : String , message : String , action : NotificationAction ) : UserNotification
+	{method} +notifyInfo ( channelId : String , title : String , message : String ) : UserNotification
+	{method} +notifyInfo ( channelId : String , title : String , message : String , action : NotificationAction ) : UserNotification
+	{method}  {abstract} +notifySession ( channelId : String , severity : NotificationSeverity , title : String , message : String , action : NotificationAction ) : UserNotification
+	{method} +notifySuccess ( channelId : String , title : String , message : String ) : UserNotification
+	{method} +notifySuccess ( channelId : String , title : String , message : String , action : NotificationAction ) : UserNotification
+	{method} +notifyWarning ( channelId : String , title : String , message : String ) : UserNotification
+	{method} +notifyWarning ( channelId : String , title : String , message : String , action : NotificationAction ) : UserNotification
+}
+
+
+class UserNotificationPublished {
+	{field} -channelId : String
+	{method} +channelId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +notification () : UserNotification
+	{method} +toString () : String
+}
+
+
+interface UserNotificationQuery {
+	{method}  {abstract} +acknowledge ( channelId : String , notificationIds : Set ) : void
+	{method}  {abstract} +pending ( channelId : String ) : List
+}
+
+
+class UserNotificationRequested {
+	{field} -message : String
+	{field} -title : String
+	{method} +action () : NotificationAction
+	{method}  {static} +broadcast ( severity : NotificationSeverity , title : String , message : String , action : NotificationAction ) : UserNotificationRequested
+	{method}  {static} +broadcastInfo ( title : String , message : String ) : UserNotificationRequested
+	{method}  {static} +broadcastWarning ( title : String , message : String ) : UserNotificationRequested
+	{method} +equals ( o : Object ) : boolean
+	{method}  {static} +error ( channelId : String , title : String , message : String , action : NotificationAction ) : UserNotificationRequested
+	{method} +hashCode () : int
+	{method}  {static} +info ( channelId : String , title : String , message : String ) : UserNotificationRequested
+	{method} +message () : String
+	{method} +severity () : NotificationSeverity
+	{method}  {static} +success ( channelId : String , title : String , message : String , action : NotificationAction ) : UserNotificationRequested
+	{method} +target () : NotificationTarget
+	{method} +title () : String
+	{method} +toString () : String
+	{method}  {static} +warning ( channelId : String , title : String , message : String , action : NotificationAction ) : UserNotificationRequested
+}
+
+
+class UserNotificationService {
+	{field} {static} +MAX_ACTION_LABEL_LENGTH : int
+	{field} {static} +MAX_PENDING_BATCH : int
+	{field} -clock : Clock
+	{method} +acknowledge ( channelId : String , notificationIds : Set ) : void
+	{method} +notifyAllAuthenticated ( severity : NotificationSeverity , title : String , message : String , action : NotificationAction ) : List
+	{method} +notifySession ( channelId : String , severity : NotificationSeverity , title : String , message : String , action : NotificationAction ) : UserNotification
+	{method} +pending ( channelId : String ) : List
+	{method}  {static} -requireNonBlank ( raw : String , fieldName : String ) : String
+	{method}  {static} -requireNonBlankNoControl ( raw : String , fieldName : String ) : String
+	{method}  {static} -validateAction ( action : NotificationAction ) : NotificationAction
+	{method}  {static} -validateInternalTargetPath ( targetPath : String ) : String
+	{method}  {static} -validatePayload ( severity : NotificationSeverity , title : String , message : String , action : NotificationAction ) : ValidatedPayload
+}
+
+
+interface UserNotificationStorePort {
+	{method}  {abstract} +acknowledge ( channelId : String , notificationIds : Set ) : void
+	{method}  {abstract} +authenticatedChannels () : Set
+	{method}  {abstract} +clear ( channelId : String ) : void
+	{method}  {abstract} +enqueue ( channelId : String , notification : UserNotification ) : void
+	{method}  {abstract} +pending ( channelId : String , limit : int ) : List
+	{method}  {abstract} +registerAuthenticatedChannel ( channelId : String ) : void
+}
+
+
+class UserRequestClassification {
+	{field} {static} -BACKGROUND_CONTROL_PATHS : Set
+	{method}  {static} +classify ( request : HttpServletRequest ) : Classification
+	{method}  {static} -isExcluded ( path : String ) : boolean
+	{method}  {static} -normalizePath ( request : HttpServletRequest ) : String
+	{method}  {static} +resolveCompletionRoute ( request : HttpServletRequest , classification : Classification ) : String
+}
+
+
+class UserRequestLoggingFilter {
+	{field} {static} -log : Logger
+	{method}  {static} -buildCompletionEvent ( builder : LoggingEventBuilder , action : String , method : String , route : String , statusCode : int , durationMs : long ) : LoggingEventBuilder
+	{method} #doFilterInternal ( request : HttpServletRequest , response : HttpServletResponse , filterChain : FilterChain ) : void
+	{method}  {static} -logCompletion ( request : HttpServletRequest , classification : Classification , method : String , statusCode : int , startedNanos : long ) : void
+	{method}  {static} -logStart ( classification : Classification , method : String ) : void
+	{method} -registerAsyncCompletion ( request : HttpServletRequest , response : HttpServletResponse , classification : Classification , method : String , startedNanos : long , completedOnce : AtomicBoolean ) : void
 }
 
 
@@ -3837,11 +4225,42 @@ class VehicleWeaponDto {
 }
 
 
+class WebCorsProperties {
+	{field} +allowedOrigins : List
+}
+
+
+class WebNotificationSupport {
+	{field} {static} +ADMIN_ACK_ENDPOINT : String
+	{field} {static} +ADMIN_STREAM_ENDPOINT : String
+	{field} {static} +CODEX_ACK_ENDPOINT : String
+	{field} {static} +CODEX_STREAM_ENDPOINT : String
+	{field} {static} -REQUEST_TOASTS_ATTR : String
+	{method} +acknowledge ( rawIds : List , request : HttpServletRequest , response : HttpServletResponse ) : ResponseEntity
+	{method} +addRequestErrorToast ( request : HttpServletRequest , title : String , message : String ) : void
+	{method} +buildAdminToastRegion ( request : HttpServletRequest ) : ToastRegionViewModel
+	{method} +buildReaderToastRegion ( request : HttpServletRequest , signedIn : boolean ) : ToastRegionViewModel
+	{method} -buildRegion ( request : HttpServletRequest , channelOpt : Optional , streamUrl : String , ackUrl : String ) : ToastRegionViewModel
+	{method} +existingChannelId ( request : HttpServletRequest ) : Optional
+	{method} +getOrCreateChannelId ( request : HttpServletRequest , authenticated : boolean ) : String
+	{method} +openStream ( request : HttpServletRequest , response : HttpServletResponse , surface : NotificationSurface ) : Object
+}
+
+
+class WebObservabilityConfiguration {
+	{field} {static} -BEFORE_SPRING_SECURITY_ORDER : int
+	{method} +userRequestLoggingFilter () : UserRequestLoggingFilter
+	{method} +userRequestLoggingFilterRegistration ( filter : UserRequestLoggingFilter ) : FilterRegistrationBean
+}
+
+
 
 
 Absent *--  CatalogArea : area
 Absent ..|>  CatalogDetailResult
 Absent ..|>  EntryAccess
+AdminNotificationController *--  WebNotificationSupport : notificationSupport
+AllAuthenticatedUsers ..|>  NotificationTarget
 Article *--  ClearanceLevel : clearanceLevel
 Article --|>  TorgEntity
 Article ..|>  CatalogEntry
@@ -3860,6 +4279,7 @@ AttributeGroupViewModel "1" o-- "0..*"  AttributeItem : items
 AttributeItem *--  SanitizedHtml : markupValue
 Attributes "1" o-- "0..*"  AttributeField : fields
 Attributes ..|>  DetailSectionDescriptor
+AuthPageViewModel *--  CsrfViewModel : csrf
 AuthPageViewModel *--  NavContextViewModel : nav
 CatalogAccessObservabilityAdapter "1" o-- "0..*"  EntityType : counters
 CatalogAccessObservabilityAdapter ..|>  CatalogAccessObserver
@@ -3904,7 +4324,9 @@ CatalogUsageObserver *--  CatalogUsageObserver : NO_OP
 CategoryCard *--  CatalogArea : area
 CategorySummary *--  CatalogArea : area
 Censor *--  TorgMarkupService : markupService
+Classification *--  RequestTier : tier
 CodexAuthController *--  CodexViewMapper : viewMapper
+CodexAuthController -->  WebNotificationSupport : notificationSupport
 CodexCatalogController *--  CatalogBrowseQuery : browseQuery
 CodexCatalogController *--  CodexViewMapper : viewMapper
 CodexExceptionAdvice *--  CodexViewMapper : viewMapper
@@ -3913,11 +4335,13 @@ CodexHomeController *--  CodexViewMapper : viewMapper
 CodexHomeOverview "1" o-- "0..*"  CategorySummary : categories
 CodexHomeOverview "1" o-- "0..*"  Publication : missingPublications
 CodexHomeOverview "1" o-- "0..*"  Publication : ownedPublications
+CodexNotificationController *--  WebNotificationSupport : notificationSupport
 CodexOverviewService "1" o-- "0..*"  AreaSource : sources
 CodexOverviewService "1" o-- "0..*"  CatalogArea : sources
 CodexOverviewService *--  CallerProductsPort : callerProducts
 CodexOverviewService ..|>  CodexOverviewQuery
 CodexViewMapper *--  CurrentUserCensorFactory : censorFactory
+CodexViewMapper -->  WebNotificationSupport : notificationSupport
 ColumnDescriptor *--  CellKind : kind
 Cosm *--  ClearanceLevel : clearanceLevel
 Cosm --|>  TorgEntity
@@ -3974,6 +4398,7 @@ HomeViewModel "1" o-- "0..*"  CategoryCard : categories
 HomeViewModel "1" o-- "0..*"  PublicationCard : missingPublications
 HomeViewModel "1" o-- "0..*"  PublicationCard : ownedPublications
 HomeViewModel *--  NavContextViewModel : nav
+InMemoryUserNotificationStoreAdapter ..|>  UserNotificationStorePort
 Item *--  ClearanceLevel : clearanceLevel
 Item --|>  TorgEntity
 Item ..|>  ProductBoundEntry
@@ -4086,10 +4511,17 @@ MiracleSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 MiracleSummaryDto *--  ClearanceLevel : clearanceLevel
 NavContextViewModel "1" o-- "0..*"  NavSectionGroup : sections
 NavContextViewModel *--  CatalogArea : activeArea
+NavContextViewModel *--  CsrfViewModel : csrf
+NavContextViewModel *--  ToastRegionViewModel : toastRegion
 NavSectionGroup "1" o-- "0..*"  CatalogArea : areas
 NavSectionGroup *--  NavigationSection : section
 NotFound ..|>  RawLookupResult
 NotFoundViewModel *--  NavContextViewModel : nav
+NotificationAction *--  NotificationActionKind : kind
+NotificationEventBridge *--  UserNotificationCommand : notificationCommand
+NotificationSessionListener *--  SseNotificationBroadcaster : sseBroadcaster
+NotificationSessionListener *--  UserNotificationStorePort : storePort
+NotificationTarget *--  NotificationTarget : ALL_AUTHENTICATED
 OwnedProducts *--  OwnedProducts : ANONYMOUS
 Perk *--  ClearanceLevel : clearanceLevel
 Perk --|>  TorgEntity
@@ -4206,6 +4638,7 @@ RestrictedTeaser "1" o-- "0..*"  RequiredProductRef : requiredProducts
 RestrictedTeaser *--  CatalogArea : area
 RestrictedTeaser *--  Teaser : teaser
 RestrictedTeaser ..|>  CatalogDetailResult
+SessionChannel ..|>  NotificationTarget
 Shard *--  ClearanceLevel : clearanceLevel
 Shard --|>  TorgEntity
 Shard ..|>  ProductBoundEntry
@@ -4259,6 +4692,8 @@ SpellMapperImpl -->  TorgMappingSupport : torgMappingSupport
 SpellMapperImpl ..|>  SpellMapper
 SpellSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 SpellSummaryDto *--  ClearanceLevel : clearanceLevel
+SseNotificationBroadcaster *--  ToastViewModelMapper : toastMapper
+SseNotificationBroadcaster *--  UserNotificationQuery : notificationQuery
 TableCellViewModel "1" o-- "0..*"  CosmBadgeViewModel : cosmBadges
 TableCellViewModel *--  CellKind : kind
 TableCellViewModel *--  SanitizedHtml : markupValue
@@ -4304,8 +4739,15 @@ ThreatMapperImpl ..|>  ThreatMapper
 ThreatSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 ThreatSummaryDto *--  ClearanceLevel : clearanceLevel
 ThreatSummaryDto *--  CosmRefDto : cosm
+ToastRegionViewModel "1" o-- "0..*"  ToastViewModel : initialToasts
+ToastViewModel *--  ToastActionView : action
+ToastViewModel *--  ToastContent : content
+ToastViewModel *--  ToastPresentation : presentation
+ToastViewModelMapperImpl ..|>  ToastViewModelMapper
 TorgCodexApplication --  EnableTorgData
 TorgCodexDataApplication --  EnableTorgData
+TorgCodexSecurityConfig "1" o-- "0..*"  NotificationSessionListener : notificationSessionListener
+TorgCodexSecurityConfig "1" o-- "0..*"  UserRequestLoggingFilter : userRequestLoggingFilter
 TorgEntity -->  Censor :  @Transient\ncensor
 TorgEntity -->  ClearanceLevel :  @Column("clearance_level")\nclearanceLevel
 TorgMappingSupport *--  CatalogReferenceQuery : catalogReferenceQuery
@@ -4314,6 +4756,15 @@ TorgMarkupService *--  EntityReferenceProcessor : entityProcessor
 TorgMarkupService *--  GameTokenProcessor : gameTokenProcessor
 TorgMarkupService *--  MarkdownProcessor : markdownProcessor
 TorgMarkupService *--  RawHtmlProcessor : rawHtmlProcessor
+UserNotification *--  NotificationAction : action
+UserNotification *--  NotificationSeverity : severity
+UserNotificationPublished *--  UserNotification : notification
+UserNotificationRequested *--  NotificationAction : action
+UserNotificationRequested *--  NotificationSeverity : severity
+UserNotificationRequested *--  NotificationTarget : target
+UserNotificationService *--  UserNotificationStorePort : store
+UserNotificationService ..|>  UserNotificationCommand
+UserNotificationService ..|>  UserNotificationQuery
 ValueObjectMapperImpl ..|>  ValueObjectMapper
 Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry
 Vehicle "1" o-- "0..*"  VehicleWeapon : weaponry
@@ -4335,6 +4786,10 @@ VehicleMapperImpl ..|>  VehicleMapper
 VehicleSummaryDto "1" o-- "0..*"  PublicationRefDto : publications
 VehicleSummaryDto *--  ClearanceLevel : clearanceLevel
 VehicleSummaryDto *--  CosmRefDto : cosm
+WebNotificationSupport *--  SseNotificationBroadcaster : sseBroadcaster
+WebNotificationSupport *--  ToastViewModelMapper : toastMapper
+WebNotificationSupport *--  UserNotificationQuery : notificationQuery
+WebNotificationSupport *--  UserNotificationStorePort : storePort
 
 hide methods
 

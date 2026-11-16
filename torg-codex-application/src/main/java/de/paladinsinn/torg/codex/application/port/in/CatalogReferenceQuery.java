@@ -27,6 +27,7 @@ package de.paladinsinn.torg.codex.application.port.in;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Driving port for resolving lightweight references used by codex use cases.
@@ -44,4 +45,13 @@ public interface CatalogReferenceQuery {
     Optional<CatalogReference> findPublicationByCodexId(String codexId);
 
     List<CatalogPublicationReference> findPublicationsByProductId(int productId);
+
+    /**
+     * Resolves matching publications in bulk, including localised product ids.
+     * An empty input returns no publications.
+     *
+     * @param productIds distinct owned DriveThruRPG product ids
+     * @return matching publications, without duplicates
+     */
+    List<CatalogPublicationReference> findPublicationsByProductIds(Set<Integer> productIds);
 }

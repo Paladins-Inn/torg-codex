@@ -15,3 +15,16 @@ body.codex-admin-theme {
     background-color: var(--admin-header-bg);
     border-bottom: 3px solid var(--admin-header-border);
 }
+
+/* Isolated administrative toast region (ADR-020, ADR-024) */
+.admin-toast-region {
+    z-index: 1085;
+}
+.admin-toast {
+    border-left: 4px solid var(--admin-header-border) !important;
+}
+.admin-toast-info { border-left-color: #38bdf8 !important; }
+.admin-toast-success { border-left-color: #22c55e !important; }
+.admin-toast-warning { border-left-color: #eab308 !important; }
+.admin-toast-error { border-left-color: #ef4444 !important; }
+

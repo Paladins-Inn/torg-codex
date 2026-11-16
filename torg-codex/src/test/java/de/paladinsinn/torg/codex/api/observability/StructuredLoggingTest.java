@@ -25,10 +25,15 @@
 
 package de.paladinsinn.torg.codex.api.observability;
 
+import de.paladinsinn.drivethru.DriveThruRPGService;
+import de.paladinsinn.drivethru.token.NoValidTokenException;
+import de.paladinsinn.security.ApiKeyAuthenticationToken;
+import de.paladinsinn.security.DriveThruAuthenticationProvider;
 import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseQuery;
 import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult;
 import de.paladinsinn.torg.codex.application.port.in.CatalogDetailResult;
 import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria;
+import de.paladinsinn.torg.codex.application.port.in.CatalogReferenceQuery;
 import de.paladinsinn.torg.codex.domain.access.EntryAccess;
 import de.paladinsinn.torg.codex.domain.catalog.CatalogArea;
 import de.paladinsinn.torg.codex.domain.markup.EntityType;
@@ -39,16 +44,26 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.boot.json.JsonParseException;
 import org.springframework.boot.json.JsonParserFactory;
+import org.springframework.boot.logging.LogFile;
+import org.springframework.boot.logging.LoggingInitializationContext;
+import org.springframework.boot.logging.LoggingSystem;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.PropertySource;
+import org.springframework.core.env.StandardEnvironment;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -59,6 +74,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.ConcurrentModel;
 
 import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -66,7 +83,9 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Verifies the production logging configuration (ADR-017, constitution Principle VII): the
@@ -94,13 +113,55 @@ class StructuredLoggingTest {
     }
 
     @Test
-    void productionConfigurationSelectsNativeEcsFormat() {
+    void productionConfigurationSelectsNativeEcsConsoleFormatWithNoFileLogging() {
         assertThat(environment.getProperty("logging.structured.format.console")).isEqualTo("ecs");
+        assertThat(environment.containsProperty("logging.file.name")).isFalse();
+        assertThat(environment.containsProperty("logging.file.path")).isFalse();
+        assertThat(environment.getProperty("management.endpoints.web.exposure.include", String.class, ""))
+                .doesNotContain("logfile");
+    }
 
-        boolean fileLoggingEnabled = environment.containsProperty("logging.file.name")
-                || environment.containsProperty("logging.file.path");
-        if (fileLoggingEnabled) {
-            assertThat(environment.getProperty("logging.structured.format.file")).isEqualTo("ecs");
+    @Test
+    void devAndTestProfilesConfigureStructuredEcsFileLogging(@TempDir final Path tempDir) throws Exception {
+        YamlPropertySourceLoader loader = new YamlPropertySourceLoader();
+        List<PropertySource<?>> devSources = loader.load("dev", new ClassPathResource("application-dev.yaml"));
+        List<PropertySource<?>> testSources = loader.load("test", new ClassPathResource("application-test.yaml"));
+
+        StandardEnvironment devEnv = new StandardEnvironment();
+        devSources.forEach(devEnv.getPropertySources()::addFirst);
+        assertThat(devEnv.getProperty("logging.file.name")).isEqualTo("logs/torg-codex.log");
+        assertThat(devEnv.getProperty("logging.structured.format.file")).isEqualTo("ecs");
+
+        Path tempLog = tempDir.resolve("torg-codex-test.log");
+        StandardEnvironment testEnv = new StandardEnvironment();
+        loader.load("prod", new ClassPathResource("application.yaml"))
+                .forEach(testEnv.getPropertySources()::addLast);
+        testSources.forEach(testEnv.getPropertySources()::addFirst);
+        testEnv.getPropertySources().addFirst(new MapPropertySource(
+                "tempLogOverride", Map.of("logging.file.name", tempLog.toString())));
+
+        LoggingSystem loggingSystem = LoggingSystem.get(getClass().getClassLoader());
+        try {
+            loggingSystem.cleanUp();
+            loggingSystem.initialize(new LoggingInitializationContext(testEnv), null, LogFile.get(testEnv));
+
+            DriveThruRPGService service = mock(DriveThruRPGService.class);
+            when(service.getToken(SENTINEL_API_KEY)).thenThrow(new NoValidTokenException());
+            var provider = new DriveThruAuthenticationProvider(service, mock(CatalogReferenceQuery.class));
+            assertThatThrownBy(() -> provider.authenticate(ApiKeyAuthenticationToken.unauthenticated(SENTINEL_API_KEY)))
+                    .isInstanceOf(BadCredentialsException.class);
+
+            String line = Files.readString(tempLog).lines()
+                    .filter(candidate -> candidate.contains("DriveThruRPG authentication started."))
+                    .toList().getLast();
+            Map<String, Object> record = parse(line);
+            assertThat(value(record, "event.action")).contains("drivethru-auth-started");
+            assertThat(value(record, "log.level")).contains("INFO");
+            assertThat(line).doesNotContain(SENTINEL_API_KEY, SENTINEL_PRINCIPAL, SENTINEL_PRODUCT);
+        } finally {
+            loggingSystem.cleanUp();
+            ConfigurableEnvironment prodEnv = (ConfigurableEnvironment) environment;
+            loggingSystem.initialize(new LoggingInitializationContext(prodEnv), null, LogFile.get(prodEnv));
         }
     }
 

@@ -144,6 +144,44 @@ class CatalogBrowseServiceTest {
         assertThat(teaserResult.requiredProducts().getFirst().publication()).contains(aysleBook);
     }
 
+    @Test
+    void groupDetailListsOnlyAccessibleMembersSortedByNameWithCanonicalLinks() {
+        PerkGroup group = new PerkGroup(UUID.randomUUID(), "Prowess", ClearanceLevel.ALPHA,
+                Set.of("core-rulebook"), "", "");
+        PerkGroup empty = new PerkGroup(UUID.randomUUID(), "Empty", ClearanceLevel.ALPHA,
+                Set.of("core-rulebook"), "", "");
+        Perk zeta = perk("Zeta", Set.of("core-rulebook"), "prowess");
+        Perk alpha = perk("Alpha", Set.of("core-rulebook"), " Prowess ");
+        Perk unrelated = perk("Alpha", Set.of("core-rulebook"), "racial");
+        Perk locked = perk("Locked", Set.of("sourcebook-aysle"), "prowess");
+        Perk unassigned = perk("Unassigned", Set.of(), "prowess");
+        Perk withoutGroup = perk("No Group", Set.of("core-rulebook"), null);
+        CatalogAccessPolicy policy = new CatalogAccessPolicy();
+        CatalogUsageObserver usage = CatalogUsageObserver.NO_OP;
+        var browse = new CatalogBrowseService(List.of(
+                AreaSource.restricted(CatalogArea.PERK_GROUP, new RestrictedCatalogQueryService<>(
+                        EntityType.GROUP, port(List.of(group, empty)), OwnedProducts::anonymous,
+                        (a, i, n) -> { }, policy, usage)),
+                AreaSource.restricted(CatalogArea.PERK, new RestrictedCatalogQueryService<>(
+                        EntityType.PERK, port(List.of(zeta, alpha, unrelated, locked, unassigned, withoutGroup)),
+                        OwnedProducts::anonymous, (a, i, n) -> { }, policy, usage))
+        ), usage);
+
+        var result = (CatalogDetailResult.GrantedProductEntry) browse.findDetail(CatalogArea.PERK_GROUP, "prowess");
+        assertThat(result.embeddedReferences()).containsOnlyKeys("Perks");
+        assertThat(result.embeddedReferences().get("Perks")).containsExactly(
+                new CatalogDetailResult.LinkedEntryRef(
+                        alpha.id(), "Alpha", "alpha-" + alpha.id().toString().split("-")[0], CatalogArea.PERK),
+                new CatalogDetailResult.LinkedEntryRef(zeta.id(), "Zeta", "zeta", CatalogArea.PERK));
+        assertThat(browse.findDetail(CatalogArea.PERK_GROUP, group.id().toString())).isEqualTo(result);
+        var emptyResult = (CatalogDetailResult.GrantedProductEntry) browse.findDetail(CatalogArea.PERK_GROUP, "empty");
+        assertThat(emptyResult.embeddedReferences()).isEmpty();
+    }
+
+    private static Perk perk(final String name, final Set<String> products, final String group) {
+        return new Perk(UUID.randomUUID(), name, ClearanceLevel.ALPHA, products, false, Set.of(), group, "", "");
+    }
+
     private static <T extends CatalogEntry> CatalogPersistencePort<T> port(final List<T> items) {
         return new CatalogPersistencePort<>() {
             @Override

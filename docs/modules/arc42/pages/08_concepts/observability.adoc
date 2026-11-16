@@ -24,7 +24,9 @@ logging:
       console: ecs
 ----
 
-If file logging is enabled, also set `logging.structured.format.file: ecs`.
+Production emits structured ECS JSON exclusively to standard output (`console: ecs`) with no local file logging.
+Local file logging (`logging.file.name` with `logging.structured.format.file: ecs`) is restricted to the `dev`
+(`logs/torg-codex.log`, overridable via `LOG_FILE`) and `test` (`target/logs/torg-codex-test.log`) profiles.
 Application logging continues to use Lombok `@Slf4j` and follows the operational audience and severity rules defined in xref:08_concepts/logging-policy.adoc[Logging Policy for Operations and Support] ({adr-022}). Fields supplied through
 `log.atWarn().addKeyValue(...)` must appear in emitted JSON. Verify serialized
 output under production logging configuration; capturing a Logback event alone
@@ -95,6 +97,54 @@ management:
 
 The application exposes additional operational endpoints in its configuration.
 Metrics endpoints currently allow anonymous access; restrict access at the network or ingress boundary in production.
+
+=== DriveThruRPG authentication and HTTP calls
+
+Each actual DriveThruRPG HTTP call records both `drivethru.http.client.duration` (Micrometer Timer)
+and `drivethru.http.client.requests` (Counter), including failures and each token-renewal retry.
+Measurement surrounds the client invocation, so it includes response decoding as well as network time.
+The only tags are:
+
+* `operation`: `token-exchange`, `token-refresh`, `library-page`, `order-product`, `product`, or `publisher`.
+* `outcome`: `success` or `error`, describing the HTTP client invocation (not the subsequent authentication decision).
+
+Prometheus exports `drivethru_http_client_duration_seconds_count`, `_sum`, and `_max`, plus
+`drivethru_http_client_requests_total`. No URLs, query strings, page numbers, product/customer ids,
+keys, tokens or ownership lists are recorded as tags. Counts represent actual calls, not cache hits
+or reuse of an already authenticated session.
+
+The `drivethru.authentication` observation creates a `drivethru authenticate` span within the current
+request trace, covering token exchange, the complete library load, and bulk publication resolution.
+Its `outcome` is `success`, `rejected`, or `error`; errors contain a sanitised classification only,
+never upstream exception messages/causes. The standard meter observation handler also records overall
+authentication duration and count. Trace export remains disabled by default; enable the deployment's
+tracing exporter and sampling to retain these spans in the tracing backend.
+
+Before any token request, authentication writes an `INFO` event
+`event.action=drivethru-auth-started` to the ECS JSON console stream (file logging is restricted to `dev`/`test` profiles), within the authentication trace scope.
+It contains no principal, API key, token or owned-product list.
+
+=== User-Page Timing Metric (`torg.codex.web.page`) and Request Boundary Logging ({adr-023}, {adr-024})
+
+* **Single Page Timer (`torg.codex.web.page`)**:
+  Enabled via `management.observations.annotations.enabled=true` (Spring Boot's auto-configured `TimedAspect`).
+  All seven reader controller page handlers (`home`, `category`, `detail`, `login-view`, `login-submit`, `logout-view`, `library-reload`) carry `@Timed(value = "torg.codex.web.page", extraTags = {"page", "<value>"})`, while `LogoutTimingFilter` explicitly measures dispatched `POST /logout` submissions as `page=logout-submit` (`class=LogoutFilter`, `method=logout`).
+  Every series shares the identical bounded tag-key set `{page, class, method, exception}` (`torg_codex_web_page_seconds_*` in Prometheus). Notification SSE/ack endpoints, static assets, `/actuator/**`, `/api/**`, and pre-dispatch CSRF/CORS `403` rejections are excluded. Handler-level `@Timed` measures controller execution (excluding post-handler JTE streaming; `http.server.requests` covers full HTTP lifecycle latency).
+* **Request Boundary Logging (`UserRequestLoggingFilter`)**:
+  Ordered after `ServerHttpObservationFilter` and before Spring Security's `FilterChainProxy`, emitting one start and one final-status completion log per logical request:
+  - **User requests** (reader UI, `/admin/**`, `/api/**`, security-terminated `401`/`403`/logout): `DEBUG` `event.action=user-request-started` (`http.route` = bounded category `reader-page|admin-page|api|auth|library`) and `INFO` `event.action=user-request-completed` (`http.route` = matched Spring MVC route template or bounded fallback, `http.response.status_code`, `durationMs`, `traceId`/`spanId`).
+  - **Background notification controls** (`/notifications/{stream,ack}`, `/admin/notifications/{stream,ack}`): `TRACE` start and `TRACE` completion (`AsyncListener` on SSE completion) so open browser tabs generate zero `DEBUG`/`INFO` noise.
+  - **Excluded** (`/actuator/**`, `/webjars/**`, `/themes/**`, `/js/**`, `/css/**`, `/images/**`, `/favicon.ico`): zero boundary logs.
+  - Raw request URIs, slugs, UUIDs, query parameters, form fields, headers, session IDs, tokens, API-key digests, and `ROLE_<codex-id>` sets are never logged. Domain outcomes (`401`, `403` teaser/CSRF, `404`) complete at `INFO`, never `WARN` or `ERROR` ({adr-022}).
+
+Library reads initially request 200 products per page instead of 50. The API specification documents
+`pageSize`, but does not state a maximum; the client honours `meta.itemsPerPage` if the server applies
+a smaller size, including when pagination links are absent. Requests still omit checksums/filters and
+stop at the final page. Authentication submits distinct product ids in one bulk publication query;
+the query projects only publication references and avoids eager product-id collection loads.
+Empty libraries require no ownership database query. Localised product ids continue to unlock the
+same publication. Session reuse, renewal limits, and fail-closed behaviour on partial library failure
+are unchanged.
 
 * Prometheus is configured with a `scrape` job to periodically collect metrics:
 

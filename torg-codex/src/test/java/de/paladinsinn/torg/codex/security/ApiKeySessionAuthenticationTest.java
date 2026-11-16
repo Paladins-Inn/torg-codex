@@ -1,8 +1,10 @@
 package de.paladinsinn.torg.codex.security;
 
+import de.paladinsinn.drivethru.ApiKeyFingerprint;
 import de.paladinsinn.drivethru.token.DrivethruToken;
 import de.paladinsinn.drivethru.DriveThruRPGService;
 import de.paladinsinn.security.ApiKeyAuthenticationToken;
+import de.paladinsinn.security.ApiKeySessionAuthentication;
 import de.paladinsinn.security.DriveThruUserDetails;
 import de.paladinsinn.torg.codex.web.codex.CodexAuthController;
 import de.paladinsinn.torg.codex.web.codex.mapper.CodexViewMapper;
@@ -20,6 +22,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.test.context.junit.jupiter.web.SpringJUnitWebConfig;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -42,6 +45,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -90,9 +94,9 @@ class ApiKeySessionAuthenticationTest {
 
     @Test
     void formAndHeaderLoginShareTheSessionResult() throws Exception {
-        MockHttpSession session = session(mvc.perform(post("/login").param("apiKey", API_KEY))
+        MockHttpSession session = session(mvc.perform(post("/login").param("apiKey", API_KEY).with(csrf()))
                 .andExpect(status().isFound()).andReturn());
-        mvc.perform(post("/login").session(session).param("apiKey", " " + API_KEY + " "))
+        mvc.perform(post("/login").session(session).param("apiKey", " " + API_KEY + " ").with(csrf()))
                 .andExpect(status().isFound());
         mvc.perform(get(PROBE).session(session).header("Authorization", "ApiKey " + API_KEY))
                 .andExpect(content().string("reader"));
@@ -104,7 +108,7 @@ class ApiKeySessionAuthenticationTest {
     void headerLoginCanBeReusedByTheLoginForm() throws Exception {
         MockHttpSession session = session(mvc.perform(get(PROBE).header("Authorization", "ApiKey " + API_KEY))
                 .andExpect(status().isOk()).andReturn());
-        mvc.perform(post("/login").session(session).param("apiKey", API_KEY))
+        mvc.perform(post("/login").session(session).param("apiKey", API_KEY).with(csrf()))
                 .andExpect(status().isFound());
 
         verify(authenticationManager).authenticate(any());
@@ -173,9 +177,9 @@ class ApiKeySessionAuthenticationTest {
                 .thenThrow(new BadCredentialsException("rejected"))
                 .thenReturn(authenticated("reader"));
         MockHttpSession session = new MockHttpSession();
-        mvc.perform(post("/login").session(session).param("apiKey", API_KEY))
+        mvc.perform(post("/login").session(session).param("apiKey", API_KEY).with(csrf()))
                 .andExpect(status().isUnauthorized());
-        mvc.perform(post("/login").session(session).param("apiKey", API_KEY))
+        mvc.perform(post("/login").session(session).param("apiKey", API_KEY).with(csrf()))
                 .andExpect(status().isFound());
         mvc.perform(get(PROBE).session(session)).andExpect(content().string("reader"));
         verify(authenticationManager, times(2)).authenticate(any());
@@ -183,11 +187,11 @@ class ApiKeySessionAuthenticationTest {
 
     @Test
     void anExpiredSessionCannotSupplyTheNextLoginResult() throws Exception {
-        MockHttpSession session = session(mvc.perform(post("/login").param("apiKey", API_KEY))
+        MockHttpSession session = session(mvc.perform(post("/login").param("apiKey", API_KEY).with(csrf()))
                 .andExpect(status().isFound()).andReturn());
         session.invalidate();
         mvc.perform(get(PROBE)).andExpect(content().string("anonymous"));
-        mvc.perform(post("/login").param("apiKey", API_KEY)).andExpect(status().isFound());
+        mvc.perform(post("/login").param("apiKey", API_KEY).with(csrf())).andExpect(status().isFound());
         verify(authenticationManager, times(2)).authenticate(any());
     }
 
@@ -201,14 +205,36 @@ class ApiKeySessionAuthenticationTest {
 
     @Test
     void logoutDiscardsTheCachedResult() throws Exception {
-        MockHttpSession session = session(mvc.perform(post("/login").param("apiKey", API_KEY))
+        MockHttpSession session = session(mvc.perform(post("/login").param("apiKey", API_KEY).with(csrf()))
                 .andExpect(status().isFound()).andReturn());
-        mvc.perform(post("/logout").session(session)).andExpect(status().isFound());
+        mvc.perform(post("/logout").session(session).with(csrf())).andExpect(status().isFound());
         assertThat(session.isInvalid()).isTrue();
         mvc.perform(get(PROBE)).andExpect(content().string("anonymous"));
-        mvc.perform(post("/login").param("apiKey", API_KEY)).andExpect(status().isFound());
+        mvc.perform(post("/login").param("apiKey", API_KEY).with(csrf())).andExpect(status().isFound());
 
         verify(authenticationManager, times(2)).authenticate(any());
+    }
+
+    @Test
+    void formAndHeaderSessionsStoreFingerprintAndKeyFreeTokensWithoutRetainingRawApiKey() throws Exception {
+        MockHttpSession formSession = session(mvc.perform(post("/login").param("apiKey", API_KEY).with(csrf()))
+                .andExpect(status().isFound()).andReturn());
+        assertSessionStripsCleartextKey(formSession, API_KEY);
+
+        MockHttpSession headerSession = session(mvc.perform(get(PROBE).header("Authorization", "ApiKey " + OTHER_KEY))
+                .andExpect(status().isOk()).andReturn());
+        assertSessionStripsCleartextKey(headerSession, OTHER_KEY);
+    }
+
+    private static void assertSessionStripsCleartextKey(final MockHttpSession session, final String submittedKey) {
+        Object storedFingerprint = session.getAttribute(ApiKeySessionAuthentication.KEY_FINGERPRINT_ATTR);
+        assertThat(storedFingerprint).isEqualTo(ApiKeyFingerprint.of(submittedKey));
+        assertThat(String.valueOf(storedFingerprint)).doesNotContain(submittedKey);
+
+        SecurityContext storedContext = (SecurityContext) session.getAttribute("SPRING_SECURITY_CONTEXT");
+        assertThat(storedContext).isNotNull();
+        DriveThruUserDetails principal = (DriveThruUserDetails) storedContext.getAuthentication().getPrincipal();
+        assertThat(principal.token().getApplicationKey()).isNull();
     }
 
     @Test
@@ -254,6 +280,7 @@ class ApiKeySessionAuthenticationTest {
     private static Authentication authenticated(final String username) {
         DrivethruToken token = new DrivethruToken();
         token.setCustomerId(username);
+        token.setApplicationKey("raw-key-that-must-never-stay-in-session-" + API_KEY + "-" + OTHER_KEY);
         DriveThruUserDetails user = new DriveThruUserDetails(token, List.of("sourcebook-aysle"));
         return ApiKeyAuthenticationToken.authenticated(user);
     }

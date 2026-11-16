@@ -197,6 +197,7 @@ class JpaCatalogReferenceAdapter {
 	{method} +findCosmBySlug ( slug : String ) : Optional
 	{method} +findPublicationByCodexId ( codexId : String ) : Optional
 	{method} +findPublicationsByProductId ( productId : int ) : List
+	{method} +findPublicationsByProductIds ( productIds : Set ) : List
 	{method} -toPublicationReference ( publication : Publication ) : CatalogPublicationReference
 	{method} -toReference ( publication : Publication ) : CatalogReference
 }
@@ -558,6 +559,7 @@ interface PublicationRepository {
 	{method}  {abstract} +findByProductId ( productId : int ) : List
 	{method}  {abstract} +findByThirdParty ( thirdParty : String ) : List
 	{method}  {abstract} +findByThirdPartyIsNull () : List
+	{method}  {abstract} +findReferencesByProductIds ( productIds : Set ) : List
 }
 
 

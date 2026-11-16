@@ -44,6 +44,12 @@ class TorgMappingSupportTest {
                 findPublicationsByProductId(int productId) {
             return List.of();
         }
+
+        @Override
+        public List<de.paladinsinn.torg.codex.application.port.in.CatalogPublicationReference>
+                findPublicationsByProductIds(Set<Integer> productIds) {
+            return List.of();
+        }
     };
     private final TorgMappingSupport support = new TorgMappingSupport(references);
 

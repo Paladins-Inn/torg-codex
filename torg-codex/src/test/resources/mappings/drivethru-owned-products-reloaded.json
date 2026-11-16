@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/vBeta/order_products",
+    "headers": {
+      "Authorization": {
+        "equalTo": "wiremock-reloaded-bearer-token"
+      },
+      "Accept": {
+        "contains": "application/vnd.api+json"
+      }
+    },
+    "queryParameters": {
+      "page": {
+        "equalTo": "1"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/vnd.api+json"
+    },
+    "bodyFileName": "drivethru/owned-products-reloaded-library.json"
+  }
+}

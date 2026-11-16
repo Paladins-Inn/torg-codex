@@ -25,15 +25,33 @@
 
 package de.paladinsinn.torg.codex.web.codex.model;
 
+import de.paladinsinn.torg.codex.web.notification.CsrfViewModel;
+
 /**
- * View model for dedicated reader authentication pages ({@code /login} and {@code /logout}, FR-014).
+ * View model for dedicated reader authentication pages ({@code /login} and {@code /logout}, FR-014, FR-019).
  *
  * @param nav             shared global navigation model
  * @param errorMessage    optional validation/authentication error message
  * @param signedOutBanner whether to display a signed-out confirmation banner
+ * @param csrf            resolved CSRF token metadata for form rendering
  */
 public record AuthPageViewModel(
         NavContextViewModel nav,
         String errorMessage,
-        boolean signedOutBanner) {
+        boolean signedOutBanner,
+        CsrfViewModel csrf) {
+
+    /**
+     * Backward-compatible constructor deriving CSRF metadata from {@code nav} when available.
+     *
+     * @param nav             navigation model
+     * @param errorMessage    optional error message
+     * @param signedOutBanner signed-out banner flag
+     */
+    public AuthPageViewModel(
+            final NavContextViewModel nav,
+            final String errorMessage,
+            final boolean signedOutBanner) {
+        this(nav, errorMessage, signedOutBanner, nav != null ? nav.csrf() : null);
+    }
 }

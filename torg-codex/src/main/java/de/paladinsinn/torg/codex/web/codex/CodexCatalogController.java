@@ -36,6 +36,7 @@ import de.paladinsinn.torg.codex.domain.catalog.CatalogCategoryRegistry;
 import de.paladinsinn.torg.codex.domain.catalog.FilterFacetDescriptor;
 import de.paladinsinn.torg.codex.domain.catalog.GroupingDimension;
 import de.paladinsinn.torg.codex.web.codex.mapper.CodexViewMapper;
+import io.micrometer.core.annotation.Timed;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -74,7 +75,8 @@ public class CodexCatalogController {
     private final CatalogBrowseQuery browseQuery;
     private final CodexViewMapper viewMapper;
 
-    @GetMapping("/{category:^(?!api$|admin$|login$|logout$|webjars$|themes$|actuator$|static$|error$)[a-zA-Z0-9-]+$}")
+    @Timed(value = "torg.codex.web.page", extraTags = {"page", "category"})
+    @GetMapping("/{category:^(?!api$|admin$|login$|logout$|library$|notifications$|js$|webjars$|themes$|actuator$|static$|error$)[a-zA-Z0-9-]+$}")
     public String browseCategory(
             @PathVariable("category") final String categorySegment,
             @RequestParam final MultiValueMap<String, String> queryParams,
@@ -120,7 +122,8 @@ public class CodexCatalogController {
         return "codex/pages/category";
     }
 
-    @GetMapping("/{category:^(?!api$|admin$|login$|logout$|webjars$|themes$|actuator$|static$|error$)[a-zA-Z0-9-]+$}/{identifier}")
+    @Timed(value = "torg.codex.web.page", extraTags = {"page", "detail"})
+    @GetMapping("/{category:^(?!api$|admin$|login$|logout$|library$|notifications$|js$|webjars$|themes$|actuator$|static$|error$)[a-zA-Z0-9-]+$}/{identifier}")
     public String viewEntryDetail(
             @PathVariable("category") final String categorySegment,
             @PathVariable("identifier") final String identifier,

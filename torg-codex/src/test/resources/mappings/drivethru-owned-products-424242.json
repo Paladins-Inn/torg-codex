@@ -15,7 +15,7 @@
         "equalTo": "1"
       },
       "pageSize": {
-        "equalTo": "50"
+        "matches": "50|200"
       },
       "archived": {
         "equalTo": "0"

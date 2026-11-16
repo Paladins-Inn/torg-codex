@@ -68,6 +68,11 @@ class CatalogReferenceQueryServiceTest {
         public List<CatalogPublicationReference> findPublicationsByProductId(int productId) {
             return List.of(new CatalogPublicationReference(publication.id(), publication.name(), "sourcebook-aysle"));
         }
+
+        @Override
+        public List<CatalogPublicationReference> findPublicationsByProductIds(Set<Integer> productIds) {
+            return List.of(new CatalogPublicationReference(publication.id(), publication.name(), "sourcebook-aysle"));
+        }
     }, observer, new CatalogAccessPolicy());
 
     @Test
@@ -99,5 +104,12 @@ class CatalogReferenceQueryServiceTest {
     @Test
     void entryReferenceIsAProductBoundCosm() {
         assertThat(aysle.entityType()).isEqualTo(EntityType.COSM);
+    }
+
+    @Test
+    void bulkPublicationLookupAndEmptyLibrary() {
+        assertThat(service.findPublicationsByProductIds(Set.of(1, 2)))
+                .extracting(CatalogPublicationReference::codexId).containsExactly("sourcebook-aysle");
+        assertThat(service.findPublicationsByProductIds(Set.of())).isEmpty();
     }
 }

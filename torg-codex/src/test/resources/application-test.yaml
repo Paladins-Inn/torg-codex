@@ -1,0 +1,8 @@
+# Test profile enabling structured ECS file logging for file-output verification only;
+# production (application.yaml) never writes log files.
+logging:
+  file:
+    name: ${LOG_FILE:target/logs/torg-codex-test.log}
+  structured:
+    format:
+      file: ecs

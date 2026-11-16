@@ -25,22 +25,40 @@
 
 package de.paladinsinn.torg.codex.security;
 
+import de.paladinsinn.drivethru.DriveThruRPGService;
 import de.paladinsinn.security.ApiKeyAuthenticationFilter;
 import de.paladinsinn.security.ApiKeySessionAuthentication;
 import de.paladinsinn.security.DriveThruAuthenticationProvider;
+import de.paladinsinn.security.DriveThruLibrarySynchronizer;
 import de.paladinsinn.security.DriveThruUserDetails;
+import de.paladinsinn.security.GenerationAwareSecurityContextRepository;
 import de.paladinsinn.security.NotLoggedInUserDetails;
+import de.paladinsinn.torg.codex.api.observability.UserRequestLoggingFilter;
+import de.paladinsinn.torg.codex.web.notification.NotificationSessionListener;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.session.DisableEncodeUrlFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.util.List;
 
 /**
  * Web-application security configuration for Torg Codex.
@@ -74,47 +92,126 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  */
 @Configuration
 @EnableMethodSecurity
+@EnableConfigurationProperties(WebCorsProperties.class)
+@RequiredArgsConstructor
 @Slf4j
 public class TorgCodexSecurityConfig {
+
+    private static final List<String> UI_CORS_METHODS = List.of("GET", "HEAD", "POST", "OPTIONS");
+    private static final List<String> UI_CORS_HEADERS = List.of(
+            "Content-Type", "X-CSRF-TOKEN", "HX-Request", "HX-Target", "HX-Current-URL", "Accept");
+
+    private final ObjectProvider<NotificationSessionListener> notificationSessionListener;
+    private final ObjectProvider<MeterRegistry> meterRegistry;
+    private final ObjectProvider<UserRequestLoggingFilter> userRequestLoggingFilter;
+
+    /**
+     * Shared {@link HttpSessionCsrfTokenRepository} used by both the security filter chain and
+     * {@link ApiKeySessionAuthentication} so anti-forgery tokens rotate on login and clear on logout.
+     *
+     * @return session CSRF token repository
+     */
+    @Bean
+    public HttpSessionCsrfTokenRepository csrfTokenRepository() {
+        return new HttpSessionCsrfTokenRepository();
+    }
+
+    /**
+     * Generation-aware {@link org.springframework.security.web.context.SecurityContextRepository}
+     * preventing stale request saves from clobbering newer worker batches, newer logins, or logout.
+     *
+     * @return generation-aware context repository
+     */
+    @Bean
+    public GenerationAwareSecurityContextRepository generationAwareSecurityContextRepository() {
+        return new GenerationAwareSecurityContextRepository();
+    }
 
     /**
      * Shares session-local API-key authentication between the login form and header filter.
      *
      * @param authenticationManager the DriveThruRPG authentication manager
+     * @param csrfTokenRepository   shared session CSRF token repository
+     * @param contextRepository     shared generation-aware context repository
+     * @param driveThruRPGService   optional DriveThruRPG service for token-first interactive sign-in
+     * @param synchronizer          optional background library synchronizer
+     * @param observationRegistry   optional observation registry
      * @return the session authentication service
      */
     @Bean
-    public ApiKeySessionAuthentication apiKeySessionAuthentication(final AuthenticationManager authenticationManager) {
-        return new ApiKeySessionAuthentication(authenticationManager);
+    public ApiKeySessionAuthentication apiKeySessionAuthentication(
+            final AuthenticationManager authenticationManager,
+            final HttpSessionCsrfTokenRepository csrfTokenRepository,
+            final GenerationAwareSecurityContextRepository contextRepository,
+            final ObjectProvider<DriveThruRPGService> driveThruRPGService,
+            final ObjectProvider<DriveThruLibrarySynchronizer> synchronizer,
+            final ObjectProvider<ObservationRegistry> observationRegistry) {
+        ApiKeySessionAuthentication auth = new ApiKeySessionAuthentication(
+                authenticationManager, csrfTokenRepository, contextRepository);
+        auth.setDriveThruRPGService(driveThruRPGService.getIfAvailable());
+        auth.setSynchronizer(synchronizer.getIfAvailable());
+        auth.setObservationRegistry(observationRegistry.getIfAvailable(() -> ObservationRegistry.NOOP));
+        return auth;
+    }
+
+    /**
+     * Restrictive CORS source enforced only on browser UI routes (excluding {@code /api/**} and
+     * {@code /actuator/**}).
+     *
+     * @param corsProperties browser UI CORS configuration properties
+     * @return dynamic UI CORS configuration source
+     */
+    @Bean
+    public CorsConfigurationSource uiCorsConfigurationSource(final WebCorsProperties corsProperties) {
+        return request -> {
+            if (isNonBrowserEndpoint(request)) {
+                return null;
+            }
+            CorsConfiguration config = new CorsConfiguration();
+            List<String> allowedOrigins = corsProperties.getAllowedOrigins();
+            config.setAllowedOrigins(allowedOrigins);
+            config.setAllowedMethods(UI_CORS_METHODS);
+            config.setAllowedHeaders(UI_CORS_HEADERS);
+            if (!allowedOrigins.isEmpty()) {
+                config.setAllowCredentials(true);
+            }
+            return config;
+        };
     }
 
     /**
      * Builds the primary {@link SecurityFilterChain} for the Torg Codex web application.
-     *
-     * <p>Key settings:
-     * <ul>
-     *   <li>CSRF disabled – forms use simple POST without tokens; could be re-enabled if needed</li>
-     *   <li>Session created on demand – the API-key filter saves the authenticated principal
-     *       in the {@link org.springframework.security.core.context.SecurityContext} which is
-     *       subsequently stored in the HTTP session</li>
-     *   <li>All requests permitted – authorisation is at content level, not route level</li>
-     *   <li>{@link ApiKeyAuthenticationFilter} inserted before basic-auth – skips the chain
-     *       step when no {@code Authorization: ApiKey} header is present</li>
-     * </ul>
      */
     @Bean
     @Order(1)
     public SecurityFilterChain torgCodexSecurityFilterChain(
             final HttpSecurity http,
             final AuthenticationManager authenticationManager,
-            final ApiKeySessionAuthentication sessionAuthentication) {
+            final ApiKeySessionAuthentication sessionAuthentication,
+            final HttpSessionCsrfTokenRepository csrfTokenRepository,
+            final GenerationAwareSecurityContextRepository contextRepository,
+            final CorsConfigurationSource uiCorsConfigurationSource) {
 
         final ApiKeyAuthenticationFilter apiKeyFilter =
                 new ApiKeyAuthenticationFilter(authenticationManager);
         apiKeyFilter.setSessionAuthentication(sessionAuthentication);
 
+        UserRequestLoggingFilter requestLogger = userRequestLoggingFilter.getIfAvailable();
+        if (requestLogger != null) {
+            http.addFilterBefore(requestLogger, DisableEncodeUrlFilter.class);
+        }
+        MeterRegistry registry = meterRegistry.getIfAvailable();
+        if (registry != null) {
+            http.addFilterBefore(new LogoutTimingFilter(registry), LogoutFilter.class);
+        }
+
         http
-            .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configurationSource(uiCorsConfigurationSource))
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(csrfTokenRepository)
+                .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler())
+                .ignoringRequestMatchers("/api/**"))
+            .securityContext(sc -> sc.securityContextRepository(contextRepository))
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .anonymous(anon -> anon
@@ -127,6 +224,11 @@ public class TorgCodexSecurityConfig {
                 .logoutRequestMatcher(request ->
                     "POST".equalsIgnoreCase(request.getMethod())
                         && "/logout".equals(request.getRequestURI()))
+                .addLogoutHandler((request, response, authentication) -> {
+                    notificationSessionListener.ifAvailable(
+                            listener -> listener.cleanupSession(request.getSession(false)));
+                    contextRepository.markLoggedOut(request);
+                })
                 .logoutSuccessHandler((request, response, authentication) -> {
                     log.atInfo()
                         .addKeyValue("event.action", "user-logout")
@@ -139,7 +241,19 @@ public class TorgCodexSecurityConfig {
                 .requestMatchers("/actuator/health/**").permitAll()
                 .anyRequest().permitAll());
 
-        log.info("Torg Codex web security filter chain configured (order=1, all requests permitted).");
+        log.info("Torg Codex web security filter chain configured (order=1, UI CSRF/CORS enabled).");
         return http.build();
+    }
+
+    private static boolean isNonBrowserEndpoint(final HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        String path = contextPath != null && !contextPath.isEmpty() && uri.startsWith(contextPath)
+                ? uri.substring(contextPath.length())
+                : uri;
+        return "/api".equals(path)
+                || path.startsWith("/api/")
+                || "/actuator".equals(path)
+                || path.startsWith("/actuator/");
     }
 }

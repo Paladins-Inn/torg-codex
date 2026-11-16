@@ -29,7 +29,11 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,17 +62,32 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DriveThruRPGClientConfig {
 
+    public static final String REQUEST_DURATION = "drivethru.http.client.duration";
+    public static final String REQUEST_COUNT = "drivethru.http.client.requests";
+
     private record CachedDelegate(String baseUrl, DriveThruRPGClient delegate) {
+    }
+
+    /**
+     * Compatibility factory for clients constructed outside Spring.
+     *
+     * @param properties DriveThruRPG connection properties
+     * @return client recording metrics in Micrometer's global registry
+     */
+    public DriveThruRPGClient driveThruRPGClient(final DriveThruProperties properties) {
+        return driveThruRPGClient(properties, Metrics.globalRegistry);
     }
 
     /**
      * Creates the {@link DriveThruRPGClient} proxy backed by a {@link RestClient}.
      *
      * @param properties DriveThruRPG connection properties
+     * @param registry registry for credential-free HTTP duration and count metrics
      * @return the proxy instance
      */
     @Bean
-    public DriveThruRPGClient driveThruRPGClient(final DriveThruProperties properties) {
+    public DriveThruRPGClient driveThruRPGClient(
+            final DriveThruProperties properties, final MeterRegistry registry) {
         log.info("Configuring DriveThruRPG REST client. baseUrl={}, connectTimeout={}, readTimeout={}",
                 properties.getBaseUrl(), properties.getConnectTimeout(), properties.getReadTimeout());
 
@@ -91,14 +110,14 @@ public class DriveThruRPGClientConfig {
             public DrivethruToken authenticate(
                     final String applicationKey,
                     final Map<String, Object> body) {
-                return current().authenticate(applicationKey, body);
+                return measure(registry, "token-exchange", () -> current().authenticate(applicationKey, body));
             }
 
             @Override
             public DrivethruToken refreshSession(
                     final String refreshCookie,
                     final Map<String, Object> body) {
-                return current().refreshSession(refreshCookie, body);
+                return measure(registry, "token-refresh", () -> current().refreshSession(refreshCookie, body));
             }
 
             @Override
@@ -109,27 +128,41 @@ public class DriveThruRPGClientConfig {
                     final int archived,
                     final int getChecksum,
                     final int getFilters) {
-                return current().getOrderProducts(
-                        authorization, page, pageSize, archived, getChecksum, getFilters);
+                return measure(registry, "library-page", () -> current().getOrderProducts(
+                        authorization, page, pageSize, archived, getChecksum, getFilters));
             }
 
             @Override
             public JsonApiDocument<OwnedProduct> getOrderProduct(
                     final String authorization,
                     final long orderProductId) {
-                return current().getOrderProduct(authorization, orderProductId);
+                return measure(registry, "order-product", () -> current().getOrderProduct(authorization, orderProductId));
             }
 
             @Override
             public JsonApiDocument<Publisher> getPublisherDocument(final String publisherId) {
-                return current().getPublisherDocument(publisherId);
+                return measure(registry, "publisher", () -> current().getPublisherDocument(publisherId));
             }
 
             @Override
             public JsonApiDocument<Product> getProductDocument(final String productId) {
-                return current().getProductDocument(productId);
+                return measure(registry, "product", () -> current().getProductDocument(productId));
             }
         };
+    }
+
+    private <T> T measure(final MeterRegistry registry, final String operation, final Supplier<T> request) {
+        Timer.Sample sample = Timer.start(registry);
+        String outcome = "error";
+        try {
+            T response = request.get();
+            outcome = "success";
+            return response;
+        } finally {
+            String[] tags = {"operation", operation, "outcome", outcome};
+            sample.stop(registry.timer(REQUEST_DURATION, tags));
+            registry.counter(REQUEST_COUNT, tags).increment();
+        }
     }
 
     private DriveThruRPGClient buildDelegate(final DriveThruProperties properties) {

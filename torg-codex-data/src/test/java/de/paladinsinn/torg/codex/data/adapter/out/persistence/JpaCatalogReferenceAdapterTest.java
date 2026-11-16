@@ -26,6 +26,7 @@
 package de.paladinsinn.torg.codex.data.adapter.out.persistence;
 
 import de.paladinsinn.torg.codex.application.port.out.CatalogEntryReference;
+import de.paladinsinn.torg.codex.application.port.in.CatalogPublicationReference;
 import de.paladinsinn.torg.codex.data.mapper.CatalogReferenceEntityMapperImpl;
 import de.paladinsinn.torg.codex.data.model.Cosm;
 import de.paladinsinn.torg.codex.data.repository.CosmRepository;
@@ -33,18 +34,23 @@ import de.paladinsinn.torg.codex.data.repository.PublicationRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class JpaCatalogReferenceAdapterTest {
 
     private final CosmRepository cosms = mock(CosmRepository.class);
+    private final PublicationRepository publications = mock(PublicationRepository.class);
     private final JpaCatalogReferenceAdapter adapter = new JpaCatalogReferenceAdapter(
-            cosms, mock(PublicationRepository.class), new CatalogReferenceEntityMapperImpl());
+            cosms, publications, new CatalogReferenceEntityMapperImpl());
 
     @Test
     void cosmReferenceCarriesIdNameAndProducts() {
@@ -64,5 +70,22 @@ class JpaCatalogReferenceAdapterTest {
         when(cosms.findBySlug("nowhere")).thenReturn(Optional.empty());
 
         assertThat(adapter.findCosmBySlug("nowhere")).isEmpty();
+    }
+
+    @Test
+    void bulkPublicationReferencesRequireOnlyOneRepositoryCall() {
+        Set<Integer> ids = Set.of(1, 2, 3);
+        var reference = new CatalogPublicationReference(UUID.randomUUID(), "Core Rules", "core-rulebook");
+        when(publications.findReferencesByProductIds(ids)).thenReturn(List.of(reference));
+
+        assertThat(adapter.findPublicationsByProductIds(ids)).containsExactly(reference);
+        verify(publications).findReferencesByProductIds(ids);
+        verifyNoMoreInteractions(publications);
+    }
+
+    @Test
+    void emptyLibraryDoesNotQueryTheDatabase() {
+        assertThat(adapter.findPublicationsByProductIds(Set.of())).isEmpty();
+        verifyNoInteractions(publications);
     }
 }

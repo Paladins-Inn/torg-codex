@@ -6,6 +6,8 @@ class ApiKeyAuthenticationFilter {
 	{field} {static} -log : Logger
 	{method} -clearAuthentication ( request : HttpServletRequest , response : HttpServletResponse ) : void
 	{method} #doFilterInternal ( request : HttpServletRequest , response : HttpServletResponse , filterChain : FilterChain ) : void
+	{method}  {static} -isApiRoute ( request : HttpServletRequest ) : boolean
+	{method} -resolveHeaderAuthentication ( apiKey : String , request : HttpServletRequest , response : HttpServletResponse ) : Authentication
 }
 
 
@@ -19,24 +21,85 @@ class ApiKeyAuthenticationToken {
 
 
 class ApiKeySessionAuthentication {
-	{field} {static} -KEY_FINGERPRINT : String
+	{field} {static} +KEY_FINGERPRINT_ATTR : String
+	{field} {static} +NOTIFICATION_CHANNEL_ATTR : String
 	{field} -authenticationManager : AuthenticationManager
-	{field} -contextRepository : HttpSessionSecurityContextRepository
-	{field} -sessionStrategy : ChangeSessionIdAuthenticationStrategy
+	{field} -driveThruRPGService : DriveThruRPGService
+	{field} {static} -log : Logger
+	{field} -observationRegistry : ObservationRegistry
+	{field} -sessionStrategy : SessionAuthenticationStrategy
 	{method} +authenticate ( apiKey : String , request : HttpServletRequest , response : HttpServletResponse ) : Authentication
+	{method} +authenticateHeaderWithExistingSession ( apiKey : String , request : HttpServletRequest ) : Authentication
+	{method} +authenticateInteractive ( apiKey : String , channelId : String , request : HttpServletRequest , response : HttpServletResponse ) : Authentication
 	{method} +clear ( request : HttpServletRequest , response : HttpServletResponse ) : void
-	{method}  {static} -fingerprint ( apiKey : String ) : byte[]
+	{method}  {static} -completedSessionAuthentication ( session : HttpSession , fingerprint : ApiKeyFingerprint ) : Authentication
+	{method} +currentFingerprint ( session : HttpSession ) : Optional
+	{method}  {static} -existingCompletedOrPartialIdsForSameKey ( session : HttpSession , fingerprint : ApiKeyFingerprint ) : List
+	{method}  {static} -resolveOrCreateChannelId ( session : HttpSession , suppliedChannelId : String ) : String
 	{method} -restore ( authentication : Authentication ) : SecurityContext
+	{method}  {static} ~sanitizeForSession ( authentication : Authentication ) : Authentication
+	{method} -validateTokenWithObservation ( normalizedKey : String ) : DrivethruToken
+}
+
+
+class CachedLibraryResolution {
+	{field} -customerId : String
+	{field} -ownedCodexIds : List
+	{method} +customerId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +ownedCodexIds () : List
+	{method} +toString () : String
 }
 
 
 class DriveThruAuthenticationProvider {
 	{field} -catalogReferenceQuery : CatalogReferenceQuery
 	{field} -driveThruRPGService : DriveThruRPGService
+	{field} -libraryLoadCoordinator : LibraryLoadCoordinator
 	{field} {static} -log : Logger
+	{field} -observationRegistry : ObservationRegistry
 	{method} +authenticate ( authentication : Authentication ) : Authentication
-	{method} -resolveOwnedCodexIds ( token : DrivethruToken ) : List
+	{method} -authenticateKey ( authentication : Authentication ) : Authentication
+	{method} -resolveOwnedCodexIds ( apiKey : String , token : DrivethruToken ) : List
+	{method}  {static} -sanitizeToken ( token : DrivethruToken ) : DrivethruToken
 	{method} +supports ( authClass : Class ) : boolean
+}
+
+
+class DriveThruLibrarySynchronizer {
+	{field} {static} +PUBLICATIONS_READY_MESSAGE : String
+	{field} {static} +PUBLICATIONS_READY_TITLE : String
+	{field} {static} +REAUTH_REQUIRED_MESSAGE : String
+	{field} {static} +REAUTH_REQUIRED_TITLE : String
+	{field} {static} +SYNC_COMPLETE_MESSAGE : String
+	{field} {static} +SYNC_COMPLETE_TITLE : String
+	{field} {static} +SYNC_FAILED_MESSAGE : String
+	{field} {static} +SYNC_FAILED_TITLE : String
+	{field} {static} +SYNC_STARTED_MESSAGE : String
+	{field} {static} +SYNC_STARTED_TITLE : String
+	{field} -catalogReferenceQuery : CatalogReferenceQuery
+	{field} -driveThruRPGService : DriveThruRPGService
+	{field} -eventPublisher : ApplicationEventPublisher
+	{field} -libraryLoadCoordinator : LibraryLoadCoordinator
+	{field} {static} -log : Logger
+	{field} -observationRegistry : ObservationRegistry
+	{field} -syncExecutor : TaskExecutor
+	{method} -applyBatch ( session : HttpSession , fingerprint : ApiKeyFingerprint , workerToken : DrivethruToken , generationId : UUID , batch : DriveThruLibraryBatch ) : void
+	{method} -completeGeneration ( session : HttpSession , channelId : String , fingerprint : ApiKeyFingerprint , workerToken : DrivethruToken , generationId : UUID , snapshot : DriveThruLibrarySnapshot ) : void
+	{method}  {static} -ensureGenerationActive ( session : HttpSession , fingerprint : ApiKeyFingerprint , generationId : UUID ) : void
+	{method} -handleTaskRejected ( session : HttpSession , channelId : String , fingerprint : ApiKeyFingerprint , generationId : UUID , rejected : TaskRejectedException ) : void
+	{method}  {static} -isGenerationActiveLocked ( session : HttpSession , fingerprint : ApiKeyFingerprint , generationId : UUID ) : boolean
+	{method} -markFailed ( session : HttpSession , channelId : String , fingerprint : ApiKeyFingerprint , generationId : UUID , failure : RuntimeException ) : void
+	{method} -markReauthRequired ( session : HttpSession , channelId : String , fingerprint : ApiKeyFingerprint , generationId : UUID ) : void
+	{method} +notifyCachedReady ( channelId : String ) : void
+	{method} -publishIfPresent ( channelId : String , event : UserNotificationRequested ) : void
+	{method}  {static} -requireActiveStateLocked ( session : HttpSession , fingerprint : ApiKeyFingerprint , generationId : UUID ) : DriveThruSessionSyncState
+	{method} +resolveCachedLibrary ( fingerprint : ApiKeyFingerprint ) : Optional
+	{method} -runSync ( session : HttpSession , channelId : String , fingerprint : ApiKeyFingerprint , workerToken : DrivethruToken , generationId : UUID ) : void
+	{method} +startInitialSync ( session : HttpSession , channelId : String , fingerprint : ApiKeyFingerprint , sessionToken : DrivethruToken , generationId : UUID ) : void
+	{method} +startManualReload ( session : HttpSession , channelId : String , contextRepository : GenerationAwareSecurityContextRepository , request : HttpServletRequest , response : HttpServletResponse ) : boolean
+	{method} -transitionIfActive ( session : HttpSession , fingerprint : ApiKeyFingerprint , generationId : UUID , targetStatus : SyncStatus ) : boolean
 }
 
 
@@ -49,6 +112,26 @@ class DriveThruSecurityConfig {
 	{field} {static} -log : Logger
 	{method} +authenticationManager ( provider : DriveThruAuthenticationProvider ) : AuthenticationManager
 	{method} +driveThruSecurityFilterChain ( http : HttpSecurity , authenticationManager : AuthenticationManager ) : SecurityFilterChain
+}
+
+
+class DriveThruSessionSyncState {
+	{field} {static} +LOGGED_OUT_KEY : String
+	{field} {static} +SYNC_STATE_KEY : String
+	{field} -appliedBatches : int
+	{field} -startedAt : Instant
+	{field} -syncGenerationId : UUID
+	{method} +appliedBatches () : int
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method}  {static} +idle ( generationId : UUID , startedAt : Instant ) : DriveThruSessionSyncState
+	{method}  {static} +running ( generationId : UUID , startedAt : Instant ) : DriveThruSessionSyncState
+	{method} +startedAt () : Instant
+	{method} +status () : SyncStatus
+	{method} +syncGenerationId () : UUID
+	{method} +toString () : String
+	{method} +withBatchApplied () : DriveThruSessionSyncState
+	{method} +withStatus ( nextStatus : SyncStatus ) : DriveThruSessionSyncState
 }
 
 
@@ -85,6 +168,20 @@ class DriveThruUserService {
 
 annotation EnableDrivethruRPGSecurity
 
+class GenerationAwareSecurityContextRepository {
+	{field} {static} -LOADED_REVISION_ATTR : String
+	{field} -delegate : HttpSessionSecurityContextRepository
+	{method} -captureLoadedRevision ( request : HttpServletRequest ) : void
+	{method} +containsContext ( request : HttpServletRequest ) : boolean
+	{method}  {static} -isStaleComparedToSession ( request : HttpServletRequest , session : HttpSession ) : boolean
+	{method} +loadContext ( requestResponseHolder : HttpRequestResponseHolder ) : SecurityContext
+	{method} +loadDeferredContext ( request : HttpServletRequest ) : DeferredSecurityContext
+	{method} +markLoggedOut ( request : HttpServletRequest ) : void
+	{method} +saveContext ( context : SecurityContext , request : HttpServletRequest , response : HttpServletResponse ) : void
+	{method} +saveExplicitAuthentication ( authentication : Authentication , syncState : DriveThruSessionSyncState , fingerprint : ApiKeyFingerprint , request : HttpServletRequest , response : HttpServletResponse ) : void
+}
+
+
 class NotLoggedInUserDetails {
 	{field} {static} -AUTHORITIES : List
 	{field} {static} +FREE_PRODUCT_ID : String
@@ -96,9 +193,21 @@ class NotLoggedInUserDetails {
 }
 
 
+enum SyncStatus {
+	{field} +COMPLETED
+	{field} +FAILED
+	{field} +IDLE
+	{field} +REAUTH_REQUIRED
+	{field} +RUNNING
+}
+
+
 
 
 ApiKeyAuthenticationFilter -->  ApiKeySessionAuthentication : sessionAuthentication
+ApiKeySessionAuthentication *--  GenerationAwareSecurityContextRepository : contextRepository
+ApiKeySessionAuthentication -->  DriveThruLibrarySynchronizer : synchronizer
+DriveThruSessionSyncState *--  SyncStatus : status
 DriveThruUserDetails ..|>  DriveThruPublicationOwner
 NotLoggedInUserDetails *--  NotLoggedInUserDetails : INSTANCE
 NotLoggedInUserDetails ..|>  DriveThruPublicationOwner

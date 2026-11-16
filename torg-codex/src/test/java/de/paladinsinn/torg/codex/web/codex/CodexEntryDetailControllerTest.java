@@ -35,6 +35,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -127,6 +128,30 @@ class CodexEntryDetailControllerTest {
         mockMvc.perform(get("/perk-groups/drm-group-core"))
                 .andExpect(status().isFound())
                 .andExpect(redirectedUrl("/groups/drm-group-core"));
+    }
+
+    @Test
+    @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
+    @Sql(statements = """
+            UPDATE torg_perk SET perk_group = 'drm-group-core'
+            WHERE CAST(id AS text) LIKE 'd7a00000-0005-%';
+            """)
+    void perkGroupDetailRendersAccessiblePerksAsCanonicalLinks() throws Exception {
+        String bySlugHtml = mockMvc.perform(get("/groups/drm-group-core"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String byUuidHtml = mockMvc.perform(get("/groups/d7a00000-0006-4000-8000-000000000001"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(bySlugHtml).isEqualTo(byUuidHtml);
+        assertThat(bySlugHtml)
+                .contains("DRM-group-Core", ">Perks</div>", "href=\"/perks/drm-perk-core\"", ">DRM-perk-Core</a>")
+                .doesNotContain("DRM-perk-Aysle", "DRM-perk-Third", "DRM-perk-Unassigned");
     }
 
     @Test

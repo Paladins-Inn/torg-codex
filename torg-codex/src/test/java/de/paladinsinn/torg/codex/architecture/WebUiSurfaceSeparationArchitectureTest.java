@@ -26,6 +26,7 @@
 package de.paladinsinn.torg.codex.architecture;
 
 import com.tngtech.archunit.library.GeneralCodingRules;
+import de.paladinsinn.drivethru.token.DrivethruToken;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -82,6 +83,18 @@ class WebUiSurfaceSeparationArchitectureTest {
                 .that().resideInAnyPackage("de.paladinsinn..")
                 .should(GeneralCodingRules.ACCESS_STANDARD_STREAMS)
                 .as("W4: production code must not write to System.out or System.err (ADR-022)")
+                .check(ArchitectureTestSupport.IMPORTED_CLASSES);
+    }
+
+    @Test
+    void w5_applicationKeyAccessorIsConfinedToDriveThruAndSecurityIntegrationPackages() {
+        noClasses()
+                .that().resideOutsideOfPackages(
+                        "de.paladinsinn.drivethru..",
+                        "de.paladinsinn.security..")
+                .should().callMethod(DrivethruToken.class, "getApplicationKey")
+                .as("W5: DrivethruToken#getApplicationKey must never be accessed outside DriveThru/security integration (ADR-023)")
+                .allowEmptyShould(true)
                 .check(ArchitectureTestSupport.IMPORTED_CLASSES);
     }
 }

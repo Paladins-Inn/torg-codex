@@ -1,0 +1,103 @@
+:adr-title: Event-Driven Asynchronous User Notification Subsystem (Session and Authenticated Broadcast via SSE)
+:adr-state: Accepted
+:adr-date: 2026-11-16
+:adr-expires: ./.
+:adr-author: klenkes74
+:adr-body: klenkes74
+:adr-seq: 024
+:adr-short: ADR-{adr-seq}
+= {adr-short} -- {adr-title}
+include::partial$config.adoc[]
+
+[cols="<.<8h,<.<12a", frame="topbot", grid="rows"]
+|===
+| ADR | {adr-short}
+| Title | {adr-title}
+| State | {adr-state}
+| Author | {adr-author}
+| Decision Body | {adr-body}
+| Valid from | {adr-date}
+| Expires | {adr-expires}
+|===
+
+== Context
+
+Asynchronous background workflows in {system}—starting with non-blocking DriveThruRPG library synchronization ({adr-023}) and extending to future administrative operations in `/admin`—must inform users of progress, completion, warnings, and errors without blocking HTTP responses, replacing open reading content, or coupling application/domain logic to web templates.
+
+Periodic HTTP browser polling creates continuous idle request chatter across open tabs and introduces multi-second delivery latency. At the same time, notifications need two distinct addressing modes:
+
+1. **Current-session notifications**, addressed to a single user session (for example, library sync started/completed/failed for that reader session).
+2. **All-logged-in-users broadcasts**, addressed to every currently authenticated session (reserved for the `/admin` frontend to announce system-wide notices without notifying anonymous visitors).
+
+Both modes must work across the isolated public reader (`codex/...`) and administrative (`admin/...`) UI shells ({adr-020}, {adr-021}), survive `302` redirects and page navigations without dropping messages, protect acknowledgment endpoints with standard CSRF/CORS rules, and comply with Operations-First ECS logging ({adr-017}, {adr-022}).
+
+== Decision
+
+We introduce a generic, event-driven asynchronous user notification subsystem built on **Spring Events** in-process messaging and **Server-Sent Events (`SseEmitter`)** browser push:
+
+1. **Framework-Free Application Model and Target Addressing (`torg-codex-application`)**:
+   * Notification types (`NotificationSeverity`, `NotificationActionKind`, `NotificationAction`, `UserNotification`, `NotificationTarget`, `UserNotificationRequested`, `UserNotificationCommand`, `UserNotificationQuery`, `UserNotificationStorePort`, `UserNotificationService`) reside in `de.paladinsinn.torg.codex.application` with zero Spring, Servlet, or UI dependencies ({adr-005}).
+   * `NotificationTarget` is a sealed hierarchy supporting two explicit targets:
+     ** `NotificationTarget.SessionChannel(channelId)` — delivers to one specific session notification channel.
+     ** `NotificationTarget.AllAuthenticatedUsers()` — delivers an independent notification copy to every channel currently registered as belonging to an authenticated user session (prepared for future `/admin` broadcast use; unused by reader flows today). Anonymous sessions (such as pre-login CSRF sessions) are never included in authenticated broadcasts.
+   * Producers emit `UserNotificationRequested(target, severity, title, message, action)` via Spring's `ApplicationEventPublisher` (Constitution Principle II) or invoke `UserNotificationCommand` directly.
+
+2. **Spring Events Bridge and Immediate `SseEmitter` Push (Zero Browser Polling)**:
+   * An integration `@EventListener` in `torg-codex` consumes `UserNotificationRequested` and dispatches it through `UserNotificationCommand#dispatch(...)`.
+   * Enqueuing a notification in `InMemoryUserNotificationStoreAdapter` publishes a `UserNotificationPublished(channelId, notification)` Spring event.
+   * `SseNotificationBroadcaster` (`@EventListener`) renders the surface-appropriate JTE toast fragment (`codex/fragments/toasts.jte` or `admin/fragments/toasts.jte`, auto-escaped via `${...}`) and pushes it immediately as an `event: toast` frame over active Spring MVC `SseEmitter` streams (`GET /notifications/stream` and `GET /admin/notifications/stream`, `text/event-stream`, configurable timeout `torg.codex.notifications.sse-timeout`, default `30m`).
+   * No periodic HTTP polling is used on any UI surface. Anonymous catalog pages without a notification channel neither allocate an `HttpSession` nor open an `EventSource`.
+
+3. **Non-Destructive Session Buffering, Acknowledgment, and Replay Deduplication**:
+   * Because `EventSource` connections close and reopen across `302` redirects and full-page navigations, notifications remain buffered non-destructively per session channel (`<= 20` oldest items flushed on SSR `initialToasts` and initial SSE stream connect) until explicitly acknowledged.
+   * `/js/notifications.js` deduplicates displayed notification UUIDs in `sessionStorage` and sends `POST /notifications/ack` (or `POST /admin/notifications/ack`) with a same-origin `X-CSRF-TOKEN` header only after Bootstrap Toast display succeeds.
+   * Broadcasts mint a distinct notification UUID per recipient channel so one user acknowledging or closing a broadcast toast never dismisses it for other logged-in users.
+   * Active `SseEmitter`s are completed and channel state (including authenticated-channel registration) is cleared on logout (`POST /logout`) and `HttpSessionListener#sessionDestroyed`, with guards preventing late async events from recreating invalidated channels.
+
+4. **Severity Semantics, Surface Isolation, Security, and Logging**:
+   * `INFO` and `SUCCESS` toasts auto-dismiss after `6000 ms` while remaining manually closeable; `WARNING` and `ERROR` toasts are sticky until explicitly closed.
+   * Optional actions (`RELOAD_CURRENT_PAGE` and validated root-relative `NAVIGATE_URL`) never trigger unsolicited mid-reading page replacement.
+   * Reader and `/admin` controllers (`CodexNotificationController`, `AdminNotificationController`) remain strictly separated in `web.codex` and `web.admin` while sharing non-controller support/presentation types in `web.notification` mapped via MapStruct ({adr-014}).
+   * SSE stream and acknowledgment requests are classified as background control traffic: logged at `TRACE` start/completion (never `DEBUG`/`INFO`) and excluded from `torg.codex.web.page` page timers ({adr-022}, {adr-023}).
+
+== Benefits for {system}
+
+* **Zero Polling Overhead & Instant Delivery**: Idle open browser tabs generate zero periodic HTTP requests while live notifications arrive immediately on Spring Event publication.
+* **Unified Session & Admin-Broadcast Addressing**: Both single-session workflow feedback and future `/admin` announcements use the exact same `ApplicationEventPublisher` contract without leaking across anonymous sessions or coupling recipients' dismissal state.
+* **Redirect & Navigation Resilience**: Combining `SseEmitter` push with non-destructive pending buffering + CSRF-protected acknowledgments prevents lost toasts across post-login redirects and page transitions.
+* **Strict Hexagonal & Theme Isolation**: Producers know nothing about SSE, JTE, or Bootstrap, while reader and `/admin` shells render notifications in their own isolated themes.
+
+== Consequences and Challenges
+
+* **Long-Lived HTTP Connections**: Each signed-in open tab holds one asynchronous `SseEmitter` connection (`30m` default timeout with automatic browser `EventSource` reconnect while the session remains valid); reverse proxies should honor `X-Accel-Buffering: no`.
+* **In-Memory Single-Node Scope**: Active `SseEmitter` registries and session notification queues reside in JVM memory alongside `HttpSession`; multi-replica horizontal scaling would later require sticky sessions or an external event relay.
+
+== Evaluated Options
+
+=== Option 1: Spring Events (`ApplicationEventPublisher` / `@EventListener`) + `SseEmitter` Push with Session Ack Buffer (Selected)
+
+* **Pros**: Native to `spring-boot-starter-web` and standard browser `EventSource` with zero extra dependencies; eliminates polling; supports both single-session and all-authenticated-users fan-out cleanly; preserves redirect safety.
+* **Cons**: Requires lifecycle cleanup of `SseEmitter` instances on logout, timeout, and session destruction.
+
+=== Option 2: Periodic htmx HTTP Polling (`every 2s`)
+
+* **Pros**: Short-lived stateless HTTP requests.
+* **Cons**: Continuous background request noise from every open tab and up to 2 seconds of artificial latency; explicitly rejected.
+
+=== Option 3: Bidirectional WebSocket / STOMP Broker
+
+* **Pros**: Full-duplex messaging channel.
+* **Cons**: Unnecessary protocol and dependency complexity (`spring-boot-starter-websocket`, client STOMP library) for unidirectional server-to-browser toast delivery and simple form-POST acknowledgments.
+
+== Further Reading
+
+* {adr-005}
+* {adr-014}
+* {adr-017}
+* {adr-020}
+* {adr-021}
+* {adr-022}
+* {adr-023}
+* xref:08_concepts/observability.adoc[]
+
+<<<

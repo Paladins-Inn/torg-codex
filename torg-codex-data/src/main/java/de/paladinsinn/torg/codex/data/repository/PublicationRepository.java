@@ -26,12 +26,14 @@
 package de.paladinsinn.torg.codex.data.repository;
 
 import de.paladinsinn.torg.codex.data.model.Publication;
+import de.paladinsinn.torg.codex.application.port.in.CatalogPublicationReference;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -49,6 +51,15 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
     @Query("SELECT p FROM Publication p WHERE :productId MEMBER OF p.productIds")
     List<Publication> findByProductId(@Param("productId") int productId);
 
+    /** Resolves all matching references in one query without loading eager product-id collections. */
+    @Query("""
+            SELECT DISTINCT new de.paladinsinn.torg.codex.application.port.in.CatalogPublicationReference(
+                p.id, p.name, p.codexId)
+            FROM Publication p JOIN p.productIds productId
+            WHERE productId IN :productIds
+            """)
+    List<CatalogPublicationReference> findReferencesByProductIds(@Param("productIds") Set<Integer> productIds);
+
     /** Find by the canonical (primary) product id. */
     Optional<Publication> findByPrimaryProductId(int primaryProductId);
 
@@ -58,4 +69,3 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
     /** Find all first-party publications (no third-party author). */
     List<Publication> findByThirdPartyIsNull();
 }
-

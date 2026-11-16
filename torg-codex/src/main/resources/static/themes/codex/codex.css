@@ -70,3 +70,16 @@ a.entity-ref {
 .codex-table th {
     white-space: nowrap;
 }
+
+/* Reader notification toast region (ADR-020, ADR-024) */
+.codex-toast-region {
+    z-index: 1085;
+}
+.codex-toast {
+    border-left: 4px solid var(--codex-brand-accent) !important;
+}
+.codex-toast-info { border-left-color: #0dcaf0 !important; }
+.codex-toast-success { border-left-color: #198754 !important; }
+.codex-toast-warning { border-left-color: #ffc107 !important; }
+.codex-toast-error { border-left-color: #dc3545 !important; }
+

@@ -12,5 +12,6 @@ target/
 !/torg-codex-data/src/main/resources/db/load/torg_publication.csv
 !/torg-codex-data/src/main/resources/db/load/torg_publication_product_ids.csv
 /node_modules/
+**/logs/
 /torg-codex-data/orig-data/*
 !/torg-codex-data/orig-data/import-scripts/

@@ -36,6 +36,7 @@ import de.paladinsinn.torg.codex.data.repository.PublicationRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Secondary adapter that resolves references through Spring Data JPA repositories.
@@ -70,6 +71,11 @@ public final class JpaCatalogReferenceAdapter implements CatalogReferencePersist
         return publicationRepository.findByProductId(productId).stream()
                 .map(this::toPublicationReference)
                 .toList();
+    }
+
+    @Override
+    public List<CatalogPublicationReference> findPublicationsByProductIds(Set<Integer> productIds) {
+        return productIds.isEmpty() ? List.of() : publicationRepository.findReferencesByProductIds(productIds);
     }
 
     private CatalogReference toReference(Publication publication) {

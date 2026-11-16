@@ -39,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Framework-independent implementation of the catalog reference use case.
@@ -75,5 +76,10 @@ public final class CatalogReferenceQueryService implements CatalogReferenceQuery
     @Override
     public List<CatalogPublicationReference> findPublicationsByProductId(int productId) {
         return persistence.findPublicationsByProductId(productId);
+    }
+
+    @Override
+    public List<CatalogPublicationReference> findPublicationsByProductIds(Set<Integer> productIds) {
+        return productIds.isEmpty() ? List.of() : persistence.findPublicationsByProductIds(productIds);
     }
 }

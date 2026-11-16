@@ -114,4 +114,17 @@ class CensoringSingleMechanismArchitectureTest {
                 .as("no controller may depend on ProductOwnershipResolver directly")
                 .isFalse();
     }
+
+    @Test
+    void asyncSynchronizerAndNotificationAdaptersNeverBypassSingleOwnershipMechanism() {
+        ArchitectureTestSupport.assertNoUnfrozenViolations(noClasses()
+                .that().resideInAnyPackage(
+                        "de.paladinsinn.security..",
+                        "de.paladinsinn.torg.codex.web.notification..")
+                .should().dependOnClassesThat().haveSimpleName("ProductOwnershipResolver")
+                .orShould().dependOnClassesThat().haveSimpleName("CurrentUserCensorFactory")
+                .as("Async library sync and notification adapters must expand ROLE_<codex-id> authorities "
+                        + "without bypassing or duplicating ProductOwnershipResolver (ADR-023)")
+                .allowEmptyShould(true));
+    }
 }

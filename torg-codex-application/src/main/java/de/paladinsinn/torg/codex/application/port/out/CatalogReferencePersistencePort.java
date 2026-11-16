@@ -30,6 +30,7 @@ import de.paladinsinn.torg.codex.application.port.in.CatalogPublicationReference
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Driven port for resolving codex references from persistence.
@@ -47,4 +48,6 @@ public interface CatalogReferencePersistencePort {
     Optional<CatalogReference> findPublicationByCodexId(String codexId);
 
     List<CatalogPublicationReference> findPublicationsByProductId(int productId);
+
+    List<CatalogPublicationReference> findPublicationsByProductIds(Set<Integer> productIds);
 }

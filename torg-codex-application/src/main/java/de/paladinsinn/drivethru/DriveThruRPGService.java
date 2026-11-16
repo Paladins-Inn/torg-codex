@@ -45,7 +45,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -61,12 +61,12 @@ import java.util.Optional;
 @Slf4j
 public class DriveThruRPGService {
 
-    private static final int DEFAULT_PAGE_SIZE = 50;
+    private static final int DEFAULT_PAGE_SIZE = 200;
     private static final int EXCLUDE_ARCHIVED = 0;
     private static final int NO_CHECKSUMS = 0;
     private static final int NO_FILTERS = 0;
 
-    private record OrderProductPage(List<OwnedProduct> products, boolean hasNext) {
+    private record OrderProductPage(List<OwnedProduct> products, boolean hasNext, int pageSize) {
     }
 
     private final DriveThruRPGClient client;
@@ -285,14 +285,34 @@ public class DriveThruRPGService {
      */
     public List<Integer> getIdsOfOwnedProducts(final DrivethruToken token)
             throws NoValidTokenException {
-        final List<Integer> result = new ArrayList<>(DEFAULT_PAGE_SIZE);
+        return streamOwnedProductBatches(token, batch -> { }).productIds();
+    }
+
+    /**
+     * Streams sequential JSON:API library pages, invoking {@code batchListener} immediately after each
+     * non-empty page arrives and returning a complete, immutable, deduplicated snapshot on completion.
+     *
+     * @param token         valid DriveThruRPG session token (may be a key-free session copy)
+     * @param batchListener callback receiving each sequential page batch before the next page is fetched
+     * @return complete, deduplicated library snapshot
+     * @throws NoValidTokenException if the token expires and cannot be renewed
+     */
+    public DriveThruLibrarySnapshot streamOwnedProductBatches(
+            final DrivethruToken token,
+            final LibraryBatchListener batchListener)
+            throws NoValidTokenException {
+        Objects.requireNonNull(token, "token");
+        Objects.requireNonNull(batchListener, "batchListener");
+        final LinkedHashSet<Integer> collectedIds = new LinkedHashSet<>(DEFAULT_PAGE_SIZE);
+        String resolvedCustomerId = token.getCustomerId();
 
         int page = 1;
+        int pageSize = DEFAULT_PAGE_SIZE;
         boolean renewed = false;
         while (true) {
             final OrderProductPage currentPage;
             try {
-                currentPage = fetchOrderProductPage(token, page, DEFAULT_PAGE_SIZE, EXCLUDE_ARCHIVED);
+                currentPage = fetchOrderProductPage(token, page, pageSize, EXCLUDE_ARCHIVED);
             } catch (final HttpClientErrorException.Unauthorized e) {
                 if (renewed) {
                     logRenewalExhausted(page);
@@ -302,17 +322,32 @@ public class DriveThruRPGService {
                 renewed = true;
                 continue;
             }
-            currentPage.products().stream()
+            List<Integer> pageIds = currentPage.products().stream()
                     .map(OwnedProduct::getId)
                     .filter(id -> id > 0)
-                    .forEach(result::add);
+                    .distinct()
+                    .toList();
+            String pageCustomerId = currentPage.products().stream()
+                    .map(OwnedProduct::getCustomerId)
+                    .filter(Objects::nonNull)
+                    .map(String::valueOf)
+                    .findFirst()
+                    .orElse(null);
+            if (resolvedCustomerId == null && pageCustomerId != null) {
+                resolvedCustomerId = pageCustomerId;
+            }
+            if (!pageIds.isEmpty()) {
+                collectedIds.addAll(pageIds);
+                batchListener.onBatch(new DriveThruLibraryBatch(page, pageIds, pageCustomerId));
+            }
             if (!currentPage.hasNext()) {
                 break;
             }
+            pageSize = currentPage.pageSize();
             page++;
         }
-        log.debug("Collected all owned product ids. total={}", result.size());
-        return result;
+        log.debug("Collected all owned product ids. total={}", collectedIds.size());
+        return DriveThruLibrarySnapshot.of(collectedIds, resolvedCustomerId, Instant.now());
     }
 
     // -------------------------------------------------------------------------
@@ -361,23 +396,33 @@ public class DriveThruRPGService {
                     .findFirst()
                     .ifPresent(id -> token.setCustomerId(String.valueOf(id)));
         }
+        int effectivePageSize = document.getMeta() != null && document.getMeta().getItemsPerPage() != null
+                && document.getMeta().getItemsPerPage() > 0 ? document.getMeta().getItemsPerPage() : pageSize;
         boolean hasNext = !products.isEmpty()
-                && (document.getLinks() != null ? document.getLinks().hasNext() : products.size() >= pageSize);
+                && (document.getLinks() != null ? document.getLinks().hasNext() : products.size() >= effectivePageSize);
         log.atDebug()
                 .addKeyValue("operation", "library-fetch")
                 .addKeyValue("page", page)
                 .addKeyValue("productCount", products.size())
                 .addKeyValue("hasNext", hasNext)
                 .log("DriveThruRPG library response received.");
-        return new OrderProductPage(products, hasNext);
+        return new OrderProductPage(products, hasNext, effectivePageSize);
     }
 
     private void renewToken(final DrivethruToken token) throws NoValidTokenException {
         // Prefer the cookie-based /auth/refresh endpoint when an unexpired refresh token exists;
-        // otherwise or upon rejection, bypass the token cache and re-exchange the application key.
+        // re-exchange the application key only when the request-local token carries one (D9).
         DrivethruToken replacement = tryRefreshToken(token).orElse(null);
         if (replacement == null) {
-            replacement = requestToken(token.getApplicationKey(), "token-renewal");
+            String applicationKey = token.getApplicationKey();
+            if (applicationKey == null || applicationKey.isBlank()) {
+                log.atDebug()
+                        .addKeyValue("operation", "token-renewal")
+                        .addKeyValue("reason", "refresh-only-unrenewable")
+                        .log("DriveThruRPG session token cannot be renewed without an application key.");
+                throw new NoValidTokenException();
+            }
+            replacement = requestToken(applicationKey, "token-renewal");
         }
         token.setAccessToken(replacement.getAccessToken());
         if (replacement.getRefreshToken() != null && !replacement.getRefreshToken().isBlank()) {

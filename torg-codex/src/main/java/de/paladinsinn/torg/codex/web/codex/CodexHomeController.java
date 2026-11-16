@@ -27,6 +27,7 @@ package de.paladinsinn.torg.codex.web.codex;
 
 import de.paladinsinn.torg.codex.application.port.in.CodexOverviewQuery;
 import de.paladinsinn.torg.codex.web.codex.mapper.CodexViewMapper;
+import io.micrometer.core.annotation.Timed;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -47,6 +48,7 @@ public class CodexHomeController {
     private final CodexOverviewQuery overviewQuery;
     private final CodexViewMapper viewMapper;
 
+    @Timed(value = "torg.codex.web.page", extraTags = {"page", "home"})
     @GetMapping("/")
     public String home(
             final Authentication authentication,

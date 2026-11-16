@@ -5,6 +5,11 @@ gg:
     development-mode: true
 
 logging:
+  file:
+    name: ${LOG_FILE:logs/torg-codex.log}
+  structured:
+    format:
+      file: ecs
   level:
     de.paladinsinn: debug
     org.springframework.web.filter.CommonsRequestLoggingFilter: debug

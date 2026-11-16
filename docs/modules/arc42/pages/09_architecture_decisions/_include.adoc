@@ -20,3 +20,5 @@
 :adr-020: xref:arc42:page$09_architecture_decisions/020_bootstrap-ui-framework.adoc[&uparrow;ADR-020]
 :adr-021: xref:arc42:page$09_architecture_decisions/021_htmx-hypermedia-interactivity.adoc[&uparrow;ADR-021]
 :adr-022: xref:arc42:page$09_architecture_decisions/022_logging-policy.adoc[&uparrow;ADR-022]
+:adr-023: xref:arc42:page$09_architecture_decisions/023_async-library-sync-and-notifications.adoc[&uparrow;ADR-023]
+:adr-024: xref:arc42:page$09_architecture_decisions/024_event-driven-user-notifications.adoc[&uparrow;ADR-024]

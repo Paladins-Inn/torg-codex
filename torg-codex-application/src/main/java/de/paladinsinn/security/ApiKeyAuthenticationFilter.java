@@ -94,9 +94,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         final String apiKey = header.substring(API_KEY_PREFIX.length()).strip();
         log.debug("Received API key authentication request.");
         try {
-            final Authentication auth = sessionAuthentication == null
-                    ? authenticationManager.authenticate(ApiKeyAuthenticationToken.unauthenticated(apiKey))
-                    : sessionAuthentication.authenticate(apiKey, request, response);
+            final Authentication auth = resolveHeaderAuthentication(apiKey, request, response);
             SecurityContextHolder.getContext().setAuthentication(auth);
             log.debug("API key authentication successful. user={}, owned={}, authorities={}",
                     auth.getName(),
@@ -114,6 +112,34 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         filterChain.doFilter(request, response);
+    }
+
+    private Authentication resolveHeaderAuthentication(
+            final String apiKey,
+            final HttpServletRequest request,
+            final HttpServletResponse response) {
+        if (sessionAuthentication == null) {
+            return authenticationManager.authenticate(ApiKeyAuthenticationToken.unauthenticated(apiKey));
+        }
+        if (isApiRoute(request)) {
+            if (request.getSession(false) == null) {
+                return authenticationManager.authenticate(ApiKeyAuthenticationToken.unauthenticated(apiKey));
+            }
+            return sessionAuthentication.authenticateHeaderWithExistingSession(apiKey, request);
+        }
+        return sessionAuthentication.authenticate(apiKey, request, response);
+    }
+
+    private static boolean isApiRoute(final HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        if (uri == null) {
+            return false;
+        }
+        String contextPath = request.getContextPath();
+        String path = contextPath != null && !contextPath.isEmpty() && uri.startsWith(contextPath)
+                ? uri.substring(contextPath.length())
+                : uri;
+        return "/api".equals(path) || path.startsWith("/api/");
     }
 
     private void clearAuthentication(final HttpServletRequest request, final HttpServletResponse response) {

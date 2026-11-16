@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AdapterConventionArchitectureTest {
@@ -111,5 +112,15 @@ class AdapterConventionArchitectureTest {
         assertTrue(missing.isEmpty(),
                 "Missing (or misplaced) Phase 4d catalog-area controllers under "
                         + "api.controller: " + missing);
+    }
+
+    @Test
+    void sharedNotificationWebPackageContainsNoSpringControllers() {
+        ArchitectureTestSupport.assertNoUnfrozenViolations(noClasses()
+                .that().resideInAnyPackage("de.paladinsinn.torg.codex.web.notification..")
+                .should().beAnnotatedWith(Controller.class)
+                .orShould().beAnnotatedWith(RestController.class)
+                .as("Shared web.notification package must contain non-controller support/presentation types only")
+                .allowEmptyShould(true));
     }
 }

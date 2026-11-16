@@ -69,6 +69,11 @@ class CatalogAccessResponsesTest {
         public List<CatalogPublicationReference> findPublicationsByProductId(int productId) {
             return List.of();
         }
+
+        @Override
+        public List<CatalogPublicationReference> findPublicationsByProductIds(Set<Integer> productIds) {
+            return List.of();
+        }
     };
 
     private final CatalogAccessResponses responses =

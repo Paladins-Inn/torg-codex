@@ -27,10 +27,28 @@ gg:
     use-precompiled-templates: true
     development-mode: false
 
+drivethru:
+  library:
+    cache:
+      ttl: ${DRIVETHRU_LIBRARY_CACHE_TTL:12h}
+      max-size: ${DRIVETHRU_LIBRARY_CACHE_MAX_SIZE:1000}
+    sync:
+      executor:
+        core-size: ${DRIVETHRU_LIBRARY_SYNC_THREADS:4}
+        queue-capacity: ${DRIVETHRU_LIBRARY_SYNC_QUEUE:100}
+
+torg:
+  codex:
+    notifications:
+      sse-timeout: ${TORG_CODEX_NOTIFICATION_SSE_TIMEOUT:30m}
+    web:
+      cors:
+        allowed-origins: ${TORG_CODEX_WEB_CORS_ALLOWED_ORIGINS:}
+
 logging:
   # Spring Boot native structured JSON logging in ECS format (ADR-017, ADR-022, constitution Principle VII).
-  # No Logstash-specific encoder is used. Production defaults to INFO (ADR-022); enable DEBUG/TRACE
-  # selectively via the dev profile or runtime configuration during 2nd/3rd-level support diagnostics.
+  # Production emits console logs only (no file logging in production). File logging is restricted to
+  # local dev/test profiles. Production defaults to INFO (ADR-022); enable DEBUG/TRACE selectively at runtime.
   structured:
     format:
       console: ecs
@@ -38,6 +56,9 @@ logging:
     root: info
 
 management:
+  observations:
+    annotations:
+      enabled: true
   otlp:
     metrics:
       export:
@@ -89,7 +110,6 @@ management:
           - metrics
           - prometheus
           - loggers
-          - logfile
           - liquidbase
           - hikari
           - quartz

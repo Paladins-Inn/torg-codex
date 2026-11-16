@@ -54,6 +54,8 @@ class ModuleBoundaryArchitectureTest {
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "de.paladinsinn.torg.codex.data..",
                         "de.paladinsinn.torg.codex.api..",
+                        "de.paladinsinn.torg.codex.web..",
+                        "de.paladinsinn.torg.codex.security..",
                         "de.paladinsinn.torg.codex.configuration..",
                         "de.paladinsinn.drivethru..",
                         "de.paladinsinn.security..",
@@ -67,6 +69,8 @@ class ModuleBoundaryArchitectureTest {
         ArchitectureTestSupport.assertNoUnfrozenViolations(classes()
                 .that().haveSimpleName("CatalogQuery")
                 .or().haveSimpleName("CatalogReferenceQuery")
+                .or().haveSimpleName("UserNotificationCommand")
+                .or().haveSimpleName("UserNotificationQuery")
                 .should().resideInAnyPackage("de.paladinsinn.torg.codex.application.port.in..")
                 .as("Driving ports must live in torg-codex-application"));
     }
@@ -76,6 +80,7 @@ class ModuleBoundaryArchitectureTest {
         ArchitectureTestSupport.assertNoUnfrozenViolations(classes()
                 .that().haveSimpleName("CatalogPersistencePort")
                 .or().haveSimpleName("CatalogReferencePersistencePort")
+                .or().haveSimpleName("UserNotificationStorePort")
                 .should().resideInAnyPackage("de.paladinsinn.torg.codex.application.port.out..")
                 .as("Driven ports must live in torg-codex-application"));
     }
@@ -85,6 +90,7 @@ class ModuleBoundaryArchitectureTest {
         ArchitectureTestSupport.assertNoUnfrozenViolations(classes()
                 .that().haveSimpleName("CatalogQueryService")
                 .or().haveSimpleName("CatalogReferenceQueryService")
+                .or().haveSimpleName("UserNotificationService")
                 .should().resideInAnyPackage("de.paladinsinn.torg.codex.application.service..")
                 .as("Framework-free use-case services must live in torg-codex-application"));
     }

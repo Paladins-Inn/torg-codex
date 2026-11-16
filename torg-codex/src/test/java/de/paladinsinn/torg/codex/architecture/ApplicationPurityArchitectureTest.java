@@ -39,6 +39,9 @@ class ApplicationPurityArchitectureTest {
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "org.springframework..",
                         "jakarta.persistence..",
+                        "jakarta.servlet..",
+                        "io.micrometer..",
+                        "gg.jte..",
                         "org.hibernate..")
                 .as("torg-codex-application must stay framework-free")
                 .allowEmptyShould(true));

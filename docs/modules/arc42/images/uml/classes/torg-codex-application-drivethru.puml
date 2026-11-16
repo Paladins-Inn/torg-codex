@@ -1,5 +1,70 @@
 @startuml
 
+class ApiKeyFingerprint {
+	{field} {static} -REDACTED_REPR : String
+	{field} {static} -SHA256_HEX_PATTERN : Pattern
+	{field} -value : String
+	{method} +equals ( other : Object ) : boolean
+	{method} +hashCode () : int
+	{method}  {static} +of ( apiKey : String ) : ApiKeyFingerprint
+	{method} +toString () : String
+	{method} +value () : String
+}
+
+
+class DriveThruLibraryBatch {
+	{field} -customerId : String
+	{field} -pageNumber : int
+	{field} -productIds : List
+	{method} +customerId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +pageNumber () : int
+	{method} +productIds () : List
+	{method} +toString () : String
+}
+
+
+class DriveThruLibraryCacheConfig {
+	{field} {static} -DEFAULT_MAX_SIZE : long
+	{field} {static} -DEFAULT_TTL_HOURS : long
+	{field} {static} +LIBRARY_CACHE : String
+	{method} +driveThruLibraryCacheCustomizer ( properties : DriveThruLibraryCacheProperties , ticker : ObjectProvider ) : CacheManagerCustomizer
+	{method} +fallbackCaffeineCacheManager ( properties : DriveThruLibraryCacheProperties , ticker : ObjectProvider ) : CaffeineCacheManager
+	{method} +libraryCacheKeyGenerator () : KeyGenerator
+	{method}  {static} -registerLibraryCache ( cacheManager : CaffeineCacheManager , properties : DriveThruLibraryCacheProperties , ticker : Ticker ) : void
+}
+
+
+class DriveThruLibraryCacheProperties {
+	{field} +maxSize : long
+	{field} +ttl : Duration
+}
+
+
+class DriveThruLibraryCacheService {
+	{field} -cacheManager : CacheManager
+	{method} +findCachedLibrary ( fingerprint : ApiKeyFingerprint ) : Optional
+	{method} +loadLibrary ( fingerprint : ApiKeyFingerprint , token : DrivethruToken ) : DriveThruLibrarySnapshot
+	{method} +reloadLibraryStreaming ( fingerprint : ApiKeyFingerprint , token : DrivethruToken , listener : LibraryBatchListener ) : DriveThruLibrarySnapshot
+	{method} +reloadLibraryStreaming ( fingerprint : ApiKeyFingerprint , token : DrivethruToken , listener : LibraryBatchListener , preCommitValidator : Runnable ) : DriveThruLibrarySnapshot
+}
+
+
+class DriveThruLibrarySnapshot {
+	{field} -customerId : String
+	{field} -loadedAt : Instant
+	{field} -productIds : List
+	{method} +customerId () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +loadedAt () : Instant
+	{method}  {static} +of ( productIds : Collection , customerId : String , loadedAt : Instant ) : DriveThruLibrarySnapshot
+	{method} +productIds () : List
+	{method} +toString () : String
+}
+
+
 class DriveThruMessage {
 	{field} +message : Object
 	{field} +status : String
@@ -50,10 +115,14 @@ interface DriveThruRPGClient {
 
 
 class DriveThruRPGClientConfig {
+	{field} {static} +REQUEST_COUNT : String
+	{field} {static} +REQUEST_DURATION : String
 	{field} {static} -log : Logger
 	{method} -buildDelegate ( properties : DriveThruProperties ) : DriveThruRPGClient
 	{method} -createRequestFactory ( connectTimeout : Duration , readTimeout : Duration ) : SimpleClientHttpRequestFactory
 	{method} +driveThruRPGClient ( properties : DriveThruProperties ) : DriveThruRPGClient
+	{method} +driveThruRPGClient ( properties : DriveThruProperties , registry : MeterRegistry ) : DriveThruRPGClient
+	{method} -measure ( registry : MeterRegistry , operation : String , request : Supplier ) : Object
 }
 
 
@@ -79,6 +148,7 @@ class DriveThruRPGService {
 	{method} -logUpstreamFailure ( operation : String , endpoint : String , page : Integer , failure : RestClientException ) : void
 	{method} -renewToken ( token : DrivethruToken ) : void
 	{method} -requestToken ( apiKey : String , operation : String ) : DrivethruToken
+	{method} +streamOwnedProductBatches ( token : DrivethruToken , batchListener : LibraryBatchListener ) : DriveThruLibrarySnapshot
 	{method} -tryRefreshToken ( currentToken : DrivethruToken ) : Optional
 	{method} -validateAccessToken ( token : DrivethruToken , operation : String , endpoint : String ) : void
 }
@@ -107,6 +177,7 @@ class DrivethruToken {
 	{field} -subject : String
 	{method} +getBearerToken () : String
 	{method} +isRefreshTokenExpiredAt ( instant : Instant ) : boolean
+	{method} +sessionCopy () : DrivethruToken
 	{method} +toString () : String
 }
 
@@ -163,6 +234,21 @@ class JsonApiResource {
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +toString () : String
+}
+
+
+interface LibraryBatchListener {
+	{method}  {abstract} +onBatch ( batch : DriveThruLibraryBatch ) : void
+}
+
+
+class LibraryLoadCoordinator {
+	{method} -acquireLock ( fingerprint : ApiKeyFingerprint ) : RefCountedLock
+	{method} ~activeLockCount () : int
+	{method} +findCached ( fingerprint : ApiKeyFingerprint ) : Optional
+	{method} +loadCoordinated ( fingerprint : ApiKeyFingerprint , token : DrivethruToken ) : DriveThruLibrarySnapshot
+	{method} -releaseLock ( fingerprint : ApiKeyFingerprint , entry : RefCountedLock ) : void
+	{method} +reloadCoordinated ( fingerprint : ApiKeyFingerprint , token : DrivethruToken , listener : LibraryBatchListener , preCommitValidator : Runnable ) : DriveThruLibrarySnapshot
 }
 
 
@@ -253,8 +339,13 @@ class SpringDomainEventPublisherAdapter {
 }
 
 
+class SupersededSyncException {
+}
 
 
+
+
+DriveThruLibraryCacheService *--  DriveThruRPGService : driveThruRPGService
 DriveThruRPGService *--  DriveThruRPGClient : client
 DriveThruRpgProductAdapter *--  DriveThruRPGService : service
 DrivethruToken --|>  DriveThruResource
@@ -264,6 +355,8 @@ JsonApiCollectionDocument -->  JsonApiLinks : links
 JsonApiCollectionDocument -->  JsonApiMeta : meta
 JsonApiDocument "1" o-- "0..*"  JsonApiResource : included
 JsonApiDocument -->  JsonApiResource : data
+LibraryLoadCoordinator "1" o-- "0..*"  ApiKeyFingerprint : locks
+LibraryLoadCoordinator *--  DriveThruLibraryCacheService : cacheService
 OwnedProduct --|>  DriveThruResource
 Product -->  ProductDescription : description
 Product --|>  DriveThruResource

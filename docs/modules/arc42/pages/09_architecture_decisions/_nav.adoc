@@ -1,4 +1,6 @@
 *** xref:09_architecture_decisions/index.adoc[]
+**** xref:09_architecture_decisions/024_event-driven-user-notifications.adoc[]
+**** xref:09_architecture_decisions/023_async-library-sync-and-notifications.adoc[]
 **** xref:09_architecture_decisions/022_logging-policy.adoc[]
 **** xref:09_architecture_decisions/021_htmx-hypermedia-interactivity.adoc[]
 **** xref:09_architecture_decisions/020_bootstrap-ui-framework.adoc[]
