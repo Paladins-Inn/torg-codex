@@ -29,6 +29,7 @@ import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseQuery;
 import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult;
 import de.paladinsinn.torg.codex.application.port.in.CatalogDetailResult;
 import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria;
+import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria.PublicationFilter;
 import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria.SortDirection;
 import de.paladinsinn.torg.codex.domain.catalog.CatalogArea;
 import de.paladinsinn.torg.codex.domain.catalog.CatalogCategoryDescriptor;
@@ -59,6 +60,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * Generic inbound reader UI controller serving all 17 catalog category tabular views and htmx
@@ -71,6 +74,8 @@ import java.util.Set;
 public class CodexCatalogController {
 
     private static final String CATALOG_RESULTS_TARGET = "catalog-results";
+    private static final Pattern HYPHENATED_UUID_PATTERN = Pattern.compile(
+            "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
     private final CatalogBrowseQuery browseQuery;
     private final CodexViewMapper viewMapper;
@@ -212,7 +217,24 @@ public class CodexCatalogController {
 
         String sort = firstOrEmpty(params, "sort");
         SortDirection dir = SortDirection.fromParam(firstOrEmpty(params, "dir"));
-        return new CatalogFilterCriteria(q, cosms, groupings, sort, dir);
+        PublicationFilter publication = parsePublicationFilter(area, params.get("publication"));
+        return new CatalogFilterCriteria(q, cosms, groupings, sort, dir, publication);
+    }
+
+    private static PublicationFilter parsePublicationFilter(
+            final CatalogArea area,
+            final List<String> rawValues) {
+        if (!area.isProductBound() || rawValues == null || rawValues.isEmpty()) {
+            return new PublicationFilter.None();
+        }
+        if (rawValues.size() != 1 || rawValues.getFirst() == null) {
+            return new PublicationFilter.Invalid();
+        }
+        String trimmed = rawValues.getFirst().trim();
+        if (!HYPHENATED_UUID_PATTERN.matcher(trimmed).matches()) {
+            return new PublicationFilter.Invalid();
+        }
+        return new PublicationFilter.ByUuid(UUID.fromString(trimmed));
     }
 
     private static String firstOrEmpty(final MultiValueMap<String, String> params, final String key) {

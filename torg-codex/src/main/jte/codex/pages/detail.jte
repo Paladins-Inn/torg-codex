@@ -1,6 +1,9 @@
 @param de.paladinsinn.torg.codex.web.codex.model.DetailViewModel model
 
 @template.codex.layout.page(title = model.header().name(), nav = model.nav(), content = @`
+    @if(model.area() == de.paladinsinn.torg.codex.domain.catalog.CatalogArea.PUBLICATION)
+        <div hx-history="false">
+    @endif
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb small mb-0">
             <li class="breadcrumb-item"><a href="/">Home</a></li>
@@ -9,8 +12,18 @@
         </ol>
     </nav>
 
-    <header class="d-flex flex-wrap justify-content-between align-items-center gap-2 pb-3 mb-4 border-bottom">
-        <h1 class="h2 mb-0">${model.header().name()}</h1>
+    <header class="d-flex flex-wrap justify-content-between align-items-center gap-3 pb-3 mb-4 border-bottom">
+        <div class="d-flex align-items-center gap-3">
+            @if(model.area() == de.paladinsinn.torg.codex.domain.catalog.CatalogArea.PUBLICATION)
+                @template.codex.fragments.publicationThumbnail(
+                    url = model.thumbnailUrl(),
+                    fallbackUrl = model.thumbnailFallbackUrl(),
+                    alt = "",
+                    extraClass = "flex-shrink-0"
+                )
+            @endif
+            <h1 class="h2 mb-0">${model.header().name()}</h1>
+        </div>
         <div class="d-flex flex-wrap align-items-center gap-2">
             @template.codex.fragments.badges(
                 cosms = model.header().cosms(),
@@ -71,6 +84,24 @@
         @endif
     </div>
 
+    @if(!model.contentTiles().isEmpty())
+        <section class="mt-4" aria-labelledby="publication-content-heading">
+            <h2 id="publication-content-heading" class="h4 mb-3">
+                <i class="bi bi-grid-3x3-gap me-2"></i>Content in this publication
+            </h2>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-3">
+                @for(var tile : model.contentTiles())
+                    @template.codex.fragments.categoryTile(
+                        area = tile.area(),
+                        count = tile.count(),
+                        href = tile.href(),
+                        ariaLabel = tile.ariaLabel()
+                    )
+                @endfor
+            </div>
+        </section>
+    @endif
+
     @if(!model.publications().isEmpty())
         <footer class="mt-4 pt-3 border-top small text-muted">
             <i class="bi bi-book me-1"></i>Source publication(s):
@@ -87,5 +118,9 @@
                 @endif
             @endfor
         </footer>
+    @endif
+    @if(model.area() == de.paladinsinn.torg.codex.domain.catalog.CatalogArea.PUBLICATION)
+        </div>
+        <script src="/js/publication-thumbnails.js" defer></script>
     @endif
 `)

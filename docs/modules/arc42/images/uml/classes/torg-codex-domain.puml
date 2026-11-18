@@ -360,6 +360,8 @@ class Publication {
 	{method} +productUrl () : String
 	{method} +slug () : String
 	{method} +thirdParty () : String
+	{method} +thumbnailFallbackUrl () : String
+	{method} +thumbnailUrl () : String
 	{method} +toString () : String
 }
 

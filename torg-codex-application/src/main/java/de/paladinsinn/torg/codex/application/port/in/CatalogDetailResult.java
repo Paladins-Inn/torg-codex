@@ -93,6 +93,23 @@ public sealed interface CatalogDetailResult
     }
 
     /**
+     * Distinct accessible entry count for one product-bound category on a publication detail page.
+     *
+     * @param area  product-bound catalog area
+     * @param count non-negative distinct entry count
+     */
+    record PublicationContentCount(CatalogArea area, int count) {
+        public PublicationContentCount {
+            if (area == null || !area.isProductBound()) {
+                throw new IllegalArgumentException("Publication content count area must be product-bound: " + area);
+            }
+            if (count < 0) {
+                throw new IllegalArgumentException("Publication content count must be non-negative: " + count);
+            }
+        }
+    }
+
+    /**
      * Accessible public reference entry detail (Article, Publication, Tag).
      *
      * @param area               catalog area
@@ -100,13 +117,28 @@ public sealed interface CatalogDetailResult
      * @param entry              reference entry
      * @param canonicalSlug      canonical slug
      * @param embeddedReferences section title -> resolved linked entries (e.g., parent tag)
+     * @param contentCounts      ordered product-bound category counts for publication details (empty otherwise)
      */
     record PublicReferenceEntry(
             CatalogArea area,
             CatalogCategoryDescriptor<? extends CatalogEntry> descriptor,
             CatalogEntry entry,
             String canonicalSlug,
-            Map<String, List<LinkedEntryRef>> embeddedReferences) implements CatalogDetailResult {
+            Map<String, List<LinkedEntryRef>> embeddedReferences,
+            List<PublicationContentCount> contentCounts) implements CatalogDetailResult {
+
+        public PublicReferenceEntry {
+            contentCounts = contentCounts == null ? List.of() : List.copyOf(contentCounts);
+        }
+
+        public PublicReferenceEntry(
+                final CatalogArea area,
+                final CatalogCategoryDescriptor<? extends CatalogEntry> descriptor,
+                final CatalogEntry entry,
+                final String canonicalSlug,
+                final Map<String, List<LinkedEntryRef>> embeddedReferences) {
+            this(area, descriptor, entry, canonicalSlug, embeddedReferences, List.of());
+        }
     }
 
     /**

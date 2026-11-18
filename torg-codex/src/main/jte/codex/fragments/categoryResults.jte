@@ -2,11 +2,28 @@
 @param de.paladinsinn.torg.codex.web.codex.model.TableViewModel model
 
 <div class="card shadow-sm">
-    <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center py-2">
-        <span class="small text-muted">
-            Showing <strong>${model.matchingCount()}</strong> of <strong>${model.totalAccessibleCount()}</strong>
-            accessible ${model.area().displayName().toLowerCase()}
-        </span>
+    <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2 py-2">
+        <div class="d-flex flex-wrap align-items-center gap-2 small text-muted">
+            <span>
+                Showing <strong>${model.matchingCount()}</strong> of <strong>${model.totalAccessibleCount()}</strong>
+                accessible ${model.area().displayName().toLowerCase()}
+            </span>
+            @if(model.publicationFilter() != null)
+                <span class="badge text-bg-light border fw-normal">
+                    @if(model.publicationFilter().unavailable())
+                        Publication unavailable
+                    @else
+                        Publication: <strong>${model.publicationFilter().displayName()}</strong>
+                    @endif
+                </span>
+                @if(model.filterPanel().clearPublicationUrl() != null)
+                    <a href="${model.filterPanel().clearPublicationUrl()}" data-clear-publication
+                       class="text-decoration-none">
+                        <i class="bi bi-x-circle me-1"></i>Clear publication
+                    </a>
+                @endif
+            @endif
+        </div>
         @if(model.filterPanel().hasActiveFilters())
             <a href="${model.area().canonicalPath()}" class="small text-decoration-none">
                 <i class="bi bi-x-circle me-1"></i>Clear active filters

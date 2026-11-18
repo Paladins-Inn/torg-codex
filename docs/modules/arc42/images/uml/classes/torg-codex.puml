@@ -195,6 +195,15 @@ class AuthPageViewModel {
 }
 
 
+class ByUuid {
+	{field} -publicationId : UUID
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +publicationId () : UUID
+	{method} +toString () : String
+}
+
+
 interface CallerProductsPort {
 	{method}  {abstract} +current () : OwnedProducts
 }
@@ -282,12 +291,14 @@ class CatalogBrowseResult {
 	{method} +entries () : List
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +publicationSelection () : PublicationSelection
 	{method} +toString () : String
 	{method} +totalAccessibleInCategory () : int
 }
 
 
 class CatalogBrowseService {
+	{method}  {static} ~belongsToPublication ( entry : CatalogEntry , assignmentKey : String ) : boolean
 	{method} +browse ( area : CatalogArea , rawCriteria : CatalogFilterCriteria ) : CatalogBrowseResult
 	{method} -buildCosmFacetOptions ( descriptor : CatalogCategoryDescriptor , knownCosms : Map , selectedCosms : Set ) : List
 	{method} -buildDirectFacetContext ( descriptor : CatalogCategoryDescriptor , accessible : List , dim : GroupingDimension , active : Set ) : FacetContext
@@ -297,6 +308,7 @@ class CatalogBrowseService {
 	{method} -buildPerkRaceFacetContext ( active : Set ) : FacetContext
 	{method} -buildReverseListFacetContext ( listArea : CatalogArea , active : Set ) : FacetContext
 	{method}  {static} -compareNatural ( a : String , b : String ) : int
+	{method} -countPublicationContent ( publication : Publication ) : List
 	{method} -createFacetContext ( descriptor : CatalogCategoryDescriptor , accessible : List , dim : GroupingDimension , active : Set ) : FacetContext
 	{method} +findDetail ( area : CatalogArea , slugOrId : String ) : CatalogDetailResult
 	{method} -matchesCriteria ( entry : CatalogEntry , rawDescriptor : CatalogCategoryDescriptor , criteria : CatalogFilterCriteria , facetContexts : Map ) : boolean
@@ -305,6 +317,7 @@ class CatalogBrowseService {
 	{method} -requireSource ( area : CatalogArea ) : AreaSource
 	{method} -resolveEmbeddedReferences ( rawDescriptor : CatalogCategoryDescriptor , entry : CatalogEntry ) : Map
 	{method} -resolvePerkGroupMembers ( group : CatalogEntry ) : List
+	{method} -resolvePublicationFilter ( area : CatalogArea , filter : PublicationFilter ) : ResolvedPublicationFilter
 	{method} -resolvePublications ( codexIds : Set ) : List
 	{method} -resolveSingleCanonicalSlug ( source : AreaSource , entry : CatalogEntry ) : String
 	{method} -sortEntries ( entries : List , rawDescriptor : CatalogCategoryDescriptor , sortKey : String , direction : SortDirection ) : List
@@ -409,6 +422,7 @@ class CatalogFilterCriteria {
 	{method} +hasActiveFilters () : boolean
 	{method} +hashCode () : int
 	{method}  {static} -normalizeSet ( values : Collection ) : Set
+	{method} +publication () : PublicationFilter
 	{method} +query () : String
 	{method} +sortKey () : String
 	{method} +toString () : String
@@ -683,12 +697,14 @@ class CodexAuthController {
 
 class CodexCatalogController {
 	{field} {static} -CATALOG_RESULTS_TARGET : String
+	{field} {static} -HYPHENATED_UUID_PATTERN : Pattern
 	{field} {static} -log : Logger
 	{method} +browseCategory ( categorySegment : String , queryParams : MultiValueMap , authentication : Authentication , request : HttpServletRequest , response : HttpServletResponse , model : Model ) : String
 	{method}  {static} -firstOrEmpty ( params : MultiValueMap , key : String ) : String
 	{method} -isPartialResultsRequest ( request : HttpServletRequest ) : boolean
 	{method}  {static} -nonBlankValues ( raw : List ) : Set
 	{method} -parseCriteria ( area : CatalogArea , params : MultiValueMap ) : CatalogFilterCriteria
+	{method}  {static} -parsePublicationFilter ( area : CatalogArea , rawValues : List ) : PublicationFilter
 	{method} -renderNotFound ( activeArea : CatalogArea , authentication : Authentication , response : HttpServletResponse , model : Model , message : String ) : String
 	{method} +viewEntryDetail ( categorySegment : String , identifier : String , authentication : Authentication , response : HttpServletResponse , model : Model ) : String
 }
@@ -735,6 +751,7 @@ class CodexOverviewService {
 
 
 class CodexViewMapper {
+	{method} -buildCategoryUrl ( basePath : String , criteria : CatalogFilterCriteria , publicationParam : String , sortKey : String , dir : SortDirection ) : String
 	{method} -buildDetailViewModel ( nav : NavContextViewModel , rawDescriptor : CatalogCategoryDescriptor , entry : CatalogEntry , canonicalSlug : String , cosmLabels : Map , embeddedReferences : Map , publications : List ) : DetailViewModel
 	{method} -buildSortUrl ( basePath : String , criteria : CatalogFilterCriteria , nextSortKey : String , nextDir : SortDirection ) : String
 	{method} +isSignedIn ( authentication : Authentication ) : boolean
@@ -747,9 +764,11 @@ class CodexViewMapper {
 	{method} +toNavContext ( activeArea : CatalogArea , authentication : Authentication ) : NavContextViewModel
 	{method} +toNotFoundViewModel ( activeArea : CatalogArea , title : String , message : String , authentication : Authentication ) : NotFoundViewModel
 	{method} -toPublicationCard ( pub : Publication ) : PublicationCard
+	{method}  {static} -toPublicationParam ( filter : PublicationFilter ) : String
 	{method} -toTableRow ( area : CatalogArea , descriptor : CatalogCategoryDescriptor , resolved : ResolvedEntry , cosmLabels : Map , censor : Censor ) : TableRowViewModel
 	{method} +toTableViewModel ( result : CatalogBrowseResult , authentication : Authentication ) : TableViewModel
 	{method} +toTeaserViewModel ( teaserResult : RestrictedTeaser , authentication : Authentication ) : TeaserViewModel
+	{method}  {static} -toThumbnail ( pub : Publication ) : PublicationThumbnailViewModel
 }
 
 
@@ -1004,6 +1023,7 @@ class DetailViewModel {
 	{field} -embeddedGroups : Map
 	{method} +area () : CatalogArea
 	{method} +attributeGroups () : List
+	{method} +contentTiles () : List
 	{method} +embeddedGroups () : Map
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
@@ -1011,7 +1031,18 @@ class DetailViewModel {
 	{method} +nav () : NavContextViewModel
 	{method} +proseSections () : List
 	{method} +publications () : List
+	{method} +thumbnail () : PublicationThumbnailViewModel
+	{method} +thumbnailFallbackUrl () : String
+	{method} +thumbnailUrl () : String
 	{method} +toString () : String
+	{method} +withContentTiles ( tiles : List ) : DetailViewModel
+	{method} +withThumbnail ( pubThumbnail : PublicationThumbnailViewModel ) : DetailViewModel
+}
+
+
+class DifficultyNumber {
+	{field} +level : String
+	{field} +text : String
 }
 
 
@@ -1023,12 +1054,6 @@ class DifficultyNumber {
 	{method} +level () : String
 	{method} +text () : String
 	{method} +toString () : String
-}
-
-
-class DifficultyNumber {
-	{field} +level : String
-	{field} +text : String
 }
 
 
@@ -1208,16 +1233,20 @@ class FilterFacetDescriptor {
 
 class FilterPanelViewModel {
 	{field} -actionPath : String
+	{field} -clearPublicationUrl : String
 	{field} -hasActiveFilters : boolean
+	{field} -publicationParam : String
 	{field} -searchQuery : String
 	{field} -sortDir : String
 	{field} -sortKey : String
 	{method} +actionPath () : String
+	{method} +clearPublicationUrl () : String
 	{method} +cosms () : List
 	{method} +equals ( o : Object ) : boolean
 	{method} +groupingFacets () : List
 	{method} +hasActiveFilters () : boolean
 	{method} +hashCode () : int
+	{method} +publicationParam () : String
 	{method} +searchQuery () : String
 	{method} +sortDir () : String
 	{method} +sortKey () : String
@@ -1323,6 +1352,13 @@ class InMemoryUserNotificationStoreAdapter {
 	{method} +enqueue ( channelId : String , notification : UserNotification ) : void
 	{method} +pending ( channelId : String , limit : int ) : List
 	{method} +registerAuthenticatedChannel ( channelId : String ) : void
+}
+
+
+class Invalid {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
 }
 
 
@@ -1934,6 +1970,20 @@ enum NavigationSection {
 	{field} +GEAR_AND_VEHICLES
 	{field} +REFERENCE
 	{field} +STORM_KNIGHTS
+}
+
+
+class None {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class None {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
 }
 
 
@@ -2568,24 +2618,13 @@ class PublicReferenceEntry {
 	{field} -embeddedReferences : Map
 	{method} +area () : CatalogArea
 	{method} +canonicalSlug () : String
+	{method} +contentCounts () : List
 	{method} +descriptor () : CatalogCategoryDescriptor
 	{method} +embeddedReferences () : Map
 	{method} +entry () : CatalogEntry
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +toString () : String
-}
-
-
-class Publication {
-	{field} {static} -DRIVETHRURPG_COVER_BASE : String
-	{field} +codexId : String
-	{field} +id : UUID
-	{field} +name : String
-	{field} +primaryProductId : int
-	{field} +productIds : Set
-	{field} +thirdParty : String
-	{method} +getCoverURL () : String
 }
 
 
@@ -2611,7 +2650,21 @@ class Publication {
 	{method} +productUrl () : String
 	{method} +slug () : String
 	{method} +thirdParty () : String
+	{method} +thumbnailFallbackUrl () : String
+	{method} +thumbnailUrl () : String
 	{method} +toString () : String
+}
+
+
+class Publication {
+	{field} {static} -DRIVETHRURPG_COVER_BASE : String
+	{field} +codexId : String
+	{field} +id : UUID
+	{field} +name : String
+	{field} +primaryProductId : int
+	{field} +productIds : Set
+	{field} +thirdParty : String
+	{method} +getCoverURL () : String
 }
 
 
@@ -2630,6 +2683,33 @@ class PublicationCard {
 	{method} +name () : String
 	{method} +publisher () : String
 	{method} +storeUrl () : String
+	{method} +thumbnail () : PublicationThumbnailViewModel
+	{method} +thumbnailFallbackUrl () : String
+	{method} +thumbnailUrl () : String
+	{method} +toString () : String
+}
+
+
+class PublicationContentCount {
+	{field} -count : int
+	{method} +area () : CatalogArea
+	{method} +count () : int
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class PublicationContentTile {
+	{field} -ariaLabel : String
+	{field} -count : int
+	{field} -href : String
+	{method} +area () : CatalogArea
+	{method} +ariaLabel () : String
+	{method} +count () : int
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +href () : String
 	{method} +toString () : String
 }
 
@@ -2670,6 +2750,21 @@ interface PublicationEntityMapper {
 class PublicationEntityMapperImpl {
 	{method} +toDomain ( entity : Publication ) : Publication
 	{method} +toEntity ( model : Publication ) : Publication
+}
+
+
+interface PublicationFilter {
+}
+
+
+class PublicationFilterStatus {
+	{field} -displayName : String
+	{field} -unavailable : boolean
+	{method} +displayName () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+	{method} +unavailable () : boolean
 }
 
 
@@ -2733,6 +2828,10 @@ interface PublicationRepository {
 }
 
 
+interface PublicationSelection {
+}
+
+
 class PublicationSummaryDto {
 	{field} -codexId : String
 	{field} -id : UUID
@@ -2743,6 +2842,17 @@ class PublicationSummaryDto {
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +toString () : String
+}
+
+
+class PublicationThumbnailViewModel {
+	{field} -fallbackUrl : String
+	{field} -url : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +fallbackUrl () : String
+	{method} +hashCode () : int
+	{method} +toString () : String
+	{method} +url () : String
 }
 
 
@@ -2990,6 +3100,17 @@ class SanitizedHtml {
 	{method} +hashCode () : int
 	{method} +html () : String
 	{method} +isEmpty () : boolean
+	{method} +toString () : String
+}
+
+
+class Selected {
+	{field} -displayName : String
+	{field} -publicationId : UUID
+	{method} +displayName () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +publicationId () : UUID
 	{method} +toString () : String
 }
 
@@ -3425,9 +3546,15 @@ class TableViewModel {
 	{method} +headers () : List
 	{method} +matchingCount () : int
 	{method} +nav () : NavContextViewModel
+	{method} +publicationFilter () : PublicationFilterStatus
 	{method} +rows () : List
 	{method} +toString () : String
 	{method} +totalAccessibleCount () : int
+}
+
+
+class Tag {
+	{field} +parent : UUID
 }
 
 
@@ -3444,11 +3571,6 @@ class Tag {
 	{method} +name () : String
 	{method} +parent () : UUID
 	{method} +toString () : String
-}
-
-
-class Tag {
-	{field} +parent : UUID
 }
 
 
@@ -3519,14 +3641,6 @@ class TagSummaryDto {
 
 
 class Teaser {
-	{method} +equals ( o : Object ) : boolean
-	{method} +hashCode () : int
-	{method} +teaser () : Teaser
-	{method} +toString () : String
-}
-
-
-class Teaser {
 	{field} -id : UUID
 	{field} -name : String
 	{field} -requiredProducts : SortedSet
@@ -3537,6 +3651,14 @@ class Teaser {
 	{method} +requiredProducts () : SortedSet
 	{method} +toString () : String
 	{method} +type () : EntityType
+}
+
+
+class Teaser {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +teaser () : Teaser
+	{method} +toString () : String
 }
 
 
@@ -3888,6 +4010,13 @@ class TorgMappingSupport {
 
 class TorgMarkupService {
 	{method} +render ( rawText : String , ownedProducts : Set ) : String
+}
+
+
+class Unavailable {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
 }
 
 
@@ -4281,6 +4410,7 @@ Attributes "1" o-- "0..*"  AttributeField : fields
 Attributes ..|>  DetailSectionDescriptor
 AuthPageViewModel *--  CsrfViewModel : csrf
 AuthPageViewModel *--  NavContextViewModel : nav
+ByUuid ..|>  PublicationFilter
 CatalogAccessObservabilityAdapter "1" o-- "0..*"  EntityType : counters
 CatalogAccessObservabilityAdapter ..|>  CatalogAccessObserver
 CatalogAccessResponses *--  EntryTeaserMapper : teaserMapper
@@ -4290,6 +4420,7 @@ CatalogBrowseResult "1" o-- "0..*"  ResolvedEntry : entries
 CatalogBrowseResult *--  CatalogArea : area
 CatalogBrowseResult *--  CatalogCategoryDescriptor : descriptor
 CatalogBrowseResult *--  CatalogFilterCriteria : appliedCriteria
+CatalogBrowseResult *--  PublicationSelection : publicationSelection
 CatalogBrowseService "1" o-- "0..*"  AreaSource : sources
 CatalogBrowseService "1" o-- "0..*"  CatalogArea : sources
 CatalogBrowseService *--  CatalogUsageObserver : usageObserver
@@ -4302,6 +4433,7 @@ CatalogCategoryRegistry "1" o-- "0..*"  CatalogArea : DESCRIPTORS
 CatalogCategoryRegistry "1" o-- "0..*"  CatalogCategoryDescriptor : DESCRIPTORS
 CatalogEntryReference ..|>  ProductBoundEntry
 CatalogFilterCriteria "1" o-- "0..*"  GroupingDimension : groupings
+CatalogFilterCriteria *--  PublicationFilter : publication
 CatalogFilterCriteria *--  SortDirection : direction
 CatalogQueryConfiguration *--  CallerProductsPort : callerProducts
 CatalogQueryConfiguration *--  CatalogAccessObserver : observer
@@ -4364,11 +4496,13 @@ CurrentUserCensorFactory *--  ProductOwnershipResolver : ownershipResolver
 CurrentUserCensorFactory *--  TorgMarkupService : markupService
 DetailHeader "1" o-- "0..*"  CosmBadgeViewModel : cosms
 DetailViewModel "1" o-- "0..*"  AttributeGroupViewModel : attributeGroups
+DetailViewModel "1" o-- "0..*"  PublicationContentTile : contentTiles
 DetailViewModel "1" o-- "0..*"  PublicationLinkViewModel : publications
 DetailViewModel "1" o-- "0..*"  RenderedProseSection : proseSections
 DetailViewModel *--  CatalogArea : area
 DetailViewModel *--  DetailHeader : header
 DetailViewModel *--  NavContextViewModel : nav
+DetailViewModel *--  PublicationThumbnailViewModel : thumbnail
 EmbeddedReferences *--  CatalogArea : targetArea
 EmbeddedReferences ..|>  DetailSectionDescriptor
 EntityDetailDto "1" o-- "0..*"  PublicationRefDto : publications
@@ -4399,6 +4533,7 @@ HomeViewModel "1" o-- "0..*"  PublicationCard : missingPublications
 HomeViewModel "1" o-- "0..*"  PublicationCard : ownedPublications
 HomeViewModel *--  NavContextViewModel : nav
 InMemoryUserNotificationStoreAdapter ..|>  UserNotificationStorePort
+Invalid ..|>  PublicationFilter
 Item *--  ClearanceLevel : clearanceLevel
 Item --|>  TorgEntity
 Item ..|>  ProductBoundEntry
@@ -4515,6 +4650,8 @@ NavContextViewModel *--  CsrfViewModel : csrf
 NavContextViewModel *--  ToastRegionViewModel : toastRegion
 NavSectionGroup "1" o-- "0..*"  CatalogArea : areas
 NavSectionGroup *--  NavigationSection : section
+None ..|>  PublicationFilter
+None ..|>  PublicationSelection
 NotFound ..|>  RawLookupResult
 NotFoundViewModel *--  NavContextViewModel : nav
 NotificationAction *--  NotificationActionKind : kind
@@ -4597,11 +4734,15 @@ Prose ..|>  DetailSectionDescriptor
 ProseMap ..|>  DetailSectionDescriptor
 PublicEntry *--  CatalogEntry : entry
 PublicEntry ..|>  RawLookupResult
+PublicReferenceEntry "1" o-- "0..*"  PublicationContentCount : contentCounts
 PublicReferenceEntry *--  CatalogArea : area
 PublicReferenceEntry *--  CatalogCategoryDescriptor : descriptor
 PublicReferenceEntry *--  CatalogEntry : entry
 PublicReferenceEntry ..|>  CatalogDetailResult
 Publication ..|>  CatalogEntry
+PublicationCard *--  PublicationThumbnailViewModel : thumbnail
+PublicationContentCount *--  CatalogArea : area
+PublicationContentTile *--  CatalogArea : area
 PublicationController *--  CatalogQuery : catalogQuery
 PublicationController *--  PublicationMapper : mapper
 PublicationEntityMapperImpl ..|>  PublicationEntityMapper
@@ -4638,6 +4779,7 @@ RestrictedTeaser "1" o-- "0..*"  RequiredProductRef : requiredProducts
 RestrictedTeaser *--  CatalogArea : area
 RestrictedTeaser *--  Teaser : teaser
 RestrictedTeaser ..|>  CatalogDetailResult
+Selected ..|>  PublicationSelection
 SessionChannel ..|>  NotificationTarget
 Shard *--  ClearanceLevel : clearanceLevel
 Shard --|>  TorgEntity
@@ -4703,6 +4845,7 @@ TableViewModel "1" o-- "0..*"  TableRowViewModel : rows
 TableViewModel *--  CatalogArea : area
 TableViewModel *--  FilterPanelViewModel : filterPanel
 TableViewModel *--  NavContextViewModel : nav
+TableViewModel *--  PublicationFilterStatus : publicationFilter
 Tag *--  ClearanceLevel : clearanceLevel
 Tag --|>  TorgEntity
 Tag ..|>  CatalogEntry
@@ -4756,6 +4899,7 @@ TorgMarkupService *--  EntityReferenceProcessor : entityProcessor
 TorgMarkupService *--  GameTokenProcessor : gameTokenProcessor
 TorgMarkupService *--  MarkdownProcessor : markdownProcessor
 TorgMarkupService *--  RawHtmlProcessor : rawHtmlProcessor
+Unavailable ..|>  PublicationSelection
 UserNotification *--  NotificationAction : action
 UserNotification *--  NotificationSeverity : severity
 UserNotificationPublished *--  UserNotification : notification

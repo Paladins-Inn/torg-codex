@@ -29,6 +29,15 @@ interface AreaSource {
 }
 
 
+class ByUuid {
+	{field} -publicationId : UUID
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +publicationId () : UUID
+	{method} +toString () : String
+}
+
+
 interface CallerProductsPort {
 	{method}  {abstract} +current () : OwnedProducts
 }
@@ -58,12 +67,14 @@ class CatalogBrowseResult {
 	{method} +entries () : List
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
+	{method} +publicationSelection () : PublicationSelection
 	{method} +toString () : String
 	{method} +totalAccessibleInCategory () : int
 }
 
 
 class CatalogBrowseService {
+	{method}  {static} ~belongsToPublication ( entry : CatalogEntry , assignmentKey : String ) : boolean
 	{method} +browse ( area : CatalogArea , rawCriteria : CatalogFilterCriteria ) : CatalogBrowseResult
 	{method} -buildCosmFacetOptions ( descriptor : CatalogCategoryDescriptor , knownCosms : Map , selectedCosms : Set ) : List
 	{method} -buildDirectFacetContext ( descriptor : CatalogCategoryDescriptor , accessible : List , dim : GroupingDimension , active : Set ) : FacetContext
@@ -73,6 +84,7 @@ class CatalogBrowseService {
 	{method} -buildPerkRaceFacetContext ( active : Set ) : FacetContext
 	{method} -buildReverseListFacetContext ( listArea : CatalogArea , active : Set ) : FacetContext
 	{method}  {static} -compareNatural ( a : String , b : String ) : int
+	{method} -countPublicationContent ( publication : Publication ) : List
 	{method} -createFacetContext ( descriptor : CatalogCategoryDescriptor , accessible : List , dim : GroupingDimension , active : Set ) : FacetContext
 	{method} +findDetail ( area : CatalogArea , slugOrId : String ) : CatalogDetailResult
 	{method} -matchesCriteria ( entry : CatalogEntry , rawDescriptor : CatalogCategoryDescriptor , criteria : CatalogFilterCriteria , facetContexts : Map ) : boolean
@@ -81,6 +93,7 @@ class CatalogBrowseService {
 	{method} -requireSource ( area : CatalogArea ) : AreaSource
 	{method} -resolveEmbeddedReferences ( rawDescriptor : CatalogCategoryDescriptor , entry : CatalogEntry ) : Map
 	{method} -resolvePerkGroupMembers ( group : CatalogEntry ) : List
+	{method} -resolvePublicationFilter ( area : CatalogArea , filter : PublicationFilter ) : ResolvedPublicationFilter
 	{method} -resolvePublications ( codexIds : Set ) : List
 	{method} -resolveSingleCanonicalSlug ( source : AreaSource , entry : CatalogEntry ) : String
 	{method} -sortEntries ( entries : List , rawDescriptor : CatalogCategoryDescriptor , sortKey : String , direction : SortDirection ) : List
@@ -120,6 +133,7 @@ class CatalogFilterCriteria {
 	{method} +hasActiveFilters () : boolean
 	{method} +hashCode () : int
 	{method}  {static} -normalizeSet ( values : Collection ) : Set
+	{method} +publication () : PublicationFilter
 	{method} +query () : String
 	{method} +sortKey () : String
 	{method} +toString () : String
@@ -298,6 +312,13 @@ class GrantedProductEntry {
 }
 
 
+class Invalid {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
 class LinkedEntryRef {
 	{field} -canonicalSlug : String
 	{field} -id : UUID
@@ -310,6 +331,20 @@ class LinkedEntryRef {
 	{method} +id () : UUID
 	{method} +name () : String
 	{method} +targetArea () : CatalogArea
+	{method} +toString () : String
+}
+
+
+class None {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+class None {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
 	{method} +toString () : String
 }
 
@@ -372,12 +407,32 @@ class PublicReferenceEntry {
 	{field} -entry : CatalogEntry
 	{method} +area () : CatalogArea
 	{method} +canonicalSlug () : String
+	{method} +contentCounts () : List
 	{method} +descriptor () : CatalogCategoryDescriptor
 	{method} +embeddedReferences () : Map
 	{method} +entry () : CatalogEntry
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +toString () : String
+}
+
+
+class PublicationContentCount {
+	{field} -area : CatalogArea
+	{field} -count : int
+	{method} +area () : CatalogArea
+	{method} +count () : int
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +toString () : String
+}
+
+
+interface PublicationFilter {
+}
+
+
+interface PublicationSelection {
 }
 
 
@@ -453,6 +508,17 @@ class RestrictedTeaser {
 }
 
 
+class Selected {
+	{field} -displayName : String
+	{field} -publicationId : UUID
+	{method} +displayName () : String
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
+	{method} +publicationId () : UUID
+	{method} +toString () : String
+}
+
+
 class SessionChannel {
 	{field} -channelId : String
 	{method} +channelId () : String
@@ -473,6 +539,13 @@ class Teaser {
 	{method} +equals ( o : Object ) : boolean
 	{method} +hashCode () : int
 	{method} +teaser () : Teaser
+	{method} +toString () : String
+}
+
+
+class Unavailable {
+	{method} +equals ( o : Object ) : boolean
+	{method} +hashCode () : int
 	{method} +toString () : String
 }
 
@@ -566,12 +639,15 @@ interface UserNotificationStorePort {
 
 Absent ..|>  CatalogDetailResult
 AllAuthenticatedUsers ..|>  NotificationTarget
+ByUuid ..|>  PublicationFilter
 CatalogBrowseResult "1" o-- "0..*"  FacetOption : availableCosms
 CatalogBrowseResult "1" o-- "0..*"  ResolvedEntry : entries
 CatalogBrowseResult *--  CatalogFilterCriteria : appliedCriteria
+CatalogBrowseResult *--  PublicationSelection : publicationSelection
 CatalogBrowseService "1" o-- "0..*"  AreaSource : sources
 CatalogBrowseService *--  CatalogUsageObserver : usageObserver
 CatalogBrowseService ..|>  CatalogBrowseQuery
+CatalogFilterCriteria *--  PublicationFilter : publication
 CatalogFilterCriteria *--  SortDirection : direction
 CatalogQueryService *--  CatalogPersistencePort : persistence
 CatalogQueryService *--  CatalogUsageObserver : usageObserver
@@ -586,10 +662,14 @@ CodexOverviewService *--  CallerProductsPort : callerProducts
 CodexOverviewService ..|>  CodexOverviewQuery
 GrantedProduct ..|>  RawLookupResult
 GrantedProductEntry ..|>  CatalogDetailResult
+Invalid ..|>  PublicationFilter
+None ..|>  PublicationFilter
+None ..|>  PublicationSelection
 NotFound ..|>  RawLookupResult
 NotificationAction *--  NotificationActionKind : kind
 NotificationTarget *--  NotificationTarget : ALL_AUTHENTICATED
 PublicEntry ..|>  RawLookupResult
+PublicReferenceEntry "1" o-- "0..*"  PublicationContentCount : contentCounts
 PublicReferenceEntry ..|>  CatalogDetailResult
 ReferencedEntryResolver *--  CatalogAccessObserver : observer
 ReferencedEntryResolver *--  CatalogPersistencePort : referenced
@@ -600,8 +680,10 @@ RestrictedCatalogQueryService *--  CatalogUsageObserver : usageObserver
 RestrictedCatalogQueryService ..|>  RestrictedCatalogQuery
 RestrictedTeaser "1" o-- "0..*"  RequiredProductRef : requiredProducts
 RestrictedTeaser ..|>  CatalogDetailResult
+Selected ..|>  PublicationSelection
 SessionChannel ..|>  NotificationTarget
 Teaser ..|>  RawLookupResult
+Unavailable ..|>  PublicationSelection
 UserNotification *--  NotificationAction : action
 UserNotification *--  NotificationSeverity : severity
 UserNotificationRequested *--  NotificationAction : action

@@ -32,6 +32,8 @@ import de.paladinsinn.torg.codex.domain.model.CatalogEntry;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Result of browsing a {@link CatalogArea} with {@link CatalogFilterCriteria}.
@@ -43,6 +45,7 @@ import java.util.Map;
  * @param availableCosms            ordered cosm facet options (when Cosm facet is enabled)
  * @param availableFacets           ordered structured grouping facet options by dimension
  * @param appliedCriteria           normalized criteria applied to produce this result
+ * @param publicationSelection      resolved publication selection state for this browse result
  */
 public record CatalogBrowseResult(
         CatalogArea area,
@@ -51,7 +54,46 @@ public record CatalogBrowseResult(
         int totalAccessibleInCategory,
         List<FacetOption> availableCosms,
         Map<GroupingDimension, List<FacetOption>> availableFacets,
-        CatalogFilterCriteria appliedCriteria) {
+        CatalogFilterCriteria appliedCriteria,
+        PublicationSelection publicationSelection) {
+
+    public CatalogBrowseResult {
+        publicationSelection = publicationSelection == null
+                ? new PublicationSelection.None()
+                : publicationSelection;
+    }
+
+    public CatalogBrowseResult(
+            final CatalogArea area,
+            final CatalogCategoryDescriptor<? extends CatalogEntry> descriptor,
+            final List<ResolvedEntry> entries,
+            final int totalAccessibleInCategory,
+            final List<FacetOption> availableCosms,
+            final Map<GroupingDimension, List<FacetOption>> availableFacets,
+            final CatalogFilterCriteria appliedCriteria) {
+        this(area, descriptor, entries, totalAccessibleInCategory, availableCosms, availableFacets,
+                appliedCriteria, new PublicationSelection.None());
+    }
+
+    /**
+     * Resolved publication filter selection for a browsed category.
+     */
+    public sealed interface PublicationSelection
+            permits PublicationSelection.None, PublicationSelection.Selected, PublicationSelection.Unavailable {
+
+        record None() implements PublicationSelection {
+        }
+
+        record Selected(UUID publicationId, String displayName) implements PublicationSelection {
+            public Selected {
+                Objects.requireNonNull(publicationId, "publicationId must not be null");
+                displayName = displayName == null ? "" : displayName;
+            }
+        }
+
+        record Unavailable() implements PublicationSelection {
+        }
+    }
 
     /**
      * Accessible entry paired with its collision-safe canonical slug within the area.

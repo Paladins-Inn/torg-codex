@@ -34,23 +34,45 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
  * Immutable filter, search, and sort criteria for browsing a catalog category (FR-004, FR-016).
  *
- * @param query     optional free-text substring search on entry name
- * @param cosms     requested cosm filter values
- * @param groupings requested structured facet filter values by {@link GroupingDimension}
- * @param sortKey   column sort key (defaults to {@code "name"})
- * @param direction sort direction (defaults to {@link SortDirection#ASC})
+ * @param query       optional free-text substring search on entry name
+ * @param cosms       requested cosm filter values
+ * @param groupings   requested structured facet filter values by {@link GroupingDimension}
+ * @param sortKey     column sort key (defaults to {@code "name"})
+ * @param direction   sort direction (defaults to {@link SortDirection#ASC})
+ * @param publication optional publication filter state
  */
 public record CatalogFilterCriteria(
         String query,
         Set<String> cosms,
         Map<GroupingDimension, Set<String>> groupings,
         String sortKey,
-        SortDirection direction) {
+        SortDirection direction,
+        PublicationFilter publication) {
+
+    /**
+     * Requested publication filter state distinguishing omission, a valid UUID, and invalid syntax.
+     */
+    public sealed interface PublicationFilter
+            permits PublicationFilter.None, PublicationFilter.ByUuid, PublicationFilter.Invalid {
+
+        record None() implements PublicationFilter {
+        }
+
+        record ByUuid(UUID publicationId) implements PublicationFilter {
+            public ByUuid {
+                Objects.requireNonNull(publicationId, "publicationId must not be null");
+            }
+        }
+
+        record Invalid() implements PublicationFilter {
+        }
+    }
 
     /**
      * Table sort direction.
@@ -89,6 +111,16 @@ public record CatalogFilterCriteria(
         groupings = Map.copyOf(normalizedGroupings);
         sortKey = sortKey == null || sortKey.isBlank() ? "name" : sortKey.trim();
         direction = direction == null ? SortDirection.ASC : direction;
+        publication = publication == null ? new PublicationFilter.None() : publication;
+    }
+
+    public CatalogFilterCriteria(
+            final String query,
+            final Set<String> cosms,
+            final Map<GroupingDimension, Set<String>> groupings,
+            final String sortKey,
+            final SortDirection direction) {
+        this(query, cosms, groupings, sortKey, direction, new PublicationFilter.None());
     }
 
     public static CatalogFilterCriteria empty() {
@@ -96,7 +128,10 @@ public record CatalogFilterCriteria(
     }
 
     public boolean hasActiveFilters() {
-        return !query.isEmpty() || !cosms.isEmpty() || !groupings.isEmpty();
+        return !query.isEmpty()
+                || !cosms.isEmpty()
+                || !groupings.isEmpty()
+                || !(publication instanceof PublicationFilter.None);
     }
 
     private static Set<String> normalizeSet(final Collection<String> values) {

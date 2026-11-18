@@ -28,11 +28,14 @@ package de.paladinsinn.torg.codex.application.service;
 import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseQuery;
 import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult;
 import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult.FacetOption;
+import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult.PublicationSelection;
 import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult.ResolvedEntry;
 import de.paladinsinn.torg.codex.application.port.in.CatalogDetailResult;
 import de.paladinsinn.torg.codex.application.port.in.CatalogDetailResult.LinkedEntryRef;
+import de.paladinsinn.torg.codex.application.port.in.CatalogDetailResult.PublicationContentCount;
 import de.paladinsinn.torg.codex.application.port.in.CatalogDetailResult.RequiredProductRef;
 import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria;
+import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria.PublicationFilter;
 import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria.SortDirection;
 import de.paladinsinn.torg.codex.application.port.in.CatalogQuery;
 import de.paladinsinn.torg.codex.application.port.in.RestrictedCatalogQuery;
@@ -62,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -241,7 +245,28 @@ public final class CatalogBrowseService implements CatalogBrowseQuery {
             }
         });
 
-        List<CatalogEntry> filtered = accessible.stream()
+        ResolvedPublicationFilter pubFilter = resolvePublicationFilter(area, criteria.publication());
+        List<? extends CatalogEntry> scopedEntries;
+        int totalAccessible;
+        if (pubFilter.selection() instanceof PublicationSelection.Unavailable) {
+            scopedEntries = List.of();
+            totalAccessible = 0;
+        } else if (pubFilter.selection() instanceof PublicationSelection.Selected) {
+            List<CatalogEntry> matched = new ArrayList<>();
+            Set<UUID> seen = new HashSet<>();
+            for (CatalogEntry entry : accessible) {
+                if (belongsToPublication(entry, pubFilter.assignmentKey()) && seen.add(entry.id())) {
+                    matched.add(entry);
+                }
+            }
+            scopedEntries = matched;
+            totalAccessible = matched.size();
+        } else {
+            scopedEntries = accessible;
+            totalAccessible = accessible.size();
+        }
+
+        List<CatalogEntry> filtered = scopedEntries.stream()
                 .filter(entry -> matchesCriteria(entry, descriptor, criteria, facetContexts))
                 .map(CatalogEntry.class::cast)
                 .toList();
@@ -255,10 +280,37 @@ public final class CatalogBrowseService implements CatalogBrowseQuery {
                 area,
                 descriptor,
                 resolved,
-                accessible.size(),
+                totalAccessible,
                 cosmOptions,
                 Map.copyOf(availableFacets),
-                criteria);
+                criteria,
+                pubFilter.selection());
+    }
+
+    private record ResolvedPublicationFilter(PublicationSelection selection, String assignmentKey) {
+    }
+
+    private ResolvedPublicationFilter resolvePublicationFilter(
+            final CatalogArea area,
+            final PublicationFilter filter) {
+        if (!area.isProductBound() || filter instanceof PublicationFilter.None) {
+            return new ResolvedPublicationFilter(new PublicationSelection.None(), null);
+        }
+        if (filter instanceof PublicationFilter.Invalid) {
+            return new ResolvedPublicationFilter(new PublicationSelection.Unavailable(), null);
+        }
+        UUID publicationId = ((PublicationFilter.ByUuid) filter).publicationId();
+        AreaSource pubSource = sources.get(CatalogArea.PUBLICATION);
+        if (pubSource != null) {
+            for (CatalogEntry entry : pubSource.peekAll()) {
+                if (entry instanceof Publication pub && publicationId.equals(pub.id())) {
+                    return new ResolvedPublicationFilter(
+                            new PublicationSelection.Selected(pub.id(), pub.name()),
+                            pub.codexId());
+                }
+            }
+        }
+        return new ResolvedPublicationFilter(new PublicationSelection.Unavailable(), null);
     }
 
     @Override
@@ -281,8 +333,11 @@ public final class CatalogBrowseService implements CatalogBrowseQuery {
                 CatalogEntry entry = pe.entry();
                 String canonicalSlug = resolveSingleCanonicalSlug(source, entry);
                 Map<String, List<LinkedEntryRef>> embedded = resolveEmbeddedReferences(descriptor, entry);
+                List<PublicationContentCount> contentCounts = entry instanceof Publication publication
+                        ? countPublicationContent(publication)
+                        : List.of();
                 yield new CatalogDetailResult.PublicReferenceEntry(
-                        area, descriptor, entry, canonicalSlug, embedded);
+                        area, descriptor, entry, canonicalSlug, embedded, contentCounts);
             }
             case RawLookupResult.Teaser t -> {
                 Map<String, Publication> pubsByCodexId = publicationsByCodexId();
@@ -308,6 +363,41 @@ public final class CatalogBrowseService implements CatalogBrowseQuery {
             throw new IllegalStateException("No AreaSource wired for " + area);
         }
         return source;
+    }
+
+    static boolean belongsToPublication(final CatalogEntry entry, final String assignmentKey) {
+        if (assignmentKey == null || assignmentKey.isBlank()) {
+            return false;
+        }
+        return entry.productCodexIds().contains(assignmentKey);
+    }
+
+    private List<PublicationContentCount> countPublicationContent(final Publication publication) {
+        String assignmentKey = publication.codexId();
+        boolean usableKey = assignmentKey != null && !assignmentKey.isBlank();
+        List<PublicationContentCount> counts = new ArrayList<>();
+        for (CatalogArea area : CatalogArea.values()) {
+            if (!area.isProductBound()) {
+                continue;
+            }
+            if (!usableKey) {
+                counts.add(new PublicationContentCount(area, 0));
+                continue;
+            }
+            AreaSource areaSource = sources.get(area);
+            if (areaSource == null) {
+                counts.add(new PublicationContentCount(area, 0));
+                continue;
+            }
+            Set<UUID> distinctIds = new HashSet<>();
+            for (CatalogEntry candidate : areaSource.peekAll()) {
+                if (belongsToPublication(candidate, assignmentKey)) {
+                    distinctIds.add(candidate.id());
+                }
+            }
+            counts.add(new PublicationContentCount(area, distinctIds.size()));
+        }
+        return List.copyOf(counts);
     }
 
     private String resolveSingleCanonicalSlug(final AreaSource source, final CatalogEntry entry) {

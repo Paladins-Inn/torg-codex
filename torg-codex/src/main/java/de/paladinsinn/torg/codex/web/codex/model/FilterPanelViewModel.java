@@ -37,9 +37,11 @@ import java.util.List;
  * @param searchQuery      current free-text search string
  * @param cosms            cosm facet options (empty when Cosm facet is not applicable)
  * @param groupingFacets   ordered grouping facet groups
- * @param sortKey          active sort column key
- * @param sortDir          active sort direction parameter ({@code asc} or {@code desc})
- * @param hasActiveFilters whether any filter or search criterion is currently active
+ * @param sortKey              active sort column key
+ * @param sortDir              active sort direction parameter ({@code asc} or {@code desc})
+ * @param hasActiveFilters     whether any filter or search criterion is currently active
+ * @param publicationParam     safe {@code publication} query token (lowercase UUID, {@code ""}, or {@code null})
+ * @param clearPublicationUrl  full-page URL removing only {@code publication} (nullable when none)
  */
 public record FilterPanelViewModel(
         String actionPath,
@@ -48,7 +50,20 @@ public record FilterPanelViewModel(
         List<GroupingFacetGroup> groupingFacets,
         String sortKey,
         String sortDir,
-        boolean hasActiveFilters) {
+        boolean hasActiveFilters,
+        String publicationParam,
+        String clearPublicationUrl) {
+
+    public FilterPanelViewModel(
+            final String actionPath,
+            final String searchQuery,
+            final List<FacetOption> cosms,
+            final List<GroupingFacetGroup> groupingFacets,
+            final String sortKey,
+            final String sortDir,
+            final boolean hasActiveFilters) {
+        this(actionPath, searchQuery, cosms, groupingFacets, sortKey, sortDir, hasActiveFilters, null, null);
+    }
 
     /**
      * A single structured grouping facet control group.

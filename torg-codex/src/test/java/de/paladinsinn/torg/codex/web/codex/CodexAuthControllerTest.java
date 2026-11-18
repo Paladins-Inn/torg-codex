@@ -277,6 +277,9 @@ class CodexAuthControllerTest {
         assertThat(csrfMatcher.find()).isTrue();
         String formCsrf = csrfMatcher.group(1);
 
+        // Warm up home/category queries and JTE templates so cold JVM startup does not skew SC-001 timing.
+        mockMvc.perform(get("/")).andExpect(status().isOk());
+
         long startNanos = System.nanoTime();
         mockMvc.perform(post("/login")
                         .session(session)

@@ -38,15 +38,24 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.List;
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_CLASS;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
@@ -188,6 +197,93 @@ class CodexCategoryBrowseControllerTest {
 
         mockMvc.perform(get("/non-existent-category"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
+    @Sql(scripts = "/sql/publication-content-tiles-seed.sql", executionPhase = BEFORE_TEST_METHOD)
+    @Sql(scripts = "/sql/publication-content-tiles-cleanup.sql", executionPhase = AFTER_TEST_METHOD)
+    void publicationFilterSupportsFullAndHtmxRequestsClearResetAliasAndInvalidInputs() throws Exception {
+        String paidAUuid = "e9c00000-0001-4000-8000-000000000001";
+        String emptyPubUuid = "e9c00000-0001-4000-8000-000000000003";
+        RequestPostProcessor paidAOwner = user("browse-paid-a")
+                .authorities(List.of(new SimpleGrantedAuthority("ROLE_pct-paid-a")));
+
+        // Full page with known publication UUID + search + sort
+        String fullHtml = mockMvc.perform(get("/spells")
+                        .with(paidAOwner)
+                        .param("publication", paidAUuid.toUpperCase())
+                        .param("q", "Shared")
+                        .param("sort", "name")
+                        .param("dir", "desc"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.VARY, "HX-Request"))
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "private, no-store"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(fullHtml)
+                .contains("Publication: <strong>PCT Paid Sourcebook A</strong>")
+                .contains("hx-history=\"false\"")
+                .contains("<input type=\"hidden\" name=\"publication\" value=\"" + paidAUuid + "\">")
+                .contains(">PCT Shared Spell</a>")
+                .doesNotContain(">PCT Paid A Only Spell</a>")
+                .contains("href=\"/spells?q=Shared&amp;sort=name&amp;dir=desc\"")
+                .contains("href=\"/spells\"");
+
+        // HTMX partial request preserves publication and returns fragment only
+        String partialHtml = mockMvc.perform(get("/spells")
+                        .with(paidAOwner)
+                        .param("publication", paidAUuid)
+                        .header("HX-Request", "true")
+                        .header("HX-Target", "catalog-results"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.VARY, "HX-Request"))
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "private, no-store"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(partialHtml)
+                .doesNotContain("<!DOCTYPE html>", "<nav")
+                .contains("Publication: <strong>PCT Paid Sourcebook A</strong>")
+                .contains("Showing <strong>2</strong> of <strong>2</strong>")
+                .contains("publication=" + paidAUuid);
+
+        // Known empty publication shows normal empty state with publication still named
+        String emptyHtml = mockMvc.perform(get("/spells")
+                        .with(paidAOwner)
+                        .param("publication", emptyPubUuid))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(emptyHtml)
+                .contains("Publication: <strong>PCT Empty Publication</strong>")
+                .contains("No matching entries found for the selected criteria.");
+
+        // Unknown UUID, blank, malformed, and repeated values -> Publication unavailable, 0 matches, no raw echo
+        for (String[] params : new String[][] {
+                {UUID.randomUUID().toString()},
+                {""},
+                {"<script>bad</script>"},
+                {paidAUuid, emptyPubUuid}
+        }) {
+            var req = get("/spells").with(paidAOwner);
+            for (String p : params) {
+                req.param("publication", p);
+            }
+            String invalidHtml = mockMvc.perform(req)
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            assertThat(invalidHtml)
+                    .contains("Publication unavailable")
+                    .contains("No matching entries found for the selected criteria.")
+                    .doesNotContain("<script>bad</script>");
+        }
+
+        // Alias redirect preserves publication param; reference routes ignore publication param
+        mockMvc.perform(get("/perk-groups").param("publication", paidAUuid))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/groups?publication=" + paidAUuid));
+
+        String refHtml = mockMvc.perform(get("/publications").param("publication", "not-a-uuid"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(refHtml).doesNotContain("Publication unavailable");
     }
 
     private double counterValue(final String name) {

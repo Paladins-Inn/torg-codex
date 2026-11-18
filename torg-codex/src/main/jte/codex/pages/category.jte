@@ -1,6 +1,9 @@
 @param de.paladinsinn.torg.codex.web.codex.model.TableViewModel model
 
 @template.codex.layout.page(title = model.area().displayName(), nav = model.nav(), content = @`
+    @if(model.filterPanel().publicationParam() != null)
+        <div hx-history="false">
+    @endif
     <header class="mb-4">
         <h1 class="h3 mb-1">
             <i class="bi ${model.area().icon()} me-2 text-primary"></i>${model.area().displayName()}
@@ -13,4 +16,7 @@
     <div id="catalog-results">
         @template.codex.fragments.categoryResults(model = model)
     </div>
+    @if(model.filterPanel().publicationParam() != null)
+        </div>
+    @endif
 `)

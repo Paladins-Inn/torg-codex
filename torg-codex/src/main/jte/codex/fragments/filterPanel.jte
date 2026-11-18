@@ -11,6 +11,9 @@
       hx-trigger="change, submit">
     <input type="hidden" name="sort" value="${filter.sortKey()}">
     <input type="hidden" name="dir" value="${filter.sortDir()}">
+    @if(filter.publicationParam() != null)
+        <input type="hidden" name="publication" value="${filter.publicationParam()}">
+    @endif
 
     <div class="card-body">
         <div class="row g-3 align-items-end">

@@ -29,10 +29,12 @@ import de.paladinsinn.security.NotLoggedInUserDetails;
 import de.paladinsinn.torg.codex.api.security.CurrentUserCensorFactory;
 import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult;
 import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult.FacetOption;
+import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult.PublicationSelection;
 import de.paladinsinn.torg.codex.application.port.in.CatalogBrowseResult.ResolvedEntry;
 import de.paladinsinn.torg.codex.application.port.in.CatalogDetailResult;
 import de.paladinsinn.torg.codex.application.port.in.CatalogDetailResult.LinkedEntryRef;
 import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria;
+import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria.PublicationFilter;
 import de.paladinsinn.torg.codex.application.port.in.CatalogFilterCriteria.SortDirection;
 import de.paladinsinn.torg.codex.application.port.in.CodexHomeOverview;
 import de.paladinsinn.torg.codex.domain.catalog.CatalogArea;
@@ -56,11 +58,13 @@ import de.paladinsinn.torg.codex.web.codex.model.AttributeGroupViewModel.Attribu
 import de.paladinsinn.torg.codex.web.codex.model.CosmBadgeViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.DetailViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.DetailViewModel.DetailHeader;
+import de.paladinsinn.torg.codex.web.codex.model.DetailViewModel.PublicationContentTile;
 import de.paladinsinn.torg.codex.web.codex.model.FilterPanelViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.FilterPanelViewModel.GroupingFacetGroup;
 import de.paladinsinn.torg.codex.web.codex.model.HomeViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.HomeViewModel.CategoryCard;
 import de.paladinsinn.torg.codex.web.codex.model.HomeViewModel.PublicationCard;
+import de.paladinsinn.torg.codex.web.codex.model.PublicationThumbnailViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.LinkedEntryViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.NavContextViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.NotFoundViewModel;
@@ -72,6 +76,7 @@ import de.paladinsinn.torg.codex.web.codex.model.TableCellViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.TableRowViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.TableViewModel;
 import de.paladinsinn.torg.codex.web.codex.model.TableViewModel.ColumnHeaderViewModel;
+import de.paladinsinn.torg.codex.web.codex.model.TableViewModel.PublicationFilterStatus;
 import de.paladinsinn.torg.codex.web.codex.model.TeaserViewModel;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -167,6 +172,11 @@ public class CodexViewMapper {
             }
         }
 
+        String publicationParam = toPublicationParam(criteria.publication());
+        String clearPublicationUrl = publicationParam != null
+                ? buildCategoryUrl(area.canonicalPath(), criteria, null, criteria.sortKey(), criteria.direction())
+                : null;
+
         FilterPanelViewModel filterPanel = new FilterPanelViewModel(
                 area.canonicalPath(),
                 criteria.query(),
@@ -174,7 +184,15 @@ public class CodexViewMapper {
                 List.copyOf(groupingGroups),
                 criteria.sortKey(),
                 criteria.direction().paramValue(),
-                criteria.hasActiveFilters());
+                criteria.hasActiveFilters(),
+                publicationParam,
+                clearPublicationUrl);
+
+        PublicationFilterStatus pubStatus = switch (result.publicationSelection()) {
+            case PublicationSelection.None ignored -> null;
+            case PublicationSelection.Selected s -> new PublicationFilterStatus(s.displayName(), false);
+            case PublicationSelection.Unavailable ignored -> new PublicationFilterStatus(null, true);
+        };
 
         List<ColumnHeaderViewModel> headers = descriptor.columns().stream()
                 .map(col -> toColumnHeader(area, col, criteria))
@@ -192,7 +210,8 @@ public class CodexViewMapper {
                 headers,
                 rows,
                 rows.size(),
-                result.totalAccessibleInCategory());
+                result.totalAccessibleInCategory(),
+                pubStatus);
     }
 
     public DetailViewModel toDetailViewModel(
@@ -213,6 +232,23 @@ public class CodexViewMapper {
     public DetailViewModel toDetailViewModel(
             final CatalogDetailResult.PublicReferenceEntry pubRef,
             final Authentication authentication) {
+        boolean signedIn = isSignedIn(authentication);
+        Publication publication = pubRef.entry() instanceof Publication p ? p : null;
+        List<PublicationContentTile> tiles = pubRef.contentCounts().stream()
+                .filter(c -> c.count() > 0)
+                .map(c -> {
+                    String href = null;
+                    String ariaLabel = null;
+                    if (signedIn && publication != null) {
+                        href = UriComponentsBuilder.fromPath(c.area().canonicalPath())
+                                .queryParam("publication", publication.id().toString())
+                                .encode()
+                                .toUriString();
+                        ariaLabel = "Browse " + c.area().displayName() + " in " + publication.name();
+                    }
+                    return new PublicationContentTile(c.area(), c.count(), href, ariaLabel);
+                })
+                .toList();
         return buildDetailViewModel(
                 toNavContext(pubRef.area(), authentication),
                 pubRef.descriptor(),
@@ -220,7 +256,9 @@ public class CodexViewMapper {
                 pubRef.canonicalSlug(),
                 Map.of(),
                 pubRef.embeddedReferences(),
-                List.of());
+                List.of())
+                .withContentTiles(tiles)
+                .withThumbnail(publication != null ? toThumbnail(publication) : null);
     }
 
     public TeaserViewModel toTeaserViewModel(
@@ -397,7 +435,15 @@ public class CodexViewMapper {
                 CatalogArea.PUBLICATION.detailPath(pub.slug()),
                 publisher,
                 cover,
-                pub.productUrl());
+                pub.productUrl(),
+                toThumbnail(pub));
+    }
+
+    private static PublicationThumbnailViewModel toThumbnail(final Publication pub) {
+        String thumbUrl = pub.thumbnailUrl();
+        return thumbUrl != null
+                ? new PublicationThumbnailViewModel(thumbUrl, pub.thumbnailFallbackUrl())
+                : null;
     }
 
     private ColumnHeaderViewModel toColumnHeader(
@@ -424,6 +470,20 @@ public class CodexViewMapper {
             final CatalogFilterCriteria criteria,
             final String nextSortKey,
             final SortDirection nextDir) {
+        return buildCategoryUrl(
+                basePath,
+                criteria,
+                toPublicationParam(criteria.publication()),
+                nextSortKey,
+                nextDir);
+    }
+
+    private String buildCategoryUrl(
+            final String basePath,
+            final CatalogFilterCriteria criteria,
+            final String publicationParam,
+            final String sortKey,
+            final SortDirection dir) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath(basePath);
         if (!criteria.query().isEmpty()) {
             builder.queryParam("q", criteria.query());
@@ -436,9 +496,20 @@ public class CodexViewMapper {
                 builder.queryParam(dim.getQueryParam(), v);
             }
         });
-        builder.queryParam("sort", nextSortKey);
-        builder.queryParam("dir", nextDir.paramValue());
+        if (publicationParam != null) {
+            builder.queryParam("publication", publicationParam);
+        }
+        builder.queryParam("sort", sortKey);
+        builder.queryParam("dir", dir.paramValue());
         return builder.encode().toUriString();
+    }
+
+    private static String toPublicationParam(final PublicationFilter filter) {
+        return switch (filter) {
+            case PublicationFilter.None ignored -> null;
+            case PublicationFilter.ByUuid byUuid -> byUuid.publicationId().toString();
+            case PublicationFilter.Invalid ignored -> "";
+        };
     }
 
     private TableRowViewModel toTableRow(

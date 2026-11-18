@@ -63,6 +63,7 @@ public record HomeViewModel(
      * @param publisher  publisher or Infiniverse author label
      * @param coverUrl   DriveThruRPG cover image URL (nullable)
      * @param storeUrl   DriveThruRPG product page URL (nullable)
+     * @param thumbnail  DriveThruRPG 140px thumbnail URLs (nullable)
      */
     public record PublicationCard(
             String codexId,
@@ -70,6 +71,25 @@ public record HomeViewModel(
             String detailPath,
             String publisher,
             String coverUrl,
-            String storeUrl) {
+            String storeUrl,
+            PublicationThumbnailViewModel thumbnail) {
+
+        /**
+         * Returns the primary thumbnail URL, or {@code null} when unavailable.
+         *
+         * @return primary thumbnail URL or {@code null}
+         */
+        public String thumbnailUrl() {
+            return thumbnail != null ? thumbnail.url() : null;
+        }
+
+        /**
+         * Returns the fallback PNG thumbnail URL, or {@code null} when unavailable.
+         *
+         * @return fallback thumbnail URL or {@code null}
+         */
+        public String thumbnailFallbackUrl() {
+            return thumbnail != null ? thumbnail.fallbackUrl() : null;
+        }
     }
 }

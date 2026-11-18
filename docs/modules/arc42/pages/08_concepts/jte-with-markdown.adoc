@@ -228,3 +228,20 @@ Be sure to adapt the sanitizer policy if you allow additional HTML constructs (t
 * {jte} - JTE docs
 * {common-mark} - CommonMark spec
 
+== Homepage publication thumbnails
+
+On the reader landing page (`codex/pages/home.jte`), Available Sourcebooks cards display the publication's 140-pixel DriveThruRPG thumbnail directly in the browser without any server-side image download, probe, or metadata lookup during build, startup, or homepage rendering.
+
+- **Pure link derivation**: `Publication.thumbnailUrl()` and `Publication.thumbnailFallbackUrl()` format `https://www.drivethrurpg.com/images/3444/{primaryProductId}-thumb140.jpg` and `.png` whenever `primaryProductId > 0`; nonpositive IDs omit the `<img>` element and render only the neutral frame.
+- **Browser-only fallback and placeholder**: `/js/publication-thumbnails.js` (loaded on `home.jte` and publication `detail.jte` with `defer`) attaches `load` and `error` listeners before checking `img.complete`, reveals decoded images by adding `.is-loaded` to `.publication-thumbnail` (transitioning `opacity` from `0` to `1` inside a fixed `140x190` CSS-pixel frame), and on the first error consumes `data-fallback-src` once to try the `.png` URL. If both fail, or when JavaScript is disabled, the neutral placeholder remains visible without broken-image indicators or layout shift, and text and links stay usable.
+- **Transport**: Image elements use `loading="lazy"` and `referrerpolicy="no-referrer"` so requests go directly from the browser to the public CDN without Codex credentials or a referrer.
+
+== Publication detail content tiles and filtered lists
+
+Publication detail pages (`codex/pages/detail.jte` for `CatalogArea.PUBLICATION`) reuse the shared thumbnail (`codex/fragments/publicationThumbnail.jte`, decorative `alt=""` in the header) and display a "Content in this publication" grid (`codex/fragments/categoryTile.jte`) for product-bound categories with at least one accessible entry.
+
+- **Access-aware counts and shared membership rule**: `CatalogBrowseService` computes distinct accessible counts from each product-bound area's `peekAll()` using the same `productCodexIds()` membership rule as category-list filtering, without emitting synthetic category visits or bypassing `RestrictedCatalogQuery`. Zero-count categories are omitted, and the entire section is omitted when all counts are zero.
+- **Sign-in-gated navigation**: Signed-out readers see readable, noninteractive cards (no `href`, link role, `tabindex`, or activation handler). Signed-in readers receive named links to `/{category}?publication={uuid}`.
+- **Authoritative GET filtering**: Product-bound category routes (`CodexCatalogController`, `filterPanel.jte`, `categoryResults.jte`) preserve `?publication={uuid}` across search, facets, sorting, and reloads, scope the result denominator to the publication, render `Publication unavailable` with zero matches for unknown or invalid values, and use full-page GETs to clear the publication or reset filters. Publication details and publication-filtered category pages set `hx-history="false"` to keep caller-dependent output out of htmx's client-side history cache.
+
+

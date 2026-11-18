@@ -38,8 +38,9 @@ import java.util.List;
  * @param filterPanel          filter form state and facet options
  * @param headers              table column headers with sort URLs
  * @param rows                 matching accessible table rows
- * @param matchingCount        count of rows matching current criteria
- * @param totalAccessibleCount count of accessible entries in this category before filtering
+ * @param matchingCount         count of rows matching current criteria
+ * @param totalAccessibleCount  count of accessible entries in this category before filtering
+ * @param publicationFilter     active publication filter display state (nullable when none)
  */
 public record TableViewModel(
         NavContextViewModel nav,
@@ -48,7 +49,28 @@ public record TableViewModel(
         List<ColumnHeaderViewModel> headers,
         List<TableRowViewModel> rows,
         int matchingCount,
-        int totalAccessibleCount) {
+        int totalAccessibleCount,
+        PublicationFilterStatus publicationFilter) {
+
+    public TableViewModel(
+            final NavContextViewModel nav,
+            final CatalogArea area,
+            final FilterPanelViewModel filterPanel,
+            final List<ColumnHeaderViewModel> headers,
+            final List<TableRowViewModel> rows,
+            final int matchingCount,
+            final int totalAccessibleCount) {
+        this(nav, area, filterPanel, headers, rows, matchingCount, totalAccessibleCount, null);
+    }
+
+    /**
+     * Active publication filter status shown in the category results header.
+     *
+     * @param displayName resolved publication name when available (nullable when unavailable)
+     * @param unavailable {@code true} when the requested publication is unknown or invalid
+     */
+    public record PublicationFilterStatus(String displayName, boolean unavailable) {
+    }
 
     /**
      * Column header view model supporting htmx/bookmarkable column sorting.

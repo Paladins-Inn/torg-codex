@@ -77,6 +77,24 @@ public record Publication(
     }
 
     /**
+     * Returns the DriveThruRPG 140-pixel JPEG thumbnail URL when {@code primaryProductId > 0}.
+     *
+     * @return primary thumbnail URL, or {@code null} when no DriveThruRPG product id is assigned
+     */
+    public String thumbnailUrl() {
+        return primaryProductId > 0 ? DRIVETHRURPG_COVER_BASE + primaryProductId + "-thumb140.jpg" : null;
+    }
+
+    /**
+     * Returns the DriveThruRPG 140-pixel PNG fallback thumbnail URL when {@code primaryProductId > 0}.
+     *
+     * @return fallback thumbnail URL, or {@code null} when no DriveThruRPG product id is assigned
+     */
+    public String thumbnailFallbackUrl() {
+        return primaryProductId > 0 ? DRIVETHRURPG_COVER_BASE + primaryProductId + "-thumb140.png" : null;
+    }
+
+    /**
      * Returns the DriveThruRPG product page URL when {@code primaryProductId > 0}.
      *
      * @return product URL, or {@code null} when no DriveThruRPG product id is assigned

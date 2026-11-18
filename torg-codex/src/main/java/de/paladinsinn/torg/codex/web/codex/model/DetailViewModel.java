@@ -41,6 +41,8 @@ import java.util.Map;
  * @param proseSections   censored and sanitized rich-text prose blocks
  * @param embeddedGroups  titled lists of accessible referenced entries
  * @param publications    source publication attribution links
+ * @param contentTiles    positive-count content tiles on publication detail pages
+ * @param thumbnail       optional publication thumbnail URLs (publication details only)
  */
 public record DetailViewModel(
         NavContextViewModel nav,
@@ -49,7 +51,39 @@ public record DetailViewModel(
         List<AttributeGroupViewModel> attributeGroups,
         List<RenderedProseSection> proseSections,
         Map<String, List<LinkedEntryViewModel>> embeddedGroups,
-        List<PublicationLinkViewModel> publications) {
+        List<PublicationLinkViewModel> publications,
+        List<PublicationContentTile> contentTiles,
+        PublicationThumbnailViewModel thumbnail) {
+
+    public DetailViewModel(
+            final NavContextViewModel nav,
+            final CatalogArea area,
+            final DetailHeader header,
+            final List<AttributeGroupViewModel> attributeGroups,
+            final List<RenderedProseSection> proseSections,
+            final Map<String, List<LinkedEntryViewModel>> embeddedGroups,
+            final List<PublicationLinkViewModel> publications) {
+        this(nav, area, header, attributeGroups, proseSections, embeddedGroups, publications, List.of(), null);
+    }
+
+    public DetailViewModel withContentTiles(final List<PublicationContentTile> tiles) {
+        return new DetailViewModel(
+                nav, area, header, attributeGroups, proseSections, embeddedGroups, publications, tiles, thumbnail);
+    }
+
+    public DetailViewModel withThumbnail(final PublicationThumbnailViewModel pubThumbnail) {
+        return new DetailViewModel(
+                nav, area, header, attributeGroups, proseSections, embeddedGroups,
+                publications, contentTiles, pubThumbnail);
+    }
+
+    public String thumbnailUrl() {
+        return thumbnail != null ? thumbnail.url() : null;
+    }
+
+    public String thumbnailFallbackUrl() {
+        return thumbnail != null ? thumbnail.fallbackUrl() : null;
+    }
 
     /**
      * Header metadata of a detail page.
@@ -66,5 +100,20 @@ public record DetailViewModel(
             String clearanceSymbol,
             String clearanceName,
             List<CosmBadgeViewModel> cosms) {
+    }
+
+    /**
+     * Positive-count content tile on a publication detail page.
+     *
+     * @param area      product-bound catalog area
+     * @param count     positive distinct accessible entry count
+     * @param href      filtered category destination URL (nullable when signed out)
+     * @param ariaLabel accessible link label (nullable when signed out)
+     */
+    public record PublicationContentTile(
+            CatalogArea area,
+            int count,
+            String href,
+            String ariaLabel) {
     }
 }

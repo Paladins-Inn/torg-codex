@@ -43,21 +43,12 @@
         </h2>
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-3">
             @for(var card : model.categories())
-                <div class="col">
-                    <div class="card h-100 shadow-sm position-relative">
-                        <div class="card-body d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h3 class="h6 card-title mb-0">
-                                    <i class="bi ${card.area().icon()} me-2 text-primary"></i>${card.area().displayName()}
-                                </h3>
-                                <span class="badge rounded-pill text-bg-light border">${card.accessibleCount()}</span>
-                            </div>
-                            <p class="card-text small text-muted mb-0 flex-grow-1">${card.area().description()}</p>
-                            <a href="${card.area().canonicalPath()}" class="stretched-link"
-                               aria-label="Browse ${card.area().displayName()}"></a>
-                        </div>
-                    </div>
-                </div>
+                @template.codex.fragments.categoryTile(
+                    area = card.area(),
+                    count = card.accessibleCount(),
+                    href = card.area().canonicalPath(),
+                    ariaLabel = "Browse " + card.area().displayName()
+                )
             @endfor
         </div>
     </section>
@@ -75,9 +66,17 @@
                     <div class="col">
                         <div class="card h-100 shadow-sm">
                             <div class="card-body d-flex flex-column">
-                                <h3 class="h6 card-title mb-1">
-                                    <a href="${pub.detailPath()}" class="text-decoration-none">${pub.name()}</a>
-                                </h3>
+                                <a href="${pub.detailPath()}"
+                                   aria-labelledby="pub-title-${pub.codexId()}"
+                                   class="text-decoration-none d-block publication-card-link">
+                                    @template.codex.fragments.publicationThumbnail(
+                                        url = pub.thumbnailUrl(),
+                                        fallbackUrl = pub.thumbnailFallbackUrl(),
+                                        alt = pub.name(),
+                                        extraClass = "mb-3 mx-auto"
+                                    )
+                                    <h3 id="pub-title-${pub.codexId()}" class="h6 card-title mb-1">${pub.name()}</h3>
+                                </a>
                                 <div class="small text-muted mb-3">${pub.publisher()}</div>
                                 @if(pub.storeUrl() != null)
                                     <div class="mt-auto">
@@ -94,4 +93,5 @@
             </div>
         </section>
     @endif
+    <script src="/js/publication-thumbnails.js" defer></script>
 `)
